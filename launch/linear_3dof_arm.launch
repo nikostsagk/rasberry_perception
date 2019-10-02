@@ -1,0 +1,129 @@
+<launch>
+    <!-- =========================================================================================================== -->
+    <!-- ===========================================NODE SETTINGS=================================================== -->
+    <!-- =========================================================================================================== -->
+    <!-- Global Settings For All Nodes -->
+    <arg name="host" default="0.0.0.0"/>
+    <arg name="debug" default="true"/> <!-- Sets whether some nodes -->
+    <arg name="2D_camera_name" default="linear_3dof_2d_camera"/>
+    <arg name="3D_camera_name" default="linear_3dof_3d_camera"/>
+    <arg name="gripper_name" default="linear_3dof_gripper"/>
+    <arg name="device_sync" default="false"/>
+    <arg name="odom_frame_id" default="linear_3dof_arm_home"/>
+    <arg name="initial_camera_reset" default="true"/>
+
+    <!-- 2D Camera Settings -->
+    <arg name="2D_camera_serial" default="841612070382"/>
+    <arg name="2D_json_config" default="$(find rasberry_perception)/config/$(arg 2D_camera_name).json"/>
+    <arg name="2D_rgb_max_side" default="1280"/>
+    <arg name="2D_rgb_min_side" default="720"/>
+    <arg name="2D_rgb_fps" default="30"/>
+    <arg name="2D_depth_max_side" default="1280"/>
+    <arg name="2D_depth_min_side" default="720"/>
+    <arg name="2D_depth_fps" default="30"/>
+    <arg name="2D_align_depth_to_colour" default="true"/>
+    <arg name="2D_imu_enabled" default="false"/>
+    <arg name="2D_infrared_enabled" default="false"/>
+    <arg name="2D_filters" default="disparity,spatial"/>
+
+    <!-- 2D detector settings -->
+    <arg name="2D_model_name" default="faster-rcnn"/>
+    <arg name="2D_score_thresh" default="0.5"/>
+    <arg name="2D_point_selection_method" default="std"/>
+    <arg name="2D_point_selection_distance_thresh" default="0.8"/>
+    <arg name="2D_point_selection_method_thresh" default="0.5"/>
+    <arg name="2D_plot_picking_points" default="True"/>
+
+    <!-- 3D Camera Settings -->
+    <arg name="3D_camera_serial" default="843112074204"/>
+    <arg name="3D_json_config" default="$(find rasberry_perception)/config/$(arg 3D_camera_name).json"/>
+    <arg name="3D_rgb_max_side" default="848"/>
+    <arg name="3D_rgb_min_side" default="480"/>
+    <arg name="3D_rgb_fps" default="6"/>
+    <arg name="3D_depth_max_side" default="848"/>
+    <arg name="3D_depth_min_side" default="480"/>
+    <arg name="3D_depth_fps" default="6"/>
+    <arg name="3D_align_depth_to_colour" default="true"/>
+    <arg name="3D_imu_enabled" default="false"/>
+    <arg name="3D_infrared_enabled" default="false"/>
+    <arg name="3D_filters" default="disparity,spatial,temporal"/>
+
+    <!-- =========================================================================================================== -->
+    <!-- ===============================================NODES======================================================= -->
+    <!-- =========================================================================================================== -->
+    <!-- Launch robot state publisher -->
+    <node pkg="tf" type="static_transform_publisher" name="base_link_publisher" args="0 0 0 0 0 0 map base_link 100" />
+    <node pkg="tf" type="static_transform_publisher" name="linear_3dof_arm_home_tf_publisher" args="0 0 0 0 0 0 map $(arg odom_frame_id) 100" />
+    <param name="linear_3dof_arm_robot_description" command="$(find xacro)/xacro --inorder '$(find rasberry_perception)/description/linear_3dof_arm.urdf.xacro'"/>
+    <node name="linear_3dof_arm_robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
+        <remap from="robot_description" to="rasberry_perception_robot_description" />
+    </node>
+
+    <!-- Launch Arm Controller -->
+    <node pkg="rasberry_perception" name="rasberry_perception_arm_controller" type="arm_controller.py" output="screen">
+        <param name="2D_camera_frame" value="$(arg 2D_camera_name)_link"/>
+        <param name="3D_camera_frame" value="$(arg 3D_camera_name)_link"/>
+        <param name="gripper_frame" value="$(arg gripper_name)_link"/>
+        <param name="odom_frame_id" value="$(arg odom_frame_id)"/>
+    </node>
+
+    <!-- Launch Gripper Controller -->
+    <!-- Open ROS Serial interface -->
+    <node pkg="rosserial_python" type="serial_node.py" name="serial_node" output="screen">
+        <param name="port" value="/dev/usb2gripper"/>
+        <param name="baud" value="57600"/>
+    </node>
+    <node pkg="rasberry_perception" name="rasberry_perception_gripper_service" type="gripper_controller.py" output="screen"/>
+
+    <!-- Launch 2D camera -->
+    <include file="$(find rasberry_perception)/launch/camera_publisher.launch">
+        <arg name="odom_frame_id" value="$(arg odom_frame_id)"/>
+        <arg name="filters" value="$(arg 2D_filters)"/>
+        <arg name="initial_reset" value="$(arg initial_camera_reset)"/>
+        <arg name="camera_name" value="$(arg 2D_camera_name)"/>
+        <arg name="serial_no" value="$(arg 2D_camera_serial)"/>
+        <arg name="json_file_path" value="$(arg 2D_json_config)"/>
+        <arg name="device_sync" value="$(arg device_sync)"/>
+        <arg name="rgb_max_side" value="$(arg 2D_rgb_max_side)"/>
+        <arg name="rgb_min_side" value="$(arg 2D_rgb_min_side)"/>
+        <arg name="rgb_fps" value="$(arg 2D_rgb_fps)"/>
+        <arg name="depth_max_side" value="$(arg 2D_depth_max_side)"/>
+        <arg name="depth_min_side" value="$(arg 2D_depth_min_side)"/>
+        <arg name="depth_fps" value="$(arg 2D_depth_fps)"/>
+        <arg name="align_depth_to_colour" value="$(arg 2D_align_depth_to_colour)"/>
+        <arg name="imu_enabled" value="$(arg 2D_imu_enabled)"/>
+        <arg name="infrared_enabled" value="$(arg 2D_infrared_enabled)"/>
+    </include>
+
+    <!-- Launch 2D object detector -->
+    <include file="$(find rasberry_perception)/launch/2D_detector.launch">
+        <arg name="host" value="$(arg host)"/>
+        <arg name="camera_name" value="$(arg 2D_camera_name)"/>
+        <arg name="model_name" value="$(arg 2D_model_name)"/>
+        <arg name="score_thresh" value="$(arg 2D_score_thresh)"/>
+        <arg name="point_selection_method" value="$(arg 2D_point_selection_method)"/>
+        <arg name="point_selection_distance_thresh" value="$(arg 2D_point_selection_distance_thresh)"/>
+        <arg name="point_selection_method_thresh" value="$(arg 2D_point_selection_method_thresh)"/>
+        <arg name="plot_picking_points" value="$(arg 2D_plot_picking_points)"/>
+    </include>
+
+    <!-- Launch 3D camera -->
+    <include file="$(find rasberry_perception)/launch/camera_publisher.launch">
+        <arg name="odom_frame_id" value="$(arg odom_frame_id)"/>
+        <arg name="filters" value="$(arg 3D_filters)"/>
+        <arg name="initial_reset" value="$(arg initial_camera_reset)"/>
+        <arg name="camera_name" value="$(arg 3D_camera_name)"/>
+        <arg name="serial_no" value="$(arg 3D_camera_serial)"/>
+        <arg name="json_file_path" value="$(arg 3D_json_config)"/>
+        <arg name="device_sync" value="$(arg device_sync)"/>
+        <arg name="rgb_max_side" value="$(arg 3D_rgb_max_side)"/>
+        <arg name="rgb_min_side" value="$(arg 3D_rgb_min_side)"/>
+        <arg name="rgb_fps" value="$(arg 3D_rgb_fps)"/>
+        <arg name="depth_max_side" value="$(arg 3D_depth_max_side)"/>
+        <arg name="depth_min_side" value="$(arg 3D_depth_min_side)"/>
+        <arg name="depth_fps" value="$(arg 3D_depth_fps)"/>
+        <arg name="align_depth_to_colour" value="$(arg 3D_align_depth_to_colour)"/>
+        <arg name="imu_enabled" value="$(arg 3D_imu_enabled)"/>
+        <arg name="infrared_enabled" value="$(arg 3D_infrared_enabled)"/>
+    </include>
+</launch>

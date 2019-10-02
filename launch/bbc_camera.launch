@@ -1,0 +1,63 @@
+<launch>
+    <!-- =========================================================================================================== -->
+    <!-- ===========================================NODE SETTINGS=================================================== -->
+    <!-- =========================================================================================================== -->
+    <!-- Global Settings For All Nodes -->
+    <arg name="host" default="0.0.0.0"/>
+    <arg name="2D_camera_name" default="bbc_camera"/>
+    <arg name="device_sync" default="false"/>
+
+    <!-- 2D Camera Settings -->
+    <arg name="2D_camera_serial" default=""/>
+    <arg name="2D_rgb_max_side" default="1280"/>
+    <arg name="2D_rgb_min_side" default="720"/>
+    <arg name="2D_rgb_fps" default="30" />
+    <arg name="2D_depth_max_side" default="1280"/>
+    <arg name="2D_depth_min_side" default="720"/>
+    <arg name="2D_depth_fps" default="30"/>
+    <arg name="2D_align_depth_to_colour" default="true"/>
+    <arg name="2D_imu_enabled" default="false"/>
+    <arg name="2D_infrared_enabled" default="false"/>
+
+    <!-- =========================================================================================================== -->
+    <!-- ===============================================NODES======================================================= -->
+    <!-- =========================================================================================================== -->
+    <!-- Launch 2D camera -->
+    <include file="$(find yeet)/launch/camera_publisher.launch">
+        <arg name="camera_name" value="$(arg 2D_camera_name)"/>
+        <arg name="serial_no" value="$(arg 2D_camera_serial)"/>
+        <arg name="device_sync" value="$(arg device_sync)"/>
+        <arg name="rgb_max_side" value="$(arg 2D_rgb_max_side)"/>
+        <arg name="rgb_min_side" value="$(arg 2D_rgb_min_side)"/>
+        <arg name="rgb_fps" value="$(arg 2D_rgb_fps)"/>
+        <arg name="depth_max_side" value="$(arg 2D_depth_max_side)"/>
+        <arg name="depth_min_side" value="$(arg 2D_depth_min_side)"/>
+        <arg name="depth_fps" value="$(arg 2D_depth_fps)"/>
+        <arg name="align_depth_to_colour" value="$(arg 2D_align_depth_to_colour)"/>
+        <arg name="imu_enabled" value="$(arg 2D_imu_enabled)"/>
+        <arg name="infrared_enabled" value="$(arg 2D_infrared_enabled)"/>
+    </include>
+
+    <node pkg="tf" type="static_transform_publisher" name="camera_linker" args="0 0 0 0 0 0 /map /bbc_camera_link 100"/>
+    <include file="$(find bayes_people_tracker)/launch/people_tracker.launch">
+        <arg name="param_file" value="$(find yeet)/config/bbc_detectors.yaml" />
+        <arg name="base_frame" value="bbc_camera_color_optical_frame" />
+        <arg name="target_frame" value="bbc_camera_color_optical_frame" />
+        <arg name="positions" value="/tracker/positions" />
+        <arg name="pose" value="/tracker/pose" />
+        <arg name="pose_array" value="/tracker/pose_array" />
+        <arg name="people" value="/tracker/people" />
+        <arg name="marker" value="/tracker/marker_array" />
+    </include>
+
+    <node pkg="yeet" name="bbc_countryfile_announcer" type="bbc_count_announcer.py" output="screen"></node>
+    <node pkg="yeet" name="bbc_countryfile_detector" type="bbc_detector.py" output="screen"></node>
+
+    <!-- Launch preview nodes
+    <node name="$(arg 2D_camera_name)_color_view" pkg="image_view" type="image_view" respawn="false" output="screen">
+        <remap from="image" to="/bbc_camera/color/image_raw"/>
+    </node>
+    <node name="$(arg 2D_camera_name)_depth_view" pkg="image_view" type="image_view" respawn="false" output="screen">
+        <remap from="image" to="/bbc_camera/aligned_depth_to_color/image_raw"/>
+    </node> -->
+</launch>

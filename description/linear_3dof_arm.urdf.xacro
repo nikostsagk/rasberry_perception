@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<robot name="gripper" xmlns:xacro="http://ros.org/wiki/xacro">
+    <!-- Base link for arm home -->
+    <link name="linear_3dof_arm_home"/>
+
+    <!-- Gripper Model -->
+    <material name="aluminum"><color rgba="0.5 0.5 0.5 1"/></material>
+    <link name="linear_3dof_gripper_link">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://rasberry_perception/description/meshes/gripper_example.dae"/>
+            </geometry>
+            <material name="aluminum"/>
+        </visual>
+    </link>
+
+    <joint name="linear_3dof_arm_home_link_joint" type="fixed">
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <parent link="linear_3dof_arm_home"/>
+        <child link="linear_3dof_gripper_link"/>
+    </joint>
+
+    <!-- Camera models -->
+    <xacro:include filename="$(find rasberry_perception)/description/d435/_d435.urdf.xacro"/>
+    <xacro:property name="DEG2RAD" value="${3.1415926535897931/180}"/>
+
+    <!-- 2D Camera Model -->
+    <link name="linear_3dof_2d_camera_link"/>
+    <sensor_d435 parent="linear_3dof_2d_camera_link">
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+    </sensor_d435>
+
+    <joint name="linear_3dof_2d_camera_home_link_joint" type="fixed">
+        <origin xyz="-0.255 -0.115 -0.0675" rpy="0 ${15*DEG2RAD} ${90*DEG2RAD}"/>
+        <parent link="linear_3dof_arm_home"/>
+        <child link="linear_3dof_2d_camera_link"/>
+    </joint>
+    245mm,
+    <!-- 3D Camera Model -->
+    <link name="linear_3dof_3d_camera_link"/>
+    <sensor_d435 parent="linear_3dof_3d_camera_link">
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+    </sensor_d435>
+
+    <joint name="linear_3dof_3d_camera_gripper_link_joint" type="fixed">
+        <origin xyz="-0.0545 0.0 -0.025" rpy="0 ${-90*DEG2RAD} 0"/>
+        <parent link="linear_3dof_gripper_link"/>
+        <child link="linear_3dof_3d_camera_link"/>
+    </joint>
+</robot>

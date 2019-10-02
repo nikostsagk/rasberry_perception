@@ -1,0 +1,5 @@
+bool open_gripper
+bool cut
+bool release_box
+---
+bool success
