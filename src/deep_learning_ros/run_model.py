@@ -31,15 +31,14 @@ from std_msgs.msg import String
 
 
 class DeepLearningRosInference:
-    def __init__(self, camera_ns, depth_ns, config_file, checkpoint_file, score_thresh=0.5):
-        self.colour_topic = camera_ns + "/image_raw"
-        self.colour_info_topic = camera_ns + "/camera_info"
+    def __init__(self, colour_ns, depth_ns, config_file, checkpoint_file, score_thresh=0.5):
+        self.colour_topic = colour_ns + "/image_raw"
+        self.colour_info_topic = colour_ns + "/camera_info"
         self.depth_topic = depth_ns + "/image_raw"
         self.depth_info_topic = depth_ns + "/camera_info"
 
         self.visualisation_topic = camera_ns + "visualisations/image_raw"
         self.score_thresh = score_thresh
-
 
         # Initialise detectior
         self.model = init_detector(self.model_config, self.model_path, device=torch.device('cuda', 0))
@@ -48,15 +47,15 @@ def deep_learning_ros():
     rospy.init_node('deep_learning_detector', anonymous=True)
 
     # get private namespace parameters
-    p_image_ns = rospy.get_param('~image_ns', "/realsense_camera/color")
-    p_depth_ns = rospy.get_param('~depth_ns', "/realsense_camera/aligned_depth_to_color")
+    p_image_ns = rospy.get_param('~image_ns', "/camera/color")
+    p_depth_ns = rospy.get_param('~depth_ns', "/camera/aligned_depth_to_color")
 
     p_config_file = rospy.get_param('~config_path', "")
     p_checkpoint_file = rospy.get_param('~checkpoint_file', "")
 
     rospy.loginfo("MMDetection ROS: ")
 
-    detector = DeepLearningRosInference(image_ns=p_image_ns, depth_ns=p_depth_ns, config_file=p_config_file,
+    detector = DeepLearningRosInference(colour_ns=p_image_ns, depth_ns=p_depth_ns, config_file=p_config_file,
                                         checkpoint_file=p_checkpoint_file)
     rospy.spin()
 
