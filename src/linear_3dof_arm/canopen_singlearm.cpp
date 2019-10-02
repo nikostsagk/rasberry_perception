@@ -13,7 +13,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include <arm_control/controlcan.h>
+#include <linear_3dof_arm/controlcan.h>
 #include <ctime>
 #include <cstdlib>
 #include "unistd.h"
