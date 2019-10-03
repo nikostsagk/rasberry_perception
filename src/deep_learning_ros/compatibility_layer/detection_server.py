@@ -114,21 +114,32 @@ def __get_detector_results_server():
 
     # Parse passed parameters (fail if required missing, override if optional present)
     required_args, optional_args = DETECTION_REGISTRY.get_arguments(backend)
+    assigned_parameters = ["~backend"]
 
     # Fill in required backend arguments from the private ros parameter server
     kwargs = {}
     for arg_name in required_args:
-        if not rospy.has_param("~" + arg_name):
+        p_arg = "~" + arg_name
+        if not rospy.has_param(p_arg):
             rospy.logerr("Parameter '{}' not found".format(arg_name))
             arg_list = " ".join(["_" + a + ":=<value>" for a in required_args])
             rospy.logerr("Backend '{}' requires rosrun parameters '{}'".format(backend, arg_list))
             sys.exit(1)
-        kwargs[arg_name] = rospy.get_param("~" + arg_name)
+        assigned_parameters.append(p_arg)
+        kwargs[arg_name] = rospy.get_param(p_arg)
 
     # Replace optional parameters if they exist
     for arg_name in optional_args:
-        if rospy.has_param("~" + arg_name):
-            kwargs[arg_name] = rospy.get_param("~" + arg_name)
+        p_arg = "~" + arg_name
+        if rospy.has_param(p_arg):
+            assigned_parameters.append(p_arg)
+            kwargs[arg_name] = rospy.get_param(p_arg)
+
+    # Assign function to remove parameters on shutdown
+    def delete_params_on_shutdown():
+        for p in assigned_parameters:
+            rospy.delete_param(p)
+    rospy.on_shutdown(delete_params_on_shutdown)
 
     # Get the backend
     server = DETECTION_REGISTRY[backend]
