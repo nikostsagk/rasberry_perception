@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 from __future__ import absolute_import, division, print_function
 
-import os
 import sys
 from threading import Event
 
-import ros_numpy
 import rospy
 from rasberry_perception.msg import ObjectDetection
 from rasberry_perception.srv import GetDetectorResults, GetDetectorResultsResponse
+from rasberry_perception_pkg.utility import function_timer
 
 from deep_learning_ros.compatibility_layer.python3_fixes import KineticImportsFix
 from deep_learning_ros.compatibility_layer.registry import DETECTION_REGISTRY
@@ -53,20 +52,24 @@ class _DefaultDetectorResultsServer(_DetectorResultsServer):
 @DETECTION_REGISTRY.register_detection_backend("mmdetection")
 class _MMDetectionResultsServer(_DetectorResultsServer):
     def __init__(self, config_path, model_path, device=None):
-        # Import in main class definition to allow importing this file in Python2 files
-        self.inference_detector = None
-        with KineticImportsFix():
-            try:
+        # Backbone specific imports
+        try:
+            import ros_numpy
+            from os.path import abspath
+            from collections import deque
+            self.numpify = ros_numpy.numpify
+
+            with KineticImportsFix():
                 import torch
                 from mmdet.apis import inference_detector, init_detector
                 self.inference_detector = inference_detector  # Export function to class scope
-            except ImportError as e:
-                rospy.logerr(e)
-                rospy.logerr("Please source your backend detection environment before running the detection service.")
-                sys.exit(1)
+        except ImportError as e:
+            rospy.logerr(e)
+            rospy.logerr("Please source your backend detection environment before running the detection service.")
+            sys.exit(1)
 
-        config_path = os.path.abspath(config_path)
-        model_path = os.path.abspath(model_path)
+        config_path = abspath(config_path)
+        model_path = abspath(model_path)
 
         # Initialise detection backend
         if device is None:
@@ -79,14 +82,16 @@ class _MMDetectionResultsServer(_DetectorResultsServer):
         # Initialise ros service interface (done last so callback isn't called before setup)
         _DetectorResultsServer.__init__(self)
 
+    @function_timer.interval_logger(interval=10)
     def get_detector_results(self, request):
         if self.currently_busy.is_set():
             return GetDetectorResultsResponse(status=DETECTOR_BUSY)
         self.currently_busy.set()
+
         response = GetDetectorResultsResponse(status=DETECTOR_FAIL)
         response.detections = ObjectDetection()
 
-        rgb_image = ros_numpy.numpify(request.image)
+        rgb_image = self.numpify(request.image)
         # Get results from detection backend and mark service as available (since GPU memory is the constraint here)
         result = self.inference_detector(self.model, rgb_image)
         self.currently_busy.clear()

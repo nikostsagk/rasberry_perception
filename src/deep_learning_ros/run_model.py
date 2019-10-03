@@ -7,6 +7,7 @@ import rospy
 from sensor_msgs.msg import Image, CameraInfo
 
 from deep_learning_ros.compatibility_layer.detection_server import DetectorResultsClient, DETECTOR_OK
+from rasberry_perception_pkg.utility import function_timer
 
 
 class DeepLearningRosInference:
@@ -34,6 +35,7 @@ class DeepLearningRosInference:
     def on_frame(self, colour_msg, depth_msg, depth_info_msg):
         self.run_detector(colour_msg, depth_msg, depth_info_msg)
 
+    @function_timer.logger
     def run_detector(self, colour_msg, depth_msg, depth_info_msg):
         detection_result = self.detector(colour_msg)
         print("detector", detection_result.status)
