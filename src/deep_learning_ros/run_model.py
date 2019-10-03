@@ -1,33 +1,12 @@
 #!/usr/bin/env python
 from __future__ import absolute_import, division, print_function
 
-import sys
-
-# Import python3 packages after removing ros
-__ros_cv2_fix = '/opt/ros/kinetic/lib/python2.7/dist-packages'
-if __ros_cv2_fix in sys.path:
-    sys.path.remove(__ros_cv2_fix)
-    import cv2
-    import torch
-    from mmdet.apis import inference_detector, init_detector, show_result
-    from copy import deepcopy
-    from timeit import default_timer as timer
-    from collections import deque
-    from threading import Event
-
-    # Import python2/ros packages after adding ros
-    sys.path.append(__ros_cv2_fix)
-
+import message_filters
 import ros_numpy
 import rospy
-from geometry_msgs.msg import PoseArray, Pose, Quaternion, Point
 from sensor_msgs.msg import Image, CameraInfo
-from yeet.msg import LabelledImage, BoundingBox
-# from yeet_pkg.detection import DetectorClient, BBoxProjector
-from rasberry_perception_pkg.visualisation import MarkerPublisher
-from bbc_countryfile.models import model_lookup
-from bbc_countryfile.trackers import CentroidTracker
-from std_msgs.msg import String
+
+from deep_learning_ros.compatibility_layer.detection_server import DetectorResultsClient, DETECTOR_OK
 
 
 class DeepLearningRosInference:
@@ -37,11 +16,33 @@ class DeepLearningRosInference:
         self.depth_topic = depth_ns + "/image_raw"
         self.depth_info_topic = depth_ns + "/camera_info"
 
-        self.visualisation_topic = camera_ns + "visualisations/image_raw"
+        self.visualisation_topic = colour_ns + "visualisations/image_raw"
         self.score_thresh = score_thresh
 
-        # Initialise detectior
-        self.model = init_detector(self.model_config, self.model_path, device=torch.device('cuda', 0))
+        # Wait for connection to detection service
+        self.detector = DetectorResultsClient()
+
+        # Initialise subscribers
+        self.colour_sub = message_filters.Subscriber(self.colour_topic, Image)
+        self.depth_sub = message_filters.Subscriber(self.depth_topic, Image)
+        self.depth_info_sub = message_filters.Subscriber(self.depth_info_topic, CameraInfo)
+        self.ts = message_filters.ApproximateTimeSynchronizer(
+            [self.colour_sub, self.depth_sub, self.depth_info_sub], 10, 0.5)
+
+        self.ts.registerCallback(self.run_detector)
+
+    def on_frame(self, colour_msg, depth_msg, depth_info_msg):
+        self.run_detector(colour_msg, depth_msg, depth_info_msg)
+
+    def run_detector(self, colour_msg, depth_msg, depth_info_msg):
+        detection_result = self.detector(colour_msg)
+        print("detector", detection_result.status)
+        if detection_result != DETECTOR_OK:
+            return
+
+        rgb_image = ros_numpy.numpify(colour_msg)
+        depth_image = ros_numpy.numpify(depth_msg)
+
 
 def deep_learning_ros():
     rospy.init_node('deep_learning_detector', anonymous=True)
@@ -50,8 +51,10 @@ def deep_learning_ros():
     p_image_ns = rospy.get_param('~image_ns', "/camera/color")
     p_depth_ns = rospy.get_param('~depth_ns', "/camera/aligned_depth_to_color")
 
-    p_config_file = rospy.get_param('~config_path', "")
-    p_checkpoint_file = rospy.get_param('~checkpoint_file', "")
+    p_config_file = rospy.get_param('~config_path',
+                                    "/home/raymond/projects/mmdetection/configs/bbc_countryfile/grid_rcnn_gn_head_r50_fpn_1x_2cls_1333x800.py")
+    p_checkpoint_file = rospy.get_param('~checkpoint_file',
+                                        "/home/raymond/projects/mmdetection/work_dirs/bbc_countryfile/grid_rcnn_gn_head_r50_fpn_1x_2cls_1333x800/epoch_12.pth")
 
     rospy.loginfo("MMDetection ROS: ")
 

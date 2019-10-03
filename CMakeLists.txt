@@ -28,11 +28,13 @@ add_service_files(
   FILES
   OpenCloseGripper.srv
   ArmControllerService.srv
+  GetDetectorResults.srv
 )
 
 add_message_files(
   FILES
   BoundingBox.msg
+  ObjectDetection.msg
   LabelledImage.msg
   ObjectAnnotation.msg
   ObjectDescription.msg

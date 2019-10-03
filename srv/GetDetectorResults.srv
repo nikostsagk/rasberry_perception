@@ -1,0 +1,4 @@
+sensor_msgs/Image image
+---
+string status
+rasberry_perception/ObjectDetection detections
