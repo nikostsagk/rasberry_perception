@@ -5,12 +5,12 @@ import sys
 from threading import Event
 
 import rospy
-from rasberry_perception.msg import ObjectDetection
+from rasberry_perception.msg import ObjectDetection, BoundingBox
 from rasberry_perception.srv import GetDetectorResults, GetDetectorResultsResponse
-from rasberry_perception_pkg.utility import function_timer
 
 from deep_learning_ros.compatibility_layer.python3_fixes import KineticImportsFix
 from deep_learning_ros.compatibility_layer.registry import DETECTION_REGISTRY
+from rasberry_perception_pkg.utility import function_timer
 
 DETECTOR_OK = "OKAY"
 DETECTOR_FAIL = "FAIL"
@@ -89,14 +89,32 @@ class _MMDetectionResultsServer(_DetectorResultsServer):
         self.currently_busy.set()
 
         response = GetDetectorResultsResponse(status=DETECTOR_FAIL)
-        response.detections = ObjectDetection()
+        response.detections = ObjectDetection(header=request.image.header, class_labels=list(self.model.CLASSES))
 
         rgb_image = self.numpify(request.image)
         # Get results from detection backend and mark service as available (since GPU memory is the constraint here)
         result = self.inference_detector(self.model, rgb_image)
         self.currently_busy.clear()
 
+        # Convert mmdetection results to annotation results
+        # TODO: Add masks to response if they exist
+        if isinstance(result, tuple):
+            bounding_boxes = result[0]
+            masks = result[1]
+        else:
+            bounding_boxes = result
+            masks = None
+
         # Parse results into ObjectDetection method
+        # Create bounding boxes list of [x1, y1, x2, y2, score, class_id]
+        bounding_box_msgs = []
+        for class_id, class_bounding_boxes in enumerate(bounding_boxes):
+            for bbox in class_bounding_boxes:
+                if bbox[-1] > request.score_thresh:
+                    bounding_box_msgs.append(
+                        BoundingBox(x1=bbox[0], y1=bbox[1], x2=bbox[2], y2=bbox[3], score=bbox[4], class_id=class_id))
+
+        response.detections.bounding_boxes = bounding_box_msgs
         response.status = DETECTOR_OK
         return response
 
@@ -138,7 +156,9 @@ def __get_detector_results_server():
     # Assign function to remove parameters on shutdown
     def delete_params_on_shutdown():
         for p in assigned_parameters:
-            rospy.delete_param(p)
+            if rospy.has_param(p):
+                rospy.delete_param(p)
+
     rospy.on_shutdown(delete_params_on_shutdown)
 
     # Get the backend
