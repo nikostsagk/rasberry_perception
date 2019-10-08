@@ -55,7 +55,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Image
       Enabled: true
-      Image Topic: /pico_zense/colour/visualisations/image_raw
+      Image Topic: /detection/image_raw
       Max Value: 1
       Median window: 5
       Min Value: 0
@@ -143,10 +143,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.555397511
+      Pitch: -0.264602602
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.820398092
+      Yaw: 1.045398
     Saved: ~
 Window Geometry:
   DetectionSummary:

@@ -20,16 +20,16 @@ class DeepLearningRosInference:
         self.depth_topic = depth_ns + "/image_raw"
         self.depth_info_topic = depth_ns + "/camera_info"
 
-        self.visualisation_topic = colour_ns + "/detection/image_raw"
-        self.detections_topic = colour_ns + "/detection/predictions"
+        self.visualisation_topic = "/detection/image_raw"
+        self.detections_topic = "/detection/predictions"
         self.score_thresh = score_thresh
 
         # Wait for connection to detection service
         self.detector = DetectorResultsClient()
 
         # Initialise publisher
-        self.detection_vis_pub = rospy.Publisher(self.visualisation_topic, Image)
-        self.detections_pub = rospy.Publisher(self.detections_topic, ImageDetections)
+        self.detection_vis_pub = rospy.Publisher(self.visualisation_topic, Image, queue_size=1)
+        self.detections_pub = rospy.Publisher(self.detections_topic, ImageDetections, queue_size=1)
 
         # Initialise subscribers
         self.colour_sub = message_filters.Subscriber(self.colour_topic, Image)
@@ -46,7 +46,6 @@ class DeepLearningRosInference:
         if result.status != DETECTOR_OK:
             return
 
-        # TODO: Add masks
         rgb_image = ros_numpy.numpify(colour_msg)
         depth_image = ros_numpy.numpify(depth_msg)
         vis_canvas = rgb_image
