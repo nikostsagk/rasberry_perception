@@ -2,4 +2,4 @@ sensor_msgs/Image image
 float32 score_thresh
 ---
 string status
-rasberry_perception/ObjectDetection detections
+rasberry_perception/ImageDetections detections

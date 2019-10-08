@@ -5,7 +5,7 @@ import sys
 from threading import Event
 
 import rospy
-from rasberry_perception.msg import ObjectDetection, BoundingBox
+from rasberry_perception.msg import ObjectDetection, BoundingBox, SegmentationLabel
 from rasberry_perception.srv import GetDetectorResults, GetDetectorResultsResponse
 
 from deep_learning_ros.compatibility_layer.python3_fixes import KineticImportsFix
@@ -57,6 +57,10 @@ class _MMDetectionResultsServer(_DetectorResultsServer):
             import ros_numpy
             from os.path import abspath
             from collections import deque
+            import pycocotools.mask as maskUtils
+            import numpy as np
+
+            self.mask_decode = lambda x: np.where(maskUtils.decode(x).astype(np.bool))
             self.numpify = ros_numpy.numpify
 
             with KineticImportsFix():
@@ -97,10 +101,13 @@ class _MMDetectionResultsServer(_DetectorResultsServer):
         self.currently_busy.clear()
 
         # Convert mmdetection results to annotation results
-        # TODO: Add masks to response if they exist
         if isinstance(result, tuple):
             bounding_boxes = result[0]
             masks = result[1]
+            if len(bounding_boxes) != len(masks) or len(bounding_boxes[0]) != len(masks[0]):
+                rospy.logerr("Bounding boxes and masks are of different lengths {} and {}".format(len(bounding_boxes),
+                                                                                                  len(masks)))
+                return response
         else:
             bounding_boxes = result
             masks = None
@@ -108,13 +115,24 @@ class _MMDetectionResultsServer(_DetectorResultsServer):
         # Parse results into ObjectDetection method
         # Create bounding boxes list of [x1, y1, x2, y2, score, class_id]
         bounding_box_msgs = []
-        for class_id, class_bounding_boxes in enumerate(bounding_boxes):
-            for bbox in class_bounding_boxes:
+        segmentation_lbl_msgs = []
+
+        n_classes = len(bounding_boxes)
+        for class_id in range(n_classes):
+            n_detections = len(bounding_boxes[class_id])
+            for detection_id in range(n_detections):
+                bbox = bounding_boxes[class_id][detection_id]
+                mask = None if masks is None else masks[class_id][detection_id]
+
                 if bbox[-1] > request.score_thresh:
                     bounding_box_msgs.append(
                         BoundingBox(x1=bbox[0], y1=bbox[1], x2=bbox[2], y2=bbox[3], score=bbox[4], class_id=class_id))
+                    if mask is not None:
+                        x_p, y_p = self.mask_decode(mask)
+                        segmentation_lbl_msgs.append(SegmentationLabel(x=x_p, y=y_p, score=bbox[4], class_id=class_id))
 
         response.detections.bounding_boxes = bounding_box_msgs
+        response.detections.instances = segmentation_lbl_msgs
         response.status = DETECTOR_OK
         return response
 

@@ -2,7 +2,7 @@
 from __future__ import absolute_import, division, print_function
 
 import cv2
-
+import numpy as np
 
 class LabelColours:
     def __init__(self, colour_list=None):
@@ -21,17 +21,34 @@ class LabelColours:
         return self.colours[item]
 
 
-def draw_bounding_box_msgs_on_image(image, bounding_box_msgs, classes=None, font=cv2.FONT_HERSHEY_SIMPLEX,
+def draw_detection_msg_on_image(image, detection_msg, font=cv2.FONT_HERSHEY_SIMPLEX,
                                     font_scale=0.5, font_colour=(255, 255, 255), line_type=8, encoding="rgb8"):
     label_colours = LabelColours()
     if "rgb" not in encoding:
         label_colours.colours = [list(reversed(l)) for l in label_colours.colours]
 
-    for bounding_box in bounding_box_msgs:
+    classes = detection_msg.class_labels
+    bounding_box_msgs = detection_msg.bounding_boxes
+    segmentation_lbl_msgs = detection_msg.instances if detection_msg.instances else None
+
+    if segmentation_lbl_msgs is not None and len(bounding_box_msgs) != len(segmentation_lbl_msgs):
+        raise ValueError("Incorrect annotation data passed (different lengths)")
+
+    n_detections = len(bounding_box_msgs)
+    for detection_id in range(n_detections):
+        bounding_box = bounding_box_msgs[detection_id]
+        mask = None if segmentation_lbl_msgs is None else (segmentation_lbl_msgs[detection_id].x,
+                                                           segmentation_lbl_msgs[detection_id].y)
+
         pt1 = (int(bounding_box.x1), int(bounding_box.y1))
         pt2 = (int(bounding_box.x2), int(bounding_box.y2))
         class_colour = label_colours[bounding_box.class_id]
+        class_colour_f = [float(f) / 2 for f in class_colour]
         cv2.rectangle(image, pt1, pt2, color=class_colour)
+
+        if mask is not None:
+            image[mask] = (image[mask] * 0.5) + class_colour_f
+
         if classes is not None:
             padding = 10
             class_name = "{} {}%".format(classes[bounding_box.class_id], int(bounding_box.score * 100))

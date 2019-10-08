@@ -34,10 +34,8 @@ add_service_files(
 add_message_files(
   FILES
   BoundingBox.msg
-  ObjectDetection.msg
-  LabelledImage.msg
-  ObjectAnnotation.msg
-  ObjectDescription.msg
+  ImageDetections.msg
+  SegmentationLabel.msg
 )
 
 generate_messages(DEPENDENCIES std_msgs sensor_msgs rasberry_perception)

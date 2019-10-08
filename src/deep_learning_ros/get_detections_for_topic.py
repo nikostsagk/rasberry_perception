@@ -5,11 +5,12 @@ import message_filters
 import ros_numpy
 import rospy
 import cv2
+from rasberry_perception.msg import ImageDetections
 from sensor_msgs.msg import Image, CameraInfo
 
 from deep_learning_ros.compatibility_layer.detection_server import DetectorResultsClient, DETECTOR_OK
 from rasberry_perception_pkg.utility import function_timer
-from rasberry_perception_pkg.visualisation import draw_bounding_box_msgs_on_image
+from rasberry_perception_pkg.visualisation import draw_detection_msg_on_image
 
 
 class DeepLearningRosInference:
@@ -19,14 +20,16 @@ class DeepLearningRosInference:
         self.depth_topic = depth_ns + "/image_raw"
         self.depth_info_topic = depth_ns + "/camera_info"
 
-        self.visualisation_topic = colour_ns + "/visualisations/image_raw"
+        self.visualisation_topic = colour_ns + "/detection/image_raw"
+        self.detections_topic = colour_ns + "/detection/predictions"
         self.score_thresh = score_thresh
 
         # Wait for connection to detection service
         self.detector = DetectorResultsClient()
 
         # Initialise publisher
-        self.detection_pub = rospy.Publisher(self.visualisation_topic, Image)
+        self.detection_vis_pub = rospy.Publisher(self.visualisation_topic, Image)
+        self.detections_pub = rospy.Publisher(self.detections_topic, ImageDetections)
 
         # Initialise subscribers
         self.colour_sub = message_filters.Subscriber(self.colour_topic, Image)
@@ -48,13 +51,12 @@ class DeepLearningRosInference:
         depth_image = ros_numpy.numpify(depth_msg)
         vis_canvas = rgb_image
 
-        classes = result.detections.class_labels
-        bounding_box_msgs = result.detections.bounding_boxes
-        vis_canvas = draw_bounding_box_msgs_on_image(vis_canvas, bounding_box_msgs, classes, encoding=colour_msg.encoding)
+        vis_canvas = draw_detection_msg_on_image(vis_canvas, result.detections, encoding=colour_msg.encoding)
 
         detection_visualisation_msg = ros_numpy.msgify(Image, vis_canvas, encoding=colour_msg.encoding)
         detection_visualisation_msg.header = colour_msg.header
-        self.detection_pub.publish(detection_visualisation_msg)
+        self.detection_vis_pub.publish(detection_visualisation_msg)
+        self.detections_pub.publish(result.detections)
 
 
 def _get_detections_for_topic():
