@@ -5,7 +5,7 @@ import sys
 from threading import Event
 
 import rospy
-from rasberry_perception.msg import ObjectDetection, BoundingBox, SegmentationLabel
+from rasberry_perception.msg import ImageDetections, BoundingBox, SegmentationLabel
 from rasberry_perception.srv import GetDetectorResults, GetDetectorResultsResponse
 
 from deep_learning_ros.compatibility_layer.python3_fixes import KineticImportsFix
@@ -93,7 +93,7 @@ class _MMDetectionResultsServer(_DetectorResultsServer):
         self.currently_busy.set()
 
         response = GetDetectorResultsResponse(status=DETECTOR_FAIL)
-        response.detections = ObjectDetection(header=request.image.header, class_labels=list(self.model.CLASSES))
+        response.detections = ImageDetections(header=request.image.header, class_labels=list(self.model.CLASSES))
 
         rgb_image = self.numpify(request.image)
         # Get results from detection backend and mark service as available (since GPU memory is the constraint here)
