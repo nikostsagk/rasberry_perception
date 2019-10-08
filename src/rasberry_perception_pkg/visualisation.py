@@ -22,8 +22,11 @@ class LabelColours:
 
 
 def draw_bounding_box_msgs_on_image(image, bounding_box_msgs, classes=None, font=cv2.FONT_HERSHEY_SIMPLEX,
-                                    font_scale=0.5, font_colour=(255, 255, 255), line_type=8):
+                                    font_scale=0.5, font_colour=(255, 255, 255), line_type=8, encoding="rgb8"):
     label_colours = LabelColours()
+    if "rgb" not in encoding:
+        label_colours.colours = [list(reversed(l)) for l in label_colours.colours]
+
     for bounding_box in bounding_box_msgs:
         pt1 = (int(bounding_box.x1), int(bounding_box.y1))
         pt2 = (int(bounding_box.x2), int(bounding_box.y2))

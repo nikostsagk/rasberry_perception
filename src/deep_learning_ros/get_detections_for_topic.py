@@ -50,9 +50,9 @@ class DeepLearningRosInference:
 
         classes = result.detections.class_labels
         bounding_box_msgs = result.detections.bounding_boxes
-        vis_canvas = draw_bounding_box_msgs_on_image(vis_canvas, bounding_box_msgs, classes)
+        vis_canvas = draw_bounding_box_msgs_on_image(vis_canvas, bounding_box_msgs, classes, encoding=colour_msg.encoding)
 
-        detection_visualisation_msg = ros_numpy.msgify(Image, vis_canvas, encoding="rgb8")
+        detection_visualisation_msg = ros_numpy.msgify(Image, vis_canvas, encoding=colour_msg.encoding)
         detection_visualisation_msg.header = colour_msg.header
         self.detection_pub.publish(detection_visualisation_msg)
 
@@ -61,8 +61,8 @@ def _get_detections_for_topic():
     rospy.init_node('deep_learning_detector', anonymous=True)
 
     # get private namespace parameters
-    p_image_ns = rospy.get_param('~image_ns', "/camera/color")
-    p_depth_ns = rospy.get_param('~depth_ns', "/camera/aligned_depth_to_color")
+    p_image_ns = rospy.get_param('~image_ns', "/pico_zense/colour")
+    p_depth_ns = rospy.get_param('~depth_ns', "/pico_zense/aligned_depth_to_colour")
     p_score = rospy.get_param('~score', 0.5)
 
     rospy.loginfo("Camera Topic to Detection ROS: ")
