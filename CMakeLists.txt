@@ -13,7 +13,6 @@ find_package(catkin REQUIRED COMPONENTS
   ros_numpy
   message_generation
   dynamic_reconfigure
-  bayes_people_tracker
 )
 
 # ==============================================

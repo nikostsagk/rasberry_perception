@@ -59,3 +59,25 @@ The node will fail if you do not pass any non-default arguments such as `custom_
 ```bash
 rosrun rasberry_perception detection_server.py _custom_arg1:="a1" _custom_arg2:="a2" _default_arg1"="world"
 ```
+
+## Docker
+
+First of all build the base docker image using your current cloned repo.
+
+```bash
+docker build -f ./docker/base/Dockerfile $(rospack find rasberry_perception) -t rasberry_perception:base
+
+# or for gpu
+docker build -f ./docker/base_gpu/Dockerfile $(rospack find rasberry_perception) -t rasberry_perception:base_gpu
+```
+
+Build the backend of your choice.
+
+```bash
+bash docker/mmdetection/get_mmdetection.sh
+# Move your model and config files to docker/mmdetection
+docker build -t rasberry_perception:mmdetection docker/mmdetection/
+
+# Run the backend 
+docker run --network host --gpus all -it rasberry_perception:mmdetection /start
+```
