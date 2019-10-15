@@ -16,12 +16,14 @@
   <build_depend>ros_numpy</build_depend>
   <build_depend>message_generation</build_depend>
   <build_depend>dynamic_reconfigure</build_depend>
+  <build_depend>rosserial</build_depend>
 
   <build_export_depend>roscpp</build_export_depend>
   <build_export_depend>rospy</build_export_depend>
   <build_export_depend>std_msgs</build_export_depend>
   <build_export_depend>realsense2_camera</build_export_depend>
   <build_export_depend>ros_numpy</build_export_depend>
+  <build_export_depend>rosserial</build_export_depend>
 
   <exec_depend>roscpp</exec_depend>
   <exec_depend>rospy</exec_depend>
@@ -30,6 +32,7 @@
   <exec_depend>ros_numpy</exec_depend>
   <exec_depend>message_runtime</exec_depend>
   <exec_depend>dynamic_reconfigure</exec_depend>
+  <exec_depend>rosserial</exec_depend>
 
   <export>
       <name>arm_control_files</name>

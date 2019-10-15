@@ -4,11 +4,11 @@ from __future__ import absolute_import, division, print_function
 import rospy
 from diagnostic_msgs.msg import DiagnosticArray
 from geometry_msgs.msg import Pose, Point
-from yeet.srv import OpenCloseGripper, OpenCloseGripperResponse
+from rasberry_perception.srv import OpenCloseGripper, OpenCloseGripperResponse
 
 
 class GripperHandler:
-    OPEN_X, CLOSE_X = 40.0, 0.0
+    OPEN_X, CLOSE_X = 60.0, 0.0
     SCISSORS_ON, SCISSORS_OFF = 1.0, 0.0
     BOX_RELEASE, BOX_RETRACT = 1.0, 0.0
 

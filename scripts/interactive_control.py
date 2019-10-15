@@ -24,6 +24,7 @@ class InteractiveControl:
         self.create_keys()
 
         self.frame = np.random.random((512, 512))
+        rospy.loginfo("Waiting for colour topic linear_3dof_2d_camera/color/image_raw")
         self.colour_sub = rospy.Subscriber("/linear_3dof_2d_camera/color/image_raw", Image, self.save_frame)
 
         rate = rospy.Rate(30)

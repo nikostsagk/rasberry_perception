@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function
 import rospy
 from geometry_msgs.msg import Point
 from std_msgs.msg import String
-from yeet.srv import ArmControllerService, OpenCloseGripper
+from rasberry_perception.srv import ArmControllerService, OpenCloseGripper
 
 from linear_3dof_arm.arm_controller import ArmController
 

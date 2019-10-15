@@ -7,7 +7,7 @@ import roslaunch
 import rospy
 from geometry_msgs.msg import PoseArray, Point
 from std_msgs.msg import Float32MultiArray, String
-from yeet.srv import ArmControllerService, ArmControllerServiceResponse
+from rasberry_perception.srv import ArmControllerService, ArmControllerServiceResponse
 
 from linear_3dof_arm.tf_updater import Linear3dofTFUpdater
 
@@ -24,7 +24,7 @@ class ArmController:
         self.goal_position = Point()
         self.has_homed = False
 
-        self.homing_speed = 50
+        self.homing_speed = 40
         self.operation_speed = 150
 
         self.has_reached_position = False
@@ -35,7 +35,7 @@ class ArmController:
 
         # Arm CPP node (manage within this python wrapper)
         rospy.loginfo("Arm Controller: Starting CPP arm control node")
-        self.arm_node = roslaunch.core.Node("rasberry_perception", "canopen_singlearm",
+        self.arm_node = roslaunch.core.Node("rasberry_perception", "linear_3dof_arm_canopen_singlearm",
                                             "linear_3dof_arm_arm_controller_raw", output="screen")
         self.arm_launch = roslaunch.scriptapi.ROSLaunch()
         self.arm_launch.start()
