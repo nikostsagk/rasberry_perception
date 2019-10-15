@@ -18,6 +18,11 @@
 #include <cstdlib>
 #include "unistd.h"
 
+#include <errno.h>
+#include <sys/ioctl.h>
+#include <linux/usbdevice_fs.h>
+
+
 #include <signal.h>
 volatile sig_atomic_t sig_int_received = 0;
 void sig_int_handler(int sig){
@@ -402,6 +407,25 @@ void throw_error(string message) {
 int main(int argc, char ** argv) {
     // Signal to catch ctrl+c event POSIX only
     signal(SIGINT, sig_int_handler);
+
+    const char *filename = "/dev/usb2can";
+    int fd;
+    int rc;
+
+    fd = open(filename, O_WRONLY);
+    if (fd < 0) {
+        throw_error("Error opening output file");
+    }
+
+    ROS_INFO_STREAM("Resetting USB device /dev/usb2can");
+    rc = ioctl(fd, USBDEVFS_RESET, 0);
+    if (rc < 0) {
+        throw_error("Error in ioctl");
+    }
+    ROS_INFO_STREAM("Reset successful");
+
+    close(fd);
+
     int return_status = 0;
 
     try{
