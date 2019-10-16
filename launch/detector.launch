@@ -9,7 +9,8 @@
     <arg name="depth_ns" default="/linear_3dof_2d_camera/aligned_depth_to_color"/>
     <arg name="score" default="0.5"/>
 
-    <node pkg="rasberry_perception" name="rasberry_perception_detector" type="get_detections_for_topic.py" output="screen">
+    <node pkg="rasberry_perception" name="rasberry_perception_detector" type="get_detections_for_topic.py"
+          output="screen" respawn="true">
         <param name="image_ns" type="str" value="$(arg image_ns)"/>
         <param name="depth_ns" type="str" value="$(arg depth_ns)"/>
         <param name="score" type="double" value="$(arg score)"/>

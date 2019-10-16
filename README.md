@@ -1,9 +1,14 @@
 # rasberry_perception
 
-## Detection
+## Manipulation
 
+To launch the cartesian 3 degrees of freedom arm:
 
-### Detection Backends
+```bash
+roslaunch rasberry_perception linear_3dof.launch
+```
+
+## Detection Backends
 
 Modular detection backends are available in `rasberry_perception` enabling users to utilise deep learning 
 frameworks/non-ros methods to detect objects. This functionality is provided via a ros service `GetDetectorResults`. 
@@ -15,11 +20,24 @@ To run the detection backend service run the command below replacing backend wit
 rosrun rasberry_perception detection_server.py backend:="" backend_arg1:=""
 ```
 
-#### Default `backend:="default"`
+Then you can launch the detector:
+
+```bash
+roslaunch rasberry_perception detector.launch colour_ns:='' depth_ns:='' score:=''
+```
+
+Alternatively if a `run_$backend.sh` script exists in `scripts/docker_backends/` you can launch both the docker backend
+and the detector with the command below:
+
+```bash
+roslaunch rasberry_perception detector.launch colour_ns:='' depth_ns:='' score:='' backend:="<your backend>"
+```
+
+### Default `backend:="default"`
 
 The default backend will return an empty object when called.
 
-#### MMDetection `backend:="mmdetection"`
+### MMDetection `backend:="mmdetection"`
 
 This backend adds support for the popular deep learning framework mmdetection in PyTorch. 
 Specifically a private research branch of mmdetection maintained by [Raymond](https://github.com/RaymondKirk).
@@ -27,7 +45,7 @@ Specifically a private research branch of mmdetection maintained by [Raymond](ht
 Before running the backend service, source the appropriate packages from the private repo and pass 
 `config_path:=""`, `model_path:=""` and optionally `device=""`.
 
-#### Adding a new detection backend 
+### Adding a new detection backend 
 
 Adding custom backends such as TensorFlow, PyTorch, Detectron, Onnx etc. to `rasberry_perception` is easy. 
 
