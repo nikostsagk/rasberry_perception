@@ -32,19 +32,19 @@ class Linear3dofController:
 
             self.blocking = arm_blocking
 
-        if self.__gripper_enabled:
-            # Wait for gripper connection
-            rospy.loginfo("Waiting for connection to gripper control service")
-            rospy.wait_for_service('open_close_gripper')
-            self.gripper_control_service = rospy.ServiceProxy('open_close_gripper', OpenCloseGripper)
-            rospy.loginfo("Connected to gripper controller")
-
             # Subscribe to arm controller topics
             self.reached_position_sub = rospy.Subscriber("/linear_3dof_arm/arm/move_to_status", String,
                                                          self.__save_reached_position)
             self.current_position_sub = rospy.Subscriber("/linear_3dof_arm/arm/current_position", Point,
                                                          self.__save_position,
                                                          queue_size=1)
+
+        if self.__gripper_enabled:
+            # Wait for gripper connection
+            rospy.loginfo("Waiting for connection to gripper control service")
+            rospy.wait_for_service('open_close_gripper')
+            self.gripper_control_service = rospy.ServiceProxy('open_close_gripper', OpenCloseGripper)
+            rospy.loginfo("Connected to gripper controller")
 
     def __save_position(self, message):
         self.current_position = message

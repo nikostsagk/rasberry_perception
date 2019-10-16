@@ -3,11 +3,16 @@ from __future__ import absolute_import, division, print_function
 
 import rospy
 from geometry_msgs.msg import Point, PointStamped
-from yeet.msg import LabelledImage
+from rasberry_perception.msg import ImageDetections
 
 from linear_3dof_arm.control import Linear3dofController
-from rasberry_perception_pkg.visualisation import MarkerPublisher
+
 import tf
+
+
+class HarvestingStrategy:
+    def __init__(self):
+        pass
 
 
 class DetectionControl:
@@ -17,11 +22,7 @@ class DetectionControl:
         self.tf_listener = tf.TransformListener()
 
         # Yeet controller node
-        self.yeet_controller = Linear3dofController()
-
-        # Visualisation publishers
-        self.marker_publisher = MarkerPublisher("/linear_3dof_arm/arm/harvest_markers",
-                                                frame_id="/linear_3dof_arm_home", colours=[[0, 0, 1]])
+        self.controller = Linear3dofController()
 
         # TODO: Remove this debug code
         self.test_point = Point(500, 0, 350)
@@ -31,27 +32,27 @@ class DetectionControl:
         self.strawberry_height = 40
 
         # Set arm to harvest speed
-        self.yeet_controller.update_arm_speed(400)
+        self.controller.update_arm_speed(400)
 
     def validate_harvest_at(self, x, y, z):
-        return self.yeet_controller.verify_move_xyz(x, y, z) and \
-               self.yeet_controller.verify_move_xyz(x, y, z - self.strawberry_height) and \
-               self.yeet_controller.verify_move_xyz(x, y, z + self.camera_3d_distance)
+        return self.controller.verify_move_xyz(x, y, z) and \
+               self.controller.verify_move_xyz(x, y, z - self.strawberry_height) and \
+               self.controller.verify_move_xyz(x, y, z + self.camera_3d_distance)
 
     def reset(self):
-        self.yeet_controller.move_to_point(self.test_point)
+        self.controller.move_to_point(self.test_point)
         rospy.sleep(3)
 
     def harvest_at(self, x, y, z):
         goal_point = Point(x, y, z)
         goal_point.z += self.camera_3d_distance
-        self.yeet_controller.move_to_point(goal_point)
-        self.yeet_controller.open_gripper()
+        self.controller.move_to_point(goal_point)
+        self.controller.open_gripper()
         goal_point.z -= self.camera_3d_distance + self.strawberry_height
-        self.yeet_controller.move_to_point(goal_point)
+        self.controller.move_to_point(goal_point)
         goal_point.z += self.camera_3d_distance + self.strawberry_height
-        self.yeet_controller.move_to_point(goal_point)
-        self.yeet_controller.close_gripper()
+        self.controller.move_to_point(goal_point)
+        self.controller.close_gripper()
 
     def harvest(self, labelled_message):
         annotations = labelled_message.annotations
