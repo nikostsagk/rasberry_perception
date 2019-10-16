@@ -1,0 +1,17 @@
+<launch>
+    <arg name="backend" default=""/>
+    <group if="$(eval arg('backend') != '')">
+        <node pkg="rasberry_perception" name="rasberry_perception_detection_backend" type="run_$(arg backend).sh"
+              output="screen"/>
+    </group>
+
+    <arg name="image_ns" default="/linear_3dof_2d_camera/color"/>
+    <arg name="depth_ns" default="/linear_3dof_2d_camera/aligned_depth_to_color"/>
+    <arg name="score" default="0.5"/>
+
+    <node pkg="rasberry_perception" name="rasberry_perception_detector" type="get_detections_for_topic.py" output="screen">
+        <param name="image_ns" type="str" value="$(arg image_ns)"/>
+        <param name="depth_ns" type="str" value="$(arg depth_ns)"/>
+        <param name="score" type="double" value="$(arg score)"/>
+    </node>
+</launch>

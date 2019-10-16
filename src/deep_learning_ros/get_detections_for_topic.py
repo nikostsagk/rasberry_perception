@@ -62,8 +62,10 @@ def _get_detections_for_topic():
     rospy.init_node('deep_learning_detector', anonymous=True)
 
     # get private namespace parameters
-    p_image_ns = rospy.get_param('~image_ns', "/pico_zense/colour")
-    p_depth_ns = rospy.get_param('~depth_ns', "/pico_zense/aligned_depth_to_colour")
+    # p_image_ns = rospy.get_param('~image_ns', "/pico_zense/colour")
+    # p_depth_ns = rospy.get_param('~depth_ns', "/pico_zense/aligned_depth_to_colour")
+    p_image_ns = rospy.get_param('~image_ns', "/linear_3dof_2d_camera/color")
+    p_depth_ns = rospy.get_param('~depth_ns', "/linear_3dof_2d_camera/aligned_depth_to_color")
     p_score = rospy.get_param('~score', 0.5)
 
     rospy.loginfo("Camera Topic to Detection ROS: ")
