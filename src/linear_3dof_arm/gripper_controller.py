@@ -8,7 +8,7 @@ from rasberry_perception.srv import OpenCloseGripper, OpenCloseGripperResponse
 
 
 class GripperHandler:
-    OPEN_X, CLOSE_X = 60.0, 0.0
+    OPEN_X, CLOSE_X = 50.0, 0.0
     SCISSORS_ON, SCISSORS_OFF = 1.0, 0.0
     BOX_RELEASE, BOX_RETRACT = 1.0, 0.0
 
