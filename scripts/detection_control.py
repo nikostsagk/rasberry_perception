@@ -91,7 +91,7 @@ class DetectionControl:
             print("\t{}: XYZ ({}, {}, {}) => ({}, {}, {})".format("Valid" if valid_move else "Invalid Move", x, y, z,
                                                                   arm_x, arm_y, arm_z))
             if valid_move:
-                harvest_points.append([x, y, z, 0])
+                harvest_points.append([b_box.x, b_box.y, b_box.z, 0])
                 plan.append([arm_x, arm_y, arm_z])
 
         # Order plan by lowest points first
