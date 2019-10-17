@@ -10,7 +10,6 @@ Panels:
         - /TF Tree1/Tree1
         - /Gripper1
         - /Tracker1/PoseArray2
-        - /3D DepthCloud1/Status1
         - /3D DepthCloud1/Auto Size1
         - /DepthCloud1/Auto Size1
       Splitter Ratio: 0.605562568
@@ -96,16 +95,6 @@ Visualization Manager:
           Value: false
         linear_3dof_2d_camera_link_right_ir_optical_frame:
           Value: false
-        linear_3dof_3d_camera_aligned_depth_to_color_frame:
-          Value: false
-        linear_3dof_3d_camera_color_frame:
-          Value: false
-        linear_3dof_3d_camera_color_optical_frame:
-          Value: false
-        linear_3dof_3d_camera_depth_frame:
-          Value: false
-        linear_3dof_3d_camera_depth_optical_frame:
-          Value: false
         linear_3dof_3d_camera_link:
           Value: true
         linear_3dof_3d_camera_link_bottom_screw_frame:
@@ -169,14 +158,6 @@ Visualization Manager:
                         {}
             linear_3dof_gripper_link:
               linear_3dof_3d_camera_link:
-                linear_3dof_3d_camera_aligned_depth_to_color_frame:
-                  linear_3dof_3d_camera_color_optical_frame:
-                    {}
-                linear_3dof_3d_camera_color_frame:
-                  {}
-                linear_3dof_3d_camera_depth_frame:
-                  linear_3dof_3d_camera_depth_optical_frame:
-                    {}
                 linear_3dof_3d_camera_link_bottom_screw_frame:
                   linear_3dof_3d_camera_link_link:
                     linear_3dof_3d_camera_link_depth_frame:

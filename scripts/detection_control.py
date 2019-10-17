@@ -4,10 +4,12 @@ from __future__ import absolute_import, division, print_function
 import rospy
 from geometry_msgs.msg import Point, PointStamped
 from rasberry_perception.msg import ImageDetections
+from rasberry_perception.msg import HarvestDetections
 
 from linear_3dof_arm.control import Linear3dofController
 
 import tf
+import numpy as np
 
 
 class HarvestingStrategy:
@@ -21,23 +23,27 @@ class DetectionControl:
 
         self.tf_listener = tf.TransformListener()
 
-        # Yeet controller node
         self.controller = Linear3dofController()
 
         # TODO: Remove this debug code
-        self.test_point = Point(500, 0, 350)
+        self.test_point = Point(500, 0, 500)
         self.reset()
 
-        self.camera_3d_distance = 200
-        self.strawberry_height = 40
+        self.cluster_radius = 100
+        self.strawberry_height = 125
 
         # Set arm to harvest speed
-        self.controller.update_arm_speed(400)
+        self.controller.update_arm_speed(200)
 
     def validate_harvest_at(self, x, y, z):
-        return self.controller.verify_move_xyz(x, y, z) and \
-               self.controller.verify_move_xyz(x, y, z - self.strawberry_height) and \
-               self.controller.verify_move_xyz(x, y, z + self.camera_3d_distance)
+        if not self.controller.verify_move_xyz(x, y, z):
+            print("Move outside of the controller bounds")
+            return False
+        elif not (self.controller.verify_move_xyz(x, y, z - self.strawberry_height) and
+                  self.controller.verify_move_xyz(x, y, z + self.cluster_radius)):
+            print("Move is outside the needed room (strawberry height and cluster radius")
+            return False
+        return True
 
     def reset(self):
         self.controller.move_to_point(self.test_point)
@@ -45,75 +51,63 @@ class DetectionControl:
 
     def harvest_at(self, x, y, z):
         goal_point = Point(x, y, z)
-        goal_point.z += self.camera_3d_distance
+        goal_point.z += self.cluster_radius
         self.controller.move_to_point(goal_point)
         self.controller.open_gripper()
-        goal_point.z -= self.camera_3d_distance + self.strawberry_height
+        goal_point.z -= self.cluster_radius + self.strawberry_height
         self.controller.move_to_point(goal_point)
-        goal_point.z += self.camera_3d_distance + self.strawberry_height
+        goal_point.z += self.cluster_radius + self.strawberry_height
         self.controller.move_to_point(goal_point)
         self.controller.close_gripper()
 
     def harvest(self, labelled_message):
-        annotations = labelled_message.annotations
-        parent = labelled_message.parent_frame_id
-        child = labelled_message.header.frame_id
-        time = labelled_message.header.stamp
-        header = labelled_message.header
+        difference = (rospy.Time.now() - labelled_message.header.stamp).to_sec()
+        print("Starting harvest for {} objects, messaged received {} seconds ago.".format(
+            len(labelled_message.bounding_boxes), difference))
 
-        # Calculate plan from current position
-        # TODO: Manual transform to parent at time of ps
         harvest_points = []
         plan = []
-        for annotation in annotations:
-            bounding_box = annotation.bounding_box
-            shape = annotation.description
-            x, y, z = (getattr(shape, s) for s in ['x', 'y', 'z'])
 
-            # Use shape description to make point more accurate
-            y -= shape.db  # Since 2D depth only sees half the berry
+        for b_box in labelled_message.bounding_boxes:
+            x = b_box.x
+            y = b_box.y
+            z = b_box.z
 
-            # Get world x, y, z for motor controller offset at the time the detection was logged
-            wp = PointStamped(header=header, point=Point(x, y, z))
-            if parent != child:
-                try:
-                    print('FIX THE ERROR WITH PARENT CHILD TF IS WRONG IN HEADER and MESSAGE')
-                    # wp = self.tf_listener.transformPoint(parent, wp)
-                except tf.ExtrapolationException as e:
-                    print("\tSkipping {}, {}, {} due to exception '{}'".format(x, y, z, e))
-                    continue
-
-            arm_x, arm_y, arm_z = wp.point.x * 1000, wp.point.y * 1000, wp.point.z * -1000
-
+            arm_x, arm_y, arm_z = x * 1000, y * 1000, z * -1000
             valid_move = self.validate_harvest_at(arm_x, arm_y, arm_z)
+
             print("\t{}: XYZ ({}, {}, {}) => ({}, {}, {})".format("Valid" if valid_move else "Invalid Move", x, y, z,
                                                                   arm_x, arm_y, arm_z))
-
             if valid_move:
-                harvest_points.append([wp.point.x, wp.point.y, wp.point.z, 0])
+                harvest_points.append([x, y, z, 0])
                 plan.append([arm_x, arm_y, arm_z])
 
         # Order plan by lowest points first
         plan = sorted(plan, key=lambda p: (p[2]), reverse=True)
-
-        self.marker_publisher.visualise_points(harvest_points, clear=False)
 
         # Execute plan
         for arm_x, arm_y, arm_z in plan:
             print("\tMoving to {}, {}, {}".format(arm_x, arm_y, arm_z))
             self.harvest_at(arm_x, arm_y, arm_z)
 
-        self.marker_publisher.clear_markers()
         self.reset()
         return
 
     def run(self):
         try:
+            stop_time = rospy.Time.now()
+
             while not rospy.is_shutdown():
-                message = rospy.wait_for_message("/rasberry_perception/detection/rgb_bbox", LabelledImage)
-                if isinstance(message, LabelledImage):
-                    print("Starting Harvest Operation ({}):".format(len(message.annotations)))
-                    self.harvest(message)
+                # Ensure it's always the latest message
+                threshold = 0.5
+                difference = threshold
+                message = None
+                while difference >= threshold:
+                    message = rospy.wait_for_message("/detection/predictions_points", HarvestDetections)
+                    difference = (rospy.Time.now() - message.header.stamp).to_sec()
+                    print("Got Message from {} seconds ago{}".format(difference,
+                                                                     " (Skipping)" if difference >= threshold else ""))
+                self.harvest(message)
                 self.rate.sleep()
         except KeyboardInterrupt:
             pass
@@ -122,7 +116,7 @@ class DetectionControl:
 def detection_control():
     rospy.init_node('yeet_detection_control', anonymous=True)
 
-    print("Yeet Detection Control: Initialising with ''".format())
+    print("Detection Control: Initialising with ''".format())
 
     control = DetectionControl()
     control.run()

@@ -2,10 +2,13 @@
 from __future__ import absolute_import, division, print_function
 
 import message_filters
+import numpy as np
 import ros_numpy
 import rospy
 import cv2
-from rasberry_perception.msg import ImageDetections
+import tf
+from geometry_msgs.msg import PointStamped, Point
+from rasberry_perception.msg import ImageDetections, HarvestDetections, SegmentationLabel3D, BoundingBox3D
 from sensor_msgs.msg import Image, CameraInfo
 
 from deep_learning_ros.compatibility_layer.detection_server import DetectorResultsClient, DETECTOR_OK
@@ -22,6 +25,7 @@ class DeepLearningRosInference:
 
         self.visualisation_topic = "/detection/image_raw"
         self.detections_topic = "/detection/predictions"
+        self.harvest_detections_topic = "/detection/predictions_points"
         self.score_thresh = score_thresh
 
         # Wait for connection to detection service
@@ -30,6 +34,10 @@ class DeepLearningRosInference:
         # Initialise publisher
         self.detection_vis_pub = rospy.Publisher(self.visualisation_topic, Image, queue_size=1)
         self.detections_pub = rospy.Publisher(self.detections_topic, ImageDetections, queue_size=1)
+        self.harvest_detections_pub = rospy.Publisher(self.harvest_detections_topic, HarvestDetections, queue_size=1)
+
+        self.tf_listener = tf.TransformListener()
+        self.parent_frame = "linear_3dof_arm_home"
 
         # Initialise subscribers
         self.colour_sub = message_filters.Subscriber(self.colour_topic, Image)
@@ -46,16 +54,50 @@ class DeepLearningRosInference:
         if result.status != DETECTOR_OK:
             return
 
+        self.detections_pub.publish(result.detections)
+
         rgb_image = ros_numpy.numpify(colour_msg)
         depth_image = ros_numpy.numpify(depth_msg)
+
+        # If mask information available then publish 3D information too
+        if len(result.detections.instances):
+            fx, fy, cx, cy = depth_info_msg.P[0], depth_info_msg.P[5], depth_info_msg.P[2], depth_info_msg.P[6]
+            bounding_boxes_ = []
+            segmentation_labels_ = []
+            for instance in result.detections.instances:
+                x_l, y_l, z_l = np.asarray(instance.x), np.asarray(instance.y), depth_image[instance.x, instance.y]
+                invalid_ind = np.where(z_l != 0)  # Get invalid points
+                x_l, y_l, z_l = x_l[invalid_ind], y_l[invalid_ind], z_l[invalid_ind]  # Filter the points
+                # Project points to 3D space
+                x, y, z = ((x_l - cx) * z_l / fx) / 1000.0, ((y_l - cy) * z_l / fy) / 1000.0, z_l / 1000.0
+                if not (len(x) == len(y) == len(z)):
+                    raise ValueError("Somehow the array dimensions do not agree x={}, y={} and z={}".format(len(x),
+                                                                                                            len(y),
+                                                                                                            len(z)))
+                if len(x) == 0:
+                    continue
+                segmentation_labels_.append(SegmentationLabel3D(x=x, y=y, z=z, class_id=instance.class_id))
+                # Get bounding box description
+                xa, ya, za, x_r, y_r = np.average(x), np.average(y), np.average(z), np.ptp(x) / 2, np.ptp(y) / 2
+                wp = PointStamped(header=depth_msg.header, point=Point(xa, ya, za))
+                try:
+                    wp = self.tf_listener.transformPoint(self.parent_frame, wp)
+                except tf.ExtrapolationException as e:
+                    print("\tSkipping {}, {}, {} due to exception '{}'".format(xa, ya, za, e))
+                    continue
+                xa, ya, za = wp.point.x, wp.point.y, wp.point.z
+                bounding_boxes_.append(BoundingBox3D(x=xa, y=ya, z=za, height_radius=x_r, width_radius=y_r))
+            self.harvest_detections_pub.publish(HarvestDetections(header=colour_msg.header,
+                                                                  bounding_boxes=bounding_boxes_,
+                                                                  instances=segmentation_labels_,
+                                                                  class_labels=result.detections.class_labels))
+
+        # Publish detection visualisation topic
         vis_canvas = rgb_image
-
         vis_canvas = draw_detection_msg_on_image(vis_canvas, result.detections, encoding=colour_msg.encoding)
-
         detection_visualisation_msg = ros_numpy.msgify(Image, vis_canvas, encoding=colour_msg.encoding)
         detection_visualisation_msg.header = colour_msg.header
         self.detection_vis_pub.publish(detection_visualisation_msg)
-        self.detections_pub.publish(result.detections)
 
 
 def _get_detections_for_topic():
