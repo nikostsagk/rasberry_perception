@@ -7,6 +7,7 @@ from rasberry_perception.msg import ImageDetections
 from rasberry_perception.msg import HarvestDetections
 
 from linear_3dof_arm.control import Linear3dofController
+from rasberry_perception_pkg.visualisation import MarkerPublisher
 
 import tf
 import numpy as np
@@ -28,6 +29,10 @@ class DetectionControl:
         # TODO: Remove this debug code
         self.test_point = Point(500, 0, 500)
         self.reset()
+
+        self.marker_publisher = MarkerPublisher("/detection/picking_markers",
+                                                frame_id="/linear_3dof_arm_home", colours=[[0, 0, 1]])
+
 
         self.cluster_radius = 100
         self.strawberry_height = 125
@@ -60,6 +65,12 @@ class DetectionControl:
         self.controller.move_to_point(goal_point)
         self.controller.close_gripper()
 
+    def move_at(self, x, y, z):
+        goal_point = Point(x, y, z)
+        self.controller.move_to_point(goal_point)
+        self.controller.open_gripper()
+        self.controller.close_gripper()
+
     def harvest(self, labelled_message):
         difference = (rospy.Time.now() - labelled_message.header.stamp).to_sec()
         print("Starting harvest for {} objects, messaged received {} seconds ago.".format(
@@ -71,9 +82,10 @@ class DetectionControl:
         for b_box in labelled_message.bounding_boxes:
             x = b_box.x
             y = b_box.y
-            z = b_box.z
+            z = b_box.z * -1
 
-            arm_x, arm_y, arm_z = x * 1000, y * 1000, z * -1000
+            print("\tDetection Parameters: {}".format(b_box))
+            arm_x, arm_y, arm_z = x * 1000, y * 1000, z * 1000
             valid_move = self.validate_harvest_at(arm_x, arm_y, arm_z)
 
             print("\t{}: XYZ ({}, {}, {}) => ({}, {}, {})".format("Valid" if valid_move else "Invalid Move", x, y, z,
@@ -85,17 +97,19 @@ class DetectionControl:
         # Order plan by lowest points first
         plan = sorted(plan, key=lambda p: (p[2]), reverse=True)
 
+        self.marker_publisher.visualise_points(harvest_points, clear=False)
+
         # Execute plan
-        for arm_x, arm_y, arm_z in plan:
-            print("\tMoving to {}, {}, {}".format(arm_x, arm_y, arm_z))
-            self.harvest_at(arm_x, arm_y, arm_z)
+        for pm_x, pm_y, pm_z in plan:
+            print("\tMoving to {}, {}, {}".format(pm_x, pm_y, pm_z))
+            self.move_at(pm_x, pm_y, pm_z)
 
         self.reset()
         return
 
     def run(self):
         try:
-            stop_time = rospy.Time.now()
+            rospy.sleep(2)
 
             while not rospy.is_shutdown():
                 # Ensure it's always the latest message
@@ -108,6 +122,8 @@ class DetectionControl:
                     print("Got Message from {} seconds ago{}".format(difference,
                                                                      " (Skipping)" if difference >= threshold else ""))
                 self.harvest(message)
+                print("Sleeping for 5 seconds to ensure berries are stable")
+                rospy.sleep(5)
                 self.rate.sleep()
         except KeyboardInterrupt:
             pass

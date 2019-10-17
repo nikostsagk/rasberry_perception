@@ -78,6 +78,8 @@ class DeepLearningRosInference:
                     continue
                 segmentation_labels_.append(SegmentationLabel3D(x=x, y=y, z=z, class_id=instance.class_id))
                 # Get bounding box description
+                # ind_mid = len(x) // 2
+                # xa, ya, za, x_r, y_r = x[ind_mid], y[ind_mid], z[ind_mid], np.ptp(x) / 2, np.ptp(y) / 2
                 xa, ya, za, x_r, y_r = np.average(x), np.average(y), np.average(z), np.ptp(x) / 2, np.ptp(y) / 2
                 wp = PointStamped(header=depth_msg.header, point=Point(xa, ya, za))
                 try:
