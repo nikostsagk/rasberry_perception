@@ -24,7 +24,7 @@ class ArmController:
         self.goal_position = Point()
         self.has_homed = False
 
-        self.homing_speed = 40
+        self.homing_speed = 25
         self.operation_speed = 150
 
         self.has_reached_position = False
