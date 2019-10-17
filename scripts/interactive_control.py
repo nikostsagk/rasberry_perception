@@ -31,7 +31,7 @@ class InteractiveControl:
         while self.colour_sub.get_num_connections() == 0:
             rate.sleep()
 
-        self.yeet_controller = Linear3dofController()
+        self.controller = Linear3dofController()
 
     def save_frame(self, message):
         frame = ros_numpy.numpify(message)[..., ::-1].astype(np.uint8)
@@ -61,24 +61,24 @@ class InteractiveControl:
 
             if key_pressed != -1:
                 if key_pressed in self.keys:
-                    old_position = np.array([self.yeet_controller.current_position.x,
-                                             self.yeet_controller.current_position.y,
-                                             self.yeet_controller.current_position.z])
+                    old_position = np.array([self.controller.current_position.x,
+                                             self.controller.current_position.y,
+                                             self.controller.current_position.z])
                     new_position = old_position + self.keys[key_pressed]
                     self.text_print("Key '{}' pressed, moving to: '{}'".format(chr(key_pressed), new_position))
-                    self.yeet_controller.move_to_xyz(*new_position)
+                    self.controller.move_to_xyz(*new_position)
                 elif key_pressed == 104:
                     self.text_print("Key '{}' pressed, moving all axis home".format(chr(key_pressed)))
-                    self.yeet_controller.move_to_home()
+                    self.controller.move_to_home()
                 elif key_pressed == 114:
                     self.text_print("Key '{}' pressed, retiring gripper to safe position".format(chr(key_pressed)))
-                    self.yeet_controller.retire_arm()
+                    self.controller.retire_arm()
                 elif key_pressed == 111:
                     self.text_print("Key '{}' pressed, opening gripper".format(chr(key_pressed)))
-                    self.yeet_controller.open_gripper()
+                    self.controller.open_gripper()
                 elif key_pressed == 112:
                     self.text_print("Key '{}' pressed, closing gripper".format(chr(key_pressed)))
-                    self.yeet_controller.close_gripper()
+                    self.controller.close_gripper()
 
     def create_keys(self):
         self.keys = {

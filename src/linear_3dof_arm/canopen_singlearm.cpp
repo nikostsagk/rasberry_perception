@@ -41,6 +41,7 @@ std_msgs::String result;
 int former_arm_x = 0;
 int former_arm_y = 0;
 int former_arm_z = 0;
+int acceleration = 70;
 
 bool read_current_pos = false;
 bool read_current_status;
@@ -208,7 +209,7 @@ void zeroing(int motor_id, int hig_byt_arm_speed, int low_byt_arm_speed) {
         send_motor(motor_id, 8, 47, 152, 96, 0, 6, 0, 0, 0); //select zeroing mode 6 ccw
         usleep(10000); // 5ms
     }
-    send_motor(motor_id, 8, 43, 154, 96, 0, 230, 0, 0, 0); //set acceleration to 100 rps/s
+    send_motor(motor_id, 8, 43, 154, 96, 0, acceleration, 0, 0, 0); //set acceleration to 100 rps/s
     usleep(10000); // 5ms
     send_motor(motor_id, 8, 35, 153, 96, 1, low_byt_arm_speed, hig_byt_arm_speed, 0, 0); //set speed to 0.2 rps
     usleep(10000);

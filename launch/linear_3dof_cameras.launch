@@ -12,8 +12,8 @@
     <!-- 2D Camera Settings -->
     <arg name="2D_camera_serial" default="841612070382"/>
     <arg name="2D_json_config" default="$(find rasberry_perception)/config/$(arg 2D_camera_name).json"/>
-    <arg name="2D_rgb_max_side" default="1280"/>
-    <arg name="2D_rgb_min_side" default="720"/>
+    <arg name="2D_rgb_max_side" default="1920"/>
+    <arg name="2D_rgb_min_side" default="1080"/>
     <arg name="2D_rgb_fps" default="30"/>
     <arg name="2D_depth_max_side" default="1280"/>
     <arg name="2D_depth_min_side" default="720"/>
@@ -60,7 +60,7 @@
         <arg name="infrared_enabled" value="$(arg 2D_infrared_enabled)"/>
     </include>
 
-    <!-- Launch 3D camera -->
+    <!-- Launch 3D camera
     <include file="$(find rasberry_perception)/launch/camera_publisher.launch">
         <arg name="odom_frame_id" value="$(arg odom_frame_id)"/>
         <arg name="filters" value="$(arg 3D_filters)"/>
@@ -79,4 +79,5 @@
         <arg name="imu_enabled" value="$(arg 3D_imu_enabled)"/>
         <arg name="infrared_enabled" value="$(arg 3D_infrared_enabled)"/>
     </include>
+    -->
 </launch>
