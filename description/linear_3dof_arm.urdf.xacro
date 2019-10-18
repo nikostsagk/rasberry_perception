@@ -36,7 +36,7 @@
         <parent link="linear_3dof_arm_home"/>
         <child link="linear_3dof_2d_camera_link"/>
     </joint>
-    245mm,
+
     <!-- 3D Camera Model -->
     <link name="linear_3dof_3d_camera_link"/>
     <sensor_d435 parent="linear_3dof_3d_camera_link">

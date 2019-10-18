@@ -14,7 +14,6 @@ Panels:
         - /3D DepthCloud1/Auto Size1
         - /DepthCloud1/Auto Size1
         - /Marker1
-        - /Marker1/Status1
       Splitter Ratio: 0.605562568
     Tree Height: 669
   - Class: rviz/Selection
@@ -721,25 +720,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 0.935426772
+      Distance: 0.386908054
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.145311311
-        Y: -0.14164798
-        Z: 0.325986296
+        X: -0.00964962132
+        Y: 0.457862586
+        Z: -0.321987629
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.389796346
+      Pitch: 0.53979516
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 4.66517353
+      Yaw: 4.26091433
     Saved:
       - Class: rviz/Orbit
         Distance: 2.56644034
