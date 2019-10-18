@@ -83,15 +83,19 @@ class DetectionControl:
             x = b_box.x
             y = b_box.y
             z = b_box.z * -1
-
+            actual = (260, 430, 225)
+            print(b_box.y,b_box.z,b_box.x)
+            predicted = (60.8602319055, 367.117259722, 410.342532397)
             print("\tDetection Parameters: {}".format(b_box))
             arm_x, arm_y, arm_z = x * 1000, y * 1000, z * 1000
-            valid_move = self.validate_harvest_at(arm_x, arm_y, arm_z)
+
+            valid_move = True #self.validate_harvest_at(arm_x, arm_y, arm_z)
 
             print("\t{}: XYZ ({}, {}, {}) => ({}, {}, {})".format("Valid" if valid_move else "Invalid Move", x, y, z,
                                                                   arm_x, arm_y, arm_z))
+            harvest_points.append([b_box.x, b_box.y, b_box.z, 0])
+
             if valid_move:
-                harvest_points.append([b_box.x, b_box.y, b_box.z, 0])
                 plan.append([arm_x, arm_y, arm_z])
 
         # Order plan by lowest points first
@@ -102,7 +106,7 @@ class DetectionControl:
         # Execute plan
         for pm_x, pm_y, pm_z in plan:
             print("\tMoving to {}, {}, {}".format(pm_x, pm_y, pm_z))
-            self.move_at(pm_x, pm_y, pm_z)
+            # self.move_at(pm_x, pm_y, pm_z)
 
         self.reset()
         return
@@ -113,7 +117,7 @@ class DetectionControl:
 
             while not rospy.is_shutdown():
                 # Ensure it's always the latest message
-                threshold = 0.5
+                threshold = 2
                 difference = threshold
                 message = None
                 while difference >= threshold:
@@ -122,8 +126,8 @@ class DetectionControl:
                     print("Got Message from {} seconds ago{}".format(difference,
                                                                      " (Skipping)" if difference >= threshold else ""))
                 self.harvest(message)
-                print("Sleeping for 5 seconds to ensure berries are stable")
-                rospy.sleep(5)
+                print("Sleeping for 1 seconds to ensure berries are stable")
+                rospy.sleep(1)
                 self.rate.sleep()
         except KeyboardInterrupt:
             pass

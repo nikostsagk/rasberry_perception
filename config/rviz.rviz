@@ -6,14 +6,16 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /TF Tree1
-        - /TF Tree1/Frames1
         - /TF Tree1/Tree1
         - /Gripper1
         - /Tracker1/PoseArray2
         - /3D DepthCloud1/Auto Size1
         - /DepthCloud1/Auto Size1
         - /Marker1
+        - /ArmPoseArray1
+        - /ArmPoseArray1/Status1
+        - /PoseArray2
+        - /PoseArray2/Status1
       Splitter Ratio: 0.605562568
     Tree Height: 669
   - Class: rviz/Selection
@@ -688,12 +690,44 @@ Visualization Manager:
       Use rainbow: true
       Value: true
     - Class: rviz/Marker
-      Enabled: true
+      Enabled: false
       Marker Topic: /detection/picking_markers
       Name: Marker
       Namespaces:
         {}
       Queue Size: 100
+      Value: false
+    - Alpha: 1
+      Arrow Length: 0.300000012
+      Axes Length: 0.100000001
+      Axes Radius: 0.0250000004
+      Class: rviz/PoseArray
+      Color: 255; 25; 0
+      Enabled: true
+      Head Length: 0.0700000003
+      Head Radius: 0.0299999993
+      Name: ArmPoseArray
+      Shaft Length: 0.230000004
+      Shaft Radius: 0.00999999978
+      Shape: Axes
+      Topic: /detection/arm_pose_array
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Arrow Length: 0.300000012
+      Axes Length: 0.300000012
+      Axes Radius: 0.00999999978
+      Class: rviz/PoseArray
+      Color: 255; 25; 0
+      Enabled: true
+      Head Length: 0.0700000003
+      Head Radius: 0.0299999993
+      Name: PoseArray
+      Shaft Length: 0.230000004
+      Shaft Radius: 0.00999999978
+      Shape: Axes
+      Topic: /detection/image_pose_array
+      Unreliable: false
       Value: true
   Enabled: true
   Global Options:
@@ -720,25 +754,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 0.386908054
+      Distance: 2.1191113
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.00964962132
-        Y: 0.457862586
-        Z: -0.321987629
+        X: 0.247686177
+        Y: 0.329773605
+        Z: 0.109356903
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.53979516
+      Pitch: 1.56979632
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 4.26091433
+      Yaw: 4.73859072
     Saved:
       - Class: rviz/Orbit
         Distance: 2.56644034

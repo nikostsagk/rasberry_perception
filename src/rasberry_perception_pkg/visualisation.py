@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 
 import rospy
+from geometry_msgs.msg import PoseArray, Pose, Point, Quaternion
 from std_msgs.msg import Header
 from visualization_msgs.msg import Marker
 
@@ -64,6 +65,24 @@ def draw_detection_msg_on_image(image, detection_msg, font=cv2.FONT_HERSHEY_SIMP
             pt5 = (pt1[0] + (padding // 2), pt1[1] - (text_height // 2))
             cv2.putText(image, class_name, pt5, cv2.FONT_HERSHEY_SIMPLEX, font_scale, font_colour, lineType=line_type)
     return image
+
+
+class PoseArrayPublisher:
+    def __init__(self, topic, frame_id=None):
+        self.publisher = rospy.Publisher(topic, PoseArray, queue_size=1)
+        self.frame_id = frame_id
+
+    def visualise_points(self, xyz, header=None):
+        # Fill marker array
+        if header is None:
+            header = Header()
+            header.stamp = rospy.Time.now()
+        if self.frame_id:
+            header.frame_id = self.frame_id
+        poses = []
+        for pts in xyz:
+            poses.append(Pose(position=Point(*pts), orientation=Quaternion(w=1)))
+        self.publisher.publish(PoseArray(header=header, poses=poses))
 
 
 class MarkerPublisher:
