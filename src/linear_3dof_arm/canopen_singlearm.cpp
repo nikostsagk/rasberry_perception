@@ -473,8 +473,8 @@ int main(int argc, char ** argv) {
 
         for (int i = 1540; i <= 1542; i++) //ID from 601 to 606
         {
-            send_motor(i, 8, 43, 64, 96, 0, 1, 0, 0, 0); //reset
-            usleep(100000); // 50ms
+            //send_motor(i, 8, 43, 64, 96, 0, 1, 0, 0, 0); //reset
+            //usleep(100000); // 50ms
             //send_motor(1537, 8, 43, 64, 96, 0, 3, 0, 0, 0);//unlock break
             //sleep(0.5);
             send_motor(i, 8, 43, 64, 96, 0, 15, 0, 0, 0); //enable motor
