@@ -40,16 +40,16 @@ generate_messages(DEPENDENCIES std_msgs sensor_msgs)
 # ==============================================
 catkin_package(CATKIN_DEPENDS std_msgs message_runtime)
 
-find_library(controlcan NAMES libcontrolcan.so PATHS src/linear_3dof_arm/lib)
-include_directories(include include/linear_3dof_arm ${catkin_INCLUDE_DIRS})
+find_library(controlcan NAMES libcontrolcan.so PATHS src/arm_3dof/lib)
+include_directories(include include/arm_3dof ${catkin_INCLUDE_DIRS})
 
-add_executable(linear_3dof_arm_canopen_singlearm src/linear_3dof_arm/canopen_singlearm.cpp)
-target_link_libraries(linear_3dof_arm_canopen_singlearm ${catkin_LIBRARIES} ${controlcan})
-add_dependencies(linear_3dof_arm_canopen_singlearm ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_executable(linear_arm_3dof_canopen src/arm_3dof/canopen_singlearm.cpp)
+target_link_libraries(linear_arm_3dof_canopen ${catkin_LIBRARIES} ${controlcan})
+add_dependencies(linear_arm_3dof_canopen ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_executable(scara_3dof_arm_canopen_singlearm src/linear_3dof_arm/canopen_scara.cpp)
-target_link_libraries(scara_3dof_arm_canopen_singlearm ${catkin_LIBRARIES} ${controlcan})
-add_dependencies(scara_3dof_arm_canopen_singlearm ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_executable(scara_arm_3dof_canopen src/arm_3dof/canopen_scara.cpp)
+target_link_libraries(scara_arm_3dof_canopen ${catkin_LIBRARIES} ${controlcan})
+add_dependencies(scara_arm_3dof_canopen ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 # ==============================================
 # Install

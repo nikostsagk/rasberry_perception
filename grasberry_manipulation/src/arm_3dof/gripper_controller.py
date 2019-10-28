@@ -48,7 +48,7 @@ def handle_open_close_gripper(req):
 
 
 def gripper_control_node():
-    rospy.init_node('linear_3dof_arm_open_close_gripper_server')
+    rospy.init_node('linear_arm_3dof_open_close_gripper_server')
     gripper_handler = GripperHandler()
     rospy.spin()
 

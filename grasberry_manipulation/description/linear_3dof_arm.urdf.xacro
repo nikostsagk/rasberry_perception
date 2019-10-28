@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <robot name="gripper" xmlns:xacro="http://ros.org/wiki/xacro">
     <!-- Base link for arm home -->
-    <link name="linear_3dof_arm_home"/>
+    <link name="linear_arm_3dof_home"/>
 
     <!-- Gripper Model -->
     <material name="aluminum"><color rgba="0.5 0.5 0.5 1"/></material>
@@ -15,9 +15,9 @@
         </visual>
     </link>
 
-    <joint name="linear_3dof_arm_home_link_joint" type="fixed">
+    <joint name="linear_arm_3dof_home_link_joint" type="fixed">
         <origin xyz="0 0 0" rpy="0 0 0"/>
-        <parent link="linear_3dof_arm_home"/>
+        <parent link="linear_arm_3dof_home"/>
         <child link="linear_3dof_gripper_link"/>
     </joint>
 
@@ -33,7 +33,7 @@
 
     <joint name="linear_3dof_2d_camera_home_link_joint" type="fixed">
         <origin xyz="-0.255 -0.115 -0.0675" rpy="0 ${15*DEG2RAD} ${90*DEG2RAD}"/>
-        <parent link="linear_3dof_arm_home"/>
+        <parent link="linear_arm_3dof_home"/>
         <child link="linear_3dof_2d_camera_link"/>
     </joint>
 

@@ -95,7 +95,7 @@ class TFLinks:
 
 
 class Linear3dofTFUpdater:
-    def __init__(self, parent_frame="linear_3dof_arm_home", camera_frame_2d="linear_3dof_2d_camera_link",
+    def __init__(self, parent_frame="linear_arm_3dof_home", camera_frame_2d="linear_3dof_2d_camera_link",
                  camera_frame_3d="linear_3dof_3d_camera_link",
                  gripper_frame="linear_3dof_gripper_link"):
 
@@ -115,7 +115,7 @@ class Linear3dofTFUpdater:
         # Updater thread
         self.tf_links.start()
 
-        self.current_position_sub = rospy.Subscriber("/linear_3dof_arm/arm/current_position", Point, self.set_offsets)
+        self.current_position_sub = rospy.Subscriber("/linear_arm_3dof/arm/current_position", Point, self.set_offsets)
         self.gripper_transform = (0.0, 0.0, 0.0)
 
     def set_offsets(self, arm_position_message):

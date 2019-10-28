@@ -7,7 +7,7 @@ import ros_numpy
 import rospy
 from sensor_msgs.msg import Image
 
-from linear_3dof_arm.control import Linear3dofController
+from arm_3dof.control import Linear3dofController
 
 
 class InteractiveControl:

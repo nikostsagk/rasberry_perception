@@ -12,7 +12,7 @@ from rasberry_perception.msg import ImageDetections, HarvestDetections, Segmenta
 from sensor_msgs.msg import Image, CameraInfo
 
 from deep_learning_ros.compatibility_layer.detection_server import DetectorResultsClient, DETECTOR_OK
-from linear_3dof_arm.control import Linear3dofController
+from arm_3dof.control import Linear3dofController
 from rasberry_perception_pkg.utility import function_timer
 from rasberry_perception_pkg.visualisation import draw_detection_msg_on_image, PoseArrayPublisher
 
@@ -40,7 +40,7 @@ class DeepLearningRosInference:
         self.harvest_detections_pub = rospy.Publisher(self.harvest_detections_topic, HarvestDetections, queue_size=1)
 
         self.tf_listener = tf.TransformListener()
-        self.parent_frame = "linear_3dof_arm_home"
+        self.parent_frame = "linear_arm_3dof_home"
         self.pose_array_image_publisher = PoseArrayPublisher("/detection/image_pose_array")
         self.pose_array_arm_publisher = PoseArrayPublisher("/detection/arm_pose_array", frame_id=self.parent_frame)
 

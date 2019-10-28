@@ -13,7 +13,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <linear_3dof_arm/controlcan.h>
+#include <arm_3dof/controlcan.h>
 #include <ctime>
 #include <cstdlib>
 #include "unistd.h"
@@ -173,7 +173,7 @@ void read_cur_pos() {
     arm_pos.poses.push_back(arm_pos_single);
 
     // cout<<arm_pos_single.position.x<<' '<<arm_pos_single.position.y<<' '<<arm_pos_single.position.z<<endl;
-    arm_pos.header.frame_id = "/scara_3dof_arm_home";
+    arm_pos.header.frame_id = "/scara_arm_3dof_home";
 
     arm_cur_pos.publish(arm_pos);
 
@@ -503,11 +503,11 @@ int main(int argc, char ** argv) {
         ros::init(argc, argv, "listener"); // subscribes
 
         ros::NodeHandle nh;
-        ros::Subscriber write2_sub = nh.subscribe("/scara_3dof_arm/arm/raw/arm2position", 1000, arm2_callback);
+        ros::Subscriber write2_sub = nh.subscribe("/scara_arm_3dof/arm/raw/arm2position", 1000, arm2_callback);
 
         // we are publishing to the above topics from the python arm_controller.py script
-        arm_cur_pos = nh.advertise < geometry_msgs::PoseArray > ("/scara_3dof_arm/arm/raw/cur_pos", 1);
-        read2_pub = nh.advertise < std_msgs::String > ("/scara_3dof_arm/arm/raw/arm2reached", 1000);
+        arm_cur_pos = nh.advertise < geometry_msgs::PoseArray > ("/scara_arm_3dof/arm/raw/cur_pos", 1);
+        read2_pub = nh.advertise < std_msgs::String > ("/scara_arm_3dof/arm/raw/arm2reached", 1000);
 
         result.data = "Arm reached target position";
 

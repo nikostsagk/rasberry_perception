@@ -6,7 +6,7 @@ from geometry_msgs.msg import Point, PointStamped
 from rasberry_perception.msg import ImageDetections
 from rasberry_perception.msg import HarvestDetections
 
-from linear_3dof_arm.control import Linear3dofController
+from arm_3dof.control import Linear3dofController
 from rasberry_perception_pkg.visualisation import MarkerPublisher
 
 import tf
@@ -31,7 +31,7 @@ class DetectionControl:
         self.reset()
 
         self.marker_publisher = MarkerPublisher("/detection/picking_markers",
-                                                frame_id="/linear_3dof_arm_home", colours=[[0, 0, 1]])
+                                                frame_id="/linear_arm_3dof_home", colours=[[0, 0, 1]])
 
 
         self.cluster_radius = 100

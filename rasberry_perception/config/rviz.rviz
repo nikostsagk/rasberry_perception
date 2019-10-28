@@ -121,7 +121,7 @@ Visualization Manager:
           Value: false
         linear_3dof_3d_camera_link_right_ir_optical_frame:
           Value: false
-        linear_3dof_arm_home:
+        linear_arm_3dof_home:
           Value: true
         linear_3dof_gripper_link:
           Value: true
@@ -136,7 +136,7 @@ Visualization Manager:
         map:
           base_link:
             {}
-          linear_3dof_arm_home:
+          linear_arm_3dof_home:
             linear_3dof_2d_camera_link:
               linear_3dof_2d_camera_aligned_depth_to_color_frame:
                 linear_3dof_2d_camera_color_optical_frame:
@@ -278,7 +278,7 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        linear_3dof_arm_home:
+        linear_arm_3dof_home:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -288,7 +288,7 @@ Visualization Manager:
           Show Trail: false
           Value: true
       Name: Robot Model
-      Robot Description: linear_3dof_arm_robot_description
+      Robot Description: linear_arm_3dof_robot_description
       TF Prefix: ""
       Update Interval: 0
       Value: true

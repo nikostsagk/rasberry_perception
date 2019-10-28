@@ -9,7 +9,7 @@ from geometry_msgs.msg import PoseArray, Point
 from std_msgs.msg import Float32MultiArray, String
 from grasberry_manipulation.srv import ArmControllerService, ArmControllerServiceResponse
 
-from linear_3dof_arm.tf_updater import Linear3dofTFUpdater
+from arm_3dof.tf_updater import Linear3dofTFUpdater
 
 
 class ArmController:
@@ -35,22 +35,22 @@ class ArmController:
 
         # Arm CPP node (manage within this python wrapper)
         rospy.loginfo("Arm Controller: Starting CPP arm control node")
-        self.arm_node = roslaunch.core.Node("rasberry_perception", "linear_3dof_arm_canopen_singlearm",
-                                            "linear_3dof_arm_arm_controller_raw", output="screen")
+        self.arm_node = roslaunch.core.Node("grasberry_manipulation", "linear_arm_3dof_canopen_singlearm",
+                                            "linear_arm_3dof_arm_controller_raw", output="screen")
         self.arm_launch = roslaunch.scriptapi.ROSLaunch()
         self.arm_launch.start()
         self.arm_process = self.arm_launch.launch(self.arm_node)
 
         # Raw CPP topics
-        self.current_position_sub = rospy.Subscriber("/linear_3dof_arm/arm/raw/cur_pos", PoseArray, self.save_position)
-        self.reached_position_sub = rospy.Subscriber("/linear_3dof_arm/arm/raw/arm2reached", String, self.save_reached_position)
-        self.move_arm_publisher = rospy.Publisher("/linear_3dof_arm/arm/raw/arm2position", Float32MultiArray, queue_size=1)
+        self.current_position_sub = rospy.Subscriber("/linear_arm_3dof/arm/raw/cur_pos", PoseArray, self.save_position)
+        self.reached_position_sub = rospy.Subscriber("/linear_arm_3dof/arm/raw/arm2reached", String, self.save_reached_position)
+        self.move_arm_publisher = rospy.Publisher("/linear_arm_3dof/arm/raw/arm2position", Float32MultiArray, queue_size=1)
 
         # Synchronised python topics with safety logic
-        self.movement_subscriber = rospy.Subscriber("/linear_3dof_arm/arm/move_to_position", Point, self.move_to_pose)
-        self.reached_position_pub = rospy.Publisher("/linear_3dof_arm/arm/move_to_status", String, queue_size=1)
-        self.current_position_pub = rospy.Publisher("/linear_3dof_arm/arm/current_position", Point, queue_size=1)
-        self.current_goal_pub = rospy.Publisher("/linear_3dof_arm/arm/current_goal", Point, queue_size=1)
+        self.movement_subscriber = rospy.Subscriber("/linear_arm_3dof/arm/move_to_position", Point, self.move_to_pose)
+        self.reached_position_pub = rospy.Publisher("/linear_arm_3dof/arm/move_to_status", String, queue_size=1)
+        self.current_position_pub = rospy.Publisher("/linear_arm_3dof/arm/current_position", Point, queue_size=1)
+        self.current_goal_pub = rospy.Publisher("/linear_arm_3dof/arm/current_goal", Point, queue_size=1)
 
         # Set connection and movement to position timeouts to ensure logic does not get stuck
         self.connection_timeout = 30
@@ -59,7 +59,7 @@ class ArmController:
         self.__wait_for_connection()
 
         rospy.loginfo("Arm Controller: Starting arm controller service")
-        self.service = rospy.Service('linear_3dof_arm_arm_controller_service', ArmControllerService,
+        self.service = rospy.Service('linear_arm_3dof_arm_controller_service', ArmControllerService,
                                      self.arm_service_handler)
 
         # Home on node launch and set to start position
@@ -199,11 +199,11 @@ class ArmController:
 
 
 def arm_controller():
-    rospy.init_node('linear_3dof_arm_arm_controller_node', anonymous=True)
+    rospy.init_node('linear_arm_3dof_arm_controller_node', anonymous=True)
 
     # Launch TF updater for the arm
     rospy.loginfo("Arm Controller: Initialising with ''".format())
-    p_odom_frame_id = rospy.get_param('~odom_frame_id', "linear_3dof_arm_home")
+    p_odom_frame_id = rospy.get_param('~odom_frame_id', "linear_arm_3dof_home")
     p_gripper_frame = rospy.get_param('~gripper_frame', "linear_3dof_gripper_link")
     p_2d_camera_frame = rospy.get_param('~2D_camera_frame', "linear_3dof_2d_camera_link")
     p_3d_camera_frame = rospy.get_param('~3D_camera_frame', "linear_3dof_3d_camera_link")

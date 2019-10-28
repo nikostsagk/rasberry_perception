@@ -5,7 +5,7 @@
     <!-- Global Settings For All Nodes -->
     <arg name="2D_camera_name" default="linear_3dof_2d_camera"/>
     <arg name="3D_camera_name" default="linear_3dof_3d_camera"/>
-    <arg name="odom_frame_id" default="linear_3dof_arm_home"/>
+    <arg name="odom_frame_id" default="linear_arm_3dof_home"/>
     <arg name="device_sync" default="false"/>
     <arg name="initial_camera_reset" default="true"/>
 

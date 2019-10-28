@@ -5,7 +5,7 @@ from copy import deepcopy
 
 import rospy
 
-from linear_3dof_arm.control import Linear3dofController
+from arm_3dof.control import Linear3dofController
 
 
 def interactive_control_cli():

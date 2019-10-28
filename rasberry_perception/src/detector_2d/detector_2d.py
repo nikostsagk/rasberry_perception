@@ -25,7 +25,7 @@ class StrawberryDetector:
         self.point_method_thresh = method_thresh
         self.plot = plot
 
-        self.parent_frame_id = '/linear_3dof_arm_home'
+        self.parent_frame_id = '/linear_arm_3dof_home'
         self.child_frame_id = '/{}_color_optical_frame'.format(self.camera_name)
 
         # Define 2D detector

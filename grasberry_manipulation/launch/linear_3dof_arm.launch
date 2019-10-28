@@ -6,19 +6,19 @@
     <arg name="2D_camera_name" default="linear_3dof_2d_camera"/>
     <arg name="3D_camera_name" default="linear_3dof_3d_camera"/>
     <arg name="gripper_name" default="linear_3dof_gripper"/>
-    <arg name="odom_frame_id" default="linear_3dof_arm_home"/>
+    <arg name="odom_frame_id" default="linear_arm_3dof_home"/>
 
     <!-- =========================================================================================================== -->
     <!-- ===============================================NODES======================================================= -->
     <!-- =========================================================================================================== -->
     <!-- Launch robot state publisher -->
     <node pkg="tf" type="static_transform_publisher" name="base_link_publisher" args="0 0 0 0 0 0 map base_link 100" />
-    <node pkg="tf" type="static_transform_publisher" name="linear_3dof_arm_home_tf_publisher" args="0 0 0 0 0 0 map
+    <node pkg="tf" type="static_transform_publisher" name="linear_arm_3dof_home_tf_publisher" args="0 0 0 0 0 0 map
     $(arg odom_frame_id) 100" />
 
-    <param name="linear_3dof_arm_robot_description" command="$(find xacro)/xacro --inorder '$(find grasberry_manipulation)/description/linear_3dof_arm.urdf.xacro'"/>
-    <node name="linear_3dof_arm_robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
-        <remap from="robot_description" to="linear_3dof_arm_robot_description" />
+    <param name="linear_arm_3dof_robot_description" command="$(find xacro)/xacro --inorder '$(find grasberry_manipulation)/description/linear_arm_3dof.urdf.xacro'"/>
+    <node name="linear_arm_3dof_robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
+        <remap from="robot_description" to="linear_arm_3dof_robot_description" />
     </node>
 
     <!-- Launch Arm Controller -->

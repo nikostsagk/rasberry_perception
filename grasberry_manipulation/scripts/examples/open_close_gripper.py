@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function
 
 import rospy
 
-from linear_3dof_arm.control import Linear3dofController
+from arm_3dof.control import Linear3dofController
 
 
 def open_close_gripper():

@@ -5,7 +5,7 @@ from geometry_msgs.msg import Point
 from std_msgs.msg import String
 from grasberry_manipulation.srv import ArmControllerService, OpenCloseGripper
 
-from linear_3dof_arm.arm_controller import ArmController
+from arm_3dof.arm_controller import ArmController
 
 
 class Linear3dofController:
@@ -20,22 +20,22 @@ class Linear3dofController:
             self.has_reached_position_message = None
 
             # Wait for arm connection
-            self.movement_publisher = rospy.Publisher("/linear_3dof_arm/arm/move_to_position", Point, queue_size=1)
+            self.movement_publisher = rospy.Publisher("/linear_arm_3dof/arm/move_to_position", Point, queue_size=1)
 
             rospy.loginfo("Waiting for connection to arm controller")
             while self.movement_publisher.get_num_connections() == 0:
                 self.rate.sleep()
-            rospy.wait_for_service('linear_3dof_arm_arm_controller_service')
-            self.arm_controller_service = rospy.ServiceProxy('linear_3dof_arm_arm_controller_service',
+            rospy.wait_for_service('linear_arm_3dof_arm_controller_service')
+            self.arm_controller_service = rospy.ServiceProxy('linear_arm_3dof_arm_controller_service',
                                                              ArmControllerService)
             rospy.loginfo("Connected to arm controller")
 
             self.blocking = arm_blocking
 
             # Subscribe to arm controller topics
-            self.reached_position_sub = rospy.Subscriber("/linear_3dof_arm/arm/move_to_status", String,
+            self.reached_position_sub = rospy.Subscriber("/linear_arm_3dof/arm/move_to_status", String,
                                                          self.__save_reached_position)
-            self.current_position_sub = rospy.Subscriber("/linear_3dof_arm/arm/current_position", Point,
+            self.current_position_sub = rospy.Subscriber("/linear_arm_3dof/arm/current_position", Point,
                                                          self.__save_position,
                                                          queue_size=1)
 
