@@ -7,7 +7,7 @@ import roslaunch
 import rospy
 from geometry_msgs.msg import PoseArray, Point
 from std_msgs.msg import Float32MultiArray, String
-from rasberry_perception.srv import ArmControllerService, ArmControllerServiceResponse
+from grasberry_manipulation.srv import ArmControllerService, ArmControllerServiceResponse
 
 from linear_3dof_arm.tf_updater import Linear3dofTFUpdater
 

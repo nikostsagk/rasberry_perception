@@ -1,4 +1,0 @@
-<launch>
-    <include file="$(find rasberry_perception)/launch/linear_3dof_arm.launch"/>
-    <include file="$(find rasberry_perception)/launch/linear_3dof_cameras.launch"/>
-</launch>

@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(find grasberry_manipulation)/launch/linear_3dof_arm.launch"/>
+    <include file="$(find grasberry_manipulation)/launch/linear_3dof_cameras.launch"/>
+</launch>

@@ -16,7 +16,7 @@
     <node pkg="tf" type="static_transform_publisher" name="linear_3dof_arm_home_tf_publisher" args="0 0 0 0 0 0 map
     $(arg odom_frame_id) 100" />
 
-    <param name="linear_3dof_arm_robot_description" command="$(find xacro)/xacro --inorder '$(find rasberry_perception)/description/linear_3dof_arm.urdf.xacro'"/>
+    <param name="linear_3dof_arm_robot_description" command="$(find xacro)/xacro --inorder '$(find grasberry_manipulation)/description/linear_3dof_arm.urdf.xacro'"/>
     <node name="linear_3dof_arm_robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
         <remap from="robot_description" to="linear_3dof_arm_robot_description" />
     </node>

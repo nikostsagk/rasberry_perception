@@ -4,7 +4,7 @@ from __future__ import absolute_import, division, print_function
 import rospy
 from diagnostic_msgs.msg import DiagnosticArray
 from geometry_msgs.msg import Pose, Point
-from rasberry_perception.srv import OpenCloseGripper, OpenCloseGripperResponse
+from grasberry_manipulation.srv import OpenCloseGripper, OpenCloseGripperResponse
 
 
 class GripperHandler:

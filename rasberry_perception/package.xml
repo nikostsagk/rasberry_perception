@@ -34,11 +34,4 @@
   <exec_depend>dynamic_reconfigure</exec_depend>
   <exec_depend>rosserial</exec_depend>
 
-  <export>
-      <name>arm_control_files</name>
-      <version>0.0.0</version>
-      <description>The canopen_singelearm.cpp and libcontrolcan.so are joint effort between NORONN and the package author</description>
-      <maintainer email="yaxio@nmbu.no">yaxiong</maintainer>
-      <license>NORONN AS software license</license>
-  </export>
 </package>

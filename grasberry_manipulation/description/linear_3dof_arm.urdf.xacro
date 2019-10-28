@@ -9,7 +9,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="package://rasberry_perception/description/meshes/gripper_example.dae"/>
+                <mesh filename="package://grasberry_manipulation/description/meshes/gripper_example.dae"/>
             </geometry>
             <material name="aluminum"/>
         </visual>
