@@ -47,6 +47,10 @@ add_executable(linear_3dof_arm_canopen_singlearm src/linear_3dof_arm/canopen_sin
 target_link_libraries(linear_3dof_arm_canopen_singlearm ${catkin_LIBRARIES} ${controlcan})
 add_dependencies(linear_3dof_arm_canopen_singlearm ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+add_executable(scara_3dof_arm_canopen_singlearm src/linear_3dof_arm/canopen_scara.cpp)
+target_link_libraries(scara_3dof_arm_canopen_singlearm ${catkin_LIBRARIES} ${controlcan})
+add_dependencies(scara_3dof_arm_canopen_singlearm ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 # ==============================================
 # Install
 # ==============================================
