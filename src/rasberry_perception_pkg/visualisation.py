@@ -43,8 +43,8 @@ def draw_detection_msg_on_image(image, detection_msg, font=cv2.FONT_HERSHEY_SIMP
     n_detections = len(bounding_box_msgs)
     for detection_id in range(n_detections):
         bounding_box = bounding_box_msgs[detection_id]
-        mask = None if segmentation_lbl_msgs is None else (segmentation_lbl_msgs[detection_id].x,
-                                                           segmentation_lbl_msgs[detection_id].y)
+        mask = None if segmentation_lbl_msgs is None else (segmentation_lbl_msgs[detection_id].y,
+                                                           segmentation_lbl_msgs[detection_id].x)
 
         pt1 = (int(bounding_box.x1), int(bounding_box.y1))
         pt2 = (int(bounding_box.x2), int(bounding_box.y2))

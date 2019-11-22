@@ -128,7 +128,7 @@ class _MMDetectionResultsServer(_DetectorResultsServer):
                     bounding_box_msgs.append(
                         BoundingBox(x1=bbox[0], y1=bbox[1], x2=bbox[2], y2=bbox[3], score=bbox[4], class_id=class_id))
                     if mask is not None:
-                        x_p, y_p = self.mask_decode(mask)
+                        y_p, x_p = self.mask_decode(mask)
                         segmentation_lbl_msgs.append(SegmentationLabel(x=x_p, y=y_p, score=bbox[4], class_id=class_id))
 
         response.detections.bounding_boxes = bounding_box_msgs
