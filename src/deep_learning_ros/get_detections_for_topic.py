@@ -5,7 +5,6 @@ import message_filters
 import numpy as np
 import ros_numpy
 import rospy
-import cv2
 import tf
 from geometry_msgs.msg import PointStamped, Point
 from rasberry_perception.msg import ImageDetections, HarvestDetections, SegmentationLabel3D, BoundingBox3D
