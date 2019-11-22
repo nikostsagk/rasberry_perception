@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from __future__ import absolute_import, division, print_function
 
-import inspect
+from inspect import getargspec
 
 import rospy
 
@@ -40,7 +40,7 @@ class __DetectionRegistry:
 
     def get_arguments(self, item):
         cls = self._modules[item]
-        args, _, _, defaults = inspect.getargspec(cls)
+        args, _, _, defaults = getargspec(cls.__init__)
         if defaults is None:
             defaults = []
         if args is None:
