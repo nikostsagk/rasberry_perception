@@ -20,12 +20,33 @@ _detector_service_name = "get_detection_results"
 
 class DetectorResultsClient:
     def __init__(self, timeout=10):
-        rospy.loginfo("Waiting for '{}' service".format(_detector_service_name))
-        rospy.wait_for_service(_detector_service_name, timeout=timeout)
-        self.detection_server = rospy.ServiceProxy(_detector_service_name, GetDetectorResults)
+        self.detection_server = None
+        self.__timeout = timeout
+        self.__connect()
+
+    def __connect(self):
+        while True:
+            try:
+                rospy.loginfo("Waiting for '{}' service".format(_detector_service_name))
+                rospy.wait_for_service(_detector_service_name, timeout=self.__timeout)
+                self.detection_server = rospy.ServiceProxy(_detector_service_name, GetDetectorResults)
+                return
+            except rospy.ROSException as e:
+                rospy.logerr(e)
+
+    def __get_result(self, *args, **kwargs):
+        try:
+            return self.detection_server(*args, **kwargs), True
+        except rospy.ServiceException as e:
+            rospy.logerr(e)
+            self.__connect()
+            return None, False
 
     def __call__(self, *args, **kwargs):
-        return self.detection_server(*args, **kwargs)
+        result, success = self.__get_result(*args, **kwargs)
+        while not success:
+            result, success = self.__get_result(*args, **kwargs)
+        return result
 
 
 class _DetectorResultsServer:
