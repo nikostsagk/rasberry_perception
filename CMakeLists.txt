@@ -29,13 +29,12 @@ add_service_files(
 )
 
 add_message_files(
-  FILES
-  BoundingBox.msg
-  BoundingBox3D.msg
-  HarvestDetections.msg
-  ImageDetections.msg
-  SegmentationLabel.msg
-  SegmentationLabel3D.msg
+    FILES
+    Detection.msg
+    DetectionInfo.msg
+    Detections.msg
+    RegionOfInterest.msg
+    SegmentOfInterest.msg
 )
 
 generate_messages(DEPENDENCIES std_msgs sensor_msgs rasberry_perception)
