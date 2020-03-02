@@ -23,7 +23,7 @@ class BaseDetectionServer:
 
 
 @DETECTION_REGISTRY.register_detection_backend("default")
-class _DefaultDetectionServer(BaseDetectionServer):
+class DefaultDetectionServer(BaseDetectionServer):
     def __init__(self):
         BaseDetectionServer.__init__(self)
 
