@@ -3,6 +3,8 @@
 from threading import Event
 
 import rospy
+
+from rasberry_perception.detection.utility import function_timer
 from rasberry_perception.srv import GetDetectorResults, GetDetectorResultsResponse
 from rasberry_perception.msg import DetectionStatus
 from rasberry_perception.detection.interfaces.registry import DETECTION_REGISTRY
@@ -36,8 +38,6 @@ class DefaultDetectionServer(BaseDetectionServer):
     """Example of how to define a detection server interface.
 
     Every interface must register itself in the DETECTION_REGISTRY so ros is aware of it.
-
-    Args:
     """
     def __init__(self):
         # Extra initialisation done here
@@ -46,5 +46,6 @@ class DefaultDetectionServer(BaseDetectionServer):
         # Base class must be called at the end due to self.service_se
         BaseDetectionServer.__init__(self)
 
+    @function_timer.interval_logger(interval=10)
     def get_detector_results(self, request):
         return self.default_response
