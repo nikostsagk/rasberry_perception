@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 #  Raymond Kirk (Tunstill) Copyright (c) 2020
 #  Email: ray.tunstill@gmail.com
 
@@ -10,6 +8,7 @@ from timeit import default_timer as timer
 
 
 class FunctionTime:
+    """Utility class containing different methods for benchmarking functions"""
     def __init__(self, smooth_window=30, log_function=None):
         self.counter = 0
         if log_function is None:

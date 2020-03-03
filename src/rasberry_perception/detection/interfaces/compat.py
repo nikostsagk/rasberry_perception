@@ -1,11 +1,21 @@
 #  Raymond Kirk (Tunstill) Copyright (c) 2020
 #  Email: ray.tunstill@gmail.com
 
+# File should provide functionality to 'lubricate' python support in 2/3 environments between ROS/DL environments"""
+
 from __future__ import absolute_import, division, print_function
 import sys
 
 
 class RosImportsFix:
+    """Context manager to ignore python libraries installed in ROS distros.
+
+    Backwards compatible with kinetic and melodic
+
+    Examples:
+        >>> with RosImportsFix():
+        >>>     import library_you_really_need_but_sucks_in_ROS  # i.e opencv2, torch etc.
+    """
     def __init__(self, ros_distros=None):
         if ros_distros is None:
             ros_distros = ["/opt/ros/{}/lib/python2.7/dist-packages".format(distro) for distro in ["kinetic",
