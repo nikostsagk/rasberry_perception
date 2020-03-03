@@ -33,6 +33,7 @@ add_message_files(
     Detection.msg
     DetectionInfo.msg
     Detections.msg
+    DetectionStatus.msg
     RegionOfInterest.msg
     SegmentOfInterest.msg
 )

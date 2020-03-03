@@ -11,12 +11,13 @@ import ros_numpy
 import rospy
 import tf
 from geometry_msgs.msg import PointStamped, Point
-from rasberry_perception.msg import ImageDetections, HarvestDetections, SegmentationLabel3D, BoundingBox3D
+from rasberry_perception.msg import Detections
 from sensor_msgs.msg import Image, CameraInfo
 
-from deep_learning_ros.compatibility_layer.detection_server import DetectorResultsClient, DETECTOR_OK
-from rasberry_perception_pkg.utility import function_timer
-from rasberry_perception_pkg.visualisation import draw_detection_msg_on_image, PoseArrayPublisher
+from rasberry_perception.detection.detection_server import DetectorResultsClient, DETECTOR_OK
+from rasberry_perception.detection.utility import function_timer
+
+
 
 
 class DeepLearningRosInference:

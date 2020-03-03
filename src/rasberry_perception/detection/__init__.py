@@ -2,5 +2,4 @@
 #  Email: ray.tunstill@gmail.com
 
 from .interfaces import (DETECTION_REGISTRY,
-                         MMDetectionServer,
-                         DefaultDetectionServer)
+                         default_service_name)
