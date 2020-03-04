@@ -12,8 +12,8 @@ import numpy as np
 import ros_numpy
 import rospy
 import tf
-from geometry_msgs.msg import PointStamped, Point, PoseArray
-from rasberry_perception.msg import Detections
+from geometry_msgs.msg import PointStamped, Point, PoseArray, Pose
+from rasberry_perception.msg import Detections, Detection, RegionOfInterest, SegmentOfInterest
 from sensor_msgs.msg import Image, CameraInfo
 
 from rasberry_perception.detection import Client, default_service_name
@@ -76,8 +76,50 @@ class RunClientOnTopic:
 
         if self.depth_enabled and len(args) == 4:
             depth_msg, depth_info = args[2:]
-            for detection in result.detections:
-                pass
+            depth_image = ros_numpy.numpify(depth_msg)
+            detections = result.detections.detections
+            # For tests create a bbox and pixels
+            detections.append(Detection(roi=RegionOfInterest(200, 300, 250, 400),
+                                        seg_roi=SegmentOfInterest(x=[250, 250], y=[300, 400])))
+
+            fx, fy, cx, cy = depth_info.P[0], depth_info.P[5], depth_info.P[2], depth_info.P[6]
+            bbox_poses = PoseArray(header=image_msg.header)  # TODO: Change frame_id and translate by tf
+            segm_poses = PoseArray(header=image_msg.header)  # TODO: Change frame_id and translate by tf
+            for detection in detections:
+                # TODO: Transform by TF and intrinsics
+                # Get localisation from bbox
+                bbox = detection.roi
+                xv, yv = np.meshgrid(np.arange(int(bbox.x1), int(bbox.x2)), np.arange(int(bbox.y1), int(bbox.y2)))
+                d_roi = depth_image[yv, xv]  # For bbox the x, y, z pos is based on median of valid depth pixels
+                valid_idx = np.where(np.logical_and(d_roi != 0, np.isfinite(d_roi)))
+
+                if len(valid_idx):
+                    y_pos, x_pos = np.mean(valid_idx, axis=1)
+                    z_pos = np.median(d_roi[valid_idx])
+                    x_pos = ((x_pos - cx) * z_pos / fx) / 1000.0
+                    y_pos = ((y_pos - cy) * z_pos / fy) / 1000.0
+                    z_pos = z_pos / 1000.0
+                    bbox_poses.poses.append(Pose(position=Point(x=x_pos, y=y_pos, z=z_pos)))
+
+                # Get localisation from segm
+                segm = detection.seg_roi
+                xv, yv = np.meshgrid(segm.x, segm.y)
+                d_roi = depth_image[yv, xv]  # For segm the x,y,z pos is based on median of detected pixels
+                valid_idx = np.where(np.logical_and(d_roi != 0, np.isfinite(d_roi)))
+                if len(valid_idx):
+                    y_pos, x_pos = np.mean(valid_idx, axis=1)
+                    z_pos = np.median(d_roi[valid_idx])
+                    x_pos = ((x_pos - cx) * z_pos / fx) / 1000.0
+                    y_pos = ((y_pos - cy) * z_pos / fy) / 1000.0
+                    z_pos = z_pos / 1000.0
+                    segm_poses.poses.append(Pose(position=Point(x=x_pos, y=y_pos, z=z_pos)))
+
+            # Publish pose arrays
+            self.depth_pub.publish(depth_msg)
+            self.depth_info_pub.publish(depth_info)
+            self.depth_bbox_detections_pub.publish(bbox_poses)
+            self.depth_segm_detections_pub.publish(segm_poses)
+
 
         # Publish detection results
         self.detections_pub.publish(result.detections)
