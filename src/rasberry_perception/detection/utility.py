@@ -5,6 +5,46 @@ from __future__ import absolute_import, division, print_function
 
 from collections import deque
 from timeit import default_timer as timer
+from Queue import Queue
+from threading import Thread, Event
+
+import rospy
+
+
+class WorkerTaskQueue(Queue):
+    """Class to allow offloading tasks such as publishing and visualisation"""
+    def __init__(self, num_workers=1):
+        Queue.__init__(self)
+        self._stop = Event()
+        self.num_workers = num_workers
+        self._start_workers()
+
+    def stop(self):
+        """Signal the workers to stop. Please call WorkerTaskQueue.join() after this."""
+        self._stop.set()
+
+    def add_task(self, task, args, **kwargs):
+        """Add a task to the worker task queue
+
+        Args:
+            task: Function/task to call with args/kwargs pair by one of the workers
+            args: Tuple of arguments to unpack into task call (task(*args, **kwargs))
+            **kwargs: Any other keyword args will be passed to the function (task(*args, **kwargs))
+
+        """
+        self.put((task, args, kwargs))
+
+    def _start_workers(self):
+        for _ in range(self.num_workers):
+            thread = Thread(target=self._worker)
+            thread.daemon = True
+            thread.start()
+
+    def _worker(self):
+        while not rospy.is_shutdown() and not self._stop.is_set():
+            task, args, kwargs = self.get()
+            task(*args, **kwargs)
+            self.task_done()
 
 
 class FunctionTime:

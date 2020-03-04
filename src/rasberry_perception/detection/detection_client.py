@@ -11,22 +11,18 @@ import message_filters
 import numpy as np
 import ros_numpy
 import rospy
-import tf
-from geometry_msgs.msg import PointStamped, Point, PoseArray, Pose
-from rasberry_perception.msg import Detections, Detection, RegionOfInterest, SegmentOfInterest
+from geometry_msgs.msg import Point, PoseArray, Pose
 from sensor_msgs.msg import Image, CameraInfo
 
 from rasberry_perception.detection import Client, default_service_name
-from rasberry_perception.detection.utility import function_timer
-
-
+from rasberry_perception.detection.utility import function_timer, WorkerTaskQueue
+from rasberry_perception.msg import Detections, Detection, RegionOfInterest, SegmentOfInterest
 
 
 class RunClientOnTopic:
     def __init__(self, image_namespace, depth_namespace=None, score_thresh=0.5, service_name=default_service_name):
         self._node_name = service_name + "_client"
         rospy.init_node(self._node_name, anonymous=True)
-
         stem = image_namespace.split('/')[-1]
 
         self.namespace = "rasberry_perception/" + stem + "/"
@@ -35,6 +31,8 @@ class RunClientOnTopic:
 
         # Wait for connection to detection service
         self.detector = Client()
+        self.publisher_tasks = WorkerTaskQueue(num_workers=1)
+        rospy.on_shutdown(self.on_shutdown)
 
         # Initialise publishers
         self.detections_pub = rospy.Publisher(self.namespace + "detections", Detections, queue_size=1)
@@ -66,6 +64,10 @@ class RunClientOnTopic:
         self.ts = message_filters.ApproximateTimeSynchronizer(subscribers, 10, 0.1)
         self.ts.registerCallback(self.run_detector)
 
+    def on_shutdown(self):
+        self.publisher_tasks.stop()
+        self.publisher_tasks.join()
+
     @function_timer.interval_logger(interval=10)
     def run_detector(self, *args, **kwargs):
         assert len(args) in [2, 4], "Args must either be (colour, info), or (colour, info, depth, info)"
@@ -74,9 +76,24 @@ class RunClientOnTopic:
         if not result.status.OKAY:
             return
 
-        if self.depth_enabled and len(args) == 4:
-            depth_msg, depth_info = args[2:]
+        # Offload the visualisation task <1ms over calling publish directly
+        self.publisher_tasks.add_task(self.publish, args, result=result)
+        # self.publish(*args, result=result)
+
+    def publish(self, image_msg, image_info, depth_msg, depth_info, result):
+        """Publish function for service results. Meant to be offloaded to another thread.
+
+        Args:
+            image_msg (Image): The RGB image message
+            image_info (CameraInfo): The RGB camera info message
+            depth_msg (Image): The aligned depth to image_msg message
+            depth_info (CameraInfo):  The depth camera info message
+            result (GetDetectorResultsResponse):  The result of a call to the GetDetectorResults service api
+        """
+
+        if self.depth_enabled and depth_msg is not None:
             depth_image = ros_numpy.numpify(depth_msg)
+
             detections = result.detections.detections
             # For tests create a bbox and pixels
             detections.append(Detection(roi=RegionOfInterest(200, 300, 250, 400),
