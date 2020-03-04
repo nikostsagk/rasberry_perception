@@ -6,6 +6,11 @@
 from __future__ import absolute_import, division, print_function
 import sys
 
+try:
+    from Queue import Queue
+except ImportError:
+    from queue import Queue
+
 
 class RosImportsFix:
     """Context manager to ignore python libraries installed in ROS distros.
