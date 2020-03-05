@@ -22,7 +22,7 @@ from rasberry_perception.msg import Detections, Detection, RegionOfInterest, Seg
 
 class RunClientOnTopic:
     def __init__(self, image_namespace, depth_namespace=None, score_thresh=0.5, service_name=default_service_name,
-            vis=True):
+            vis=False):
         self._node_name = service_name + "_client"
         rospy.init_node(self._node_name, anonymous=True)
         stem = image_namespace.split('/')[-1]
@@ -207,13 +207,14 @@ def _get_detections_for_topic():
     p_image_ns = rospy.get_param('~image_ns', "/pico_zense/colour")
     p_depth_ns = rospy.get_param('~depth_ns', "/pico_zense/aligned_depth_to_colour")
     p_score = rospy.get_param('~score', 0.5)
+    p_vis = rospy.get_param('~show_vis', True)
 
     rospy.loginfo("Camera Topic to Detection ROS: image_namespace={}, depth_namespace={}, score_thresh={}".format(
         p_image_ns, p_depth_ns, p_score
     ))
 
     # TODO: Re-implement depth for now leave as None
-    detector = RunClientOnTopic(image_namespace=p_image_ns, depth_namespace=p_depth_ns, score_thresh=p_score)
+    detector = RunClientOnTopic(image_namespace=p_image_ns, depth_namespace=p_depth_ns, score_thresh=p_score, vis=p_vis)
     rospy.spin()
 
 
