@@ -119,10 +119,10 @@ class Client:
         self.detection_server = None
         self._service_name = service_name
         self.__timeout = timeout
-        self.__connect()
+        self._connect()
 
-    def __connect(self):
-        while True:
+    def _connect(self):
+        while not rospy.is_shutdown():
             try:
                 rospy.loginfo("Waiting for '{}' service".format(self._service_name))
                 rospy.wait_for_service(self._service_name, timeout=self.__timeout)
@@ -131,16 +131,16 @@ class Client:
             except rospy.ROSException as e:
                 rospy.logerr(e)
 
-    def __get_result(self, *args, **kwargs):
+    def _get_result(self, *args, **kwargs):
         try:
             return self.detection_server(*args, **kwargs), True
         except rospy.ServiceException as e:
             rospy.logerr(e)
-            self.__connect()
+            self._connect()
             return None, False
 
     def __call__(self, *args, **kwargs):
-        result, success = self.__get_result(*args, **kwargs)
+        result, success = self._get_result(*args, **kwargs)
         while not success:
-            result, success = self.__get_result(*args, **kwargs)
+            result, success = self._get_result(*args, **kwargs)
         return result
