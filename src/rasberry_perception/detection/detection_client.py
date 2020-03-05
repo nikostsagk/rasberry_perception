@@ -31,7 +31,7 @@ class RunClientOnTopic:
 
         # Wait for connection to detection service
         self.detector = Client()
-        self.publisher_tasks = WorkerTaskQueue(num_workers=1)
+        self.publisher_tasks = WorkerTaskQueue(num_workers=4, max_size=30)
         rospy.on_shutdown(self.on_shutdown)
 
         # Initialise publishers
@@ -61,7 +61,11 @@ class RunClientOnTopic:
             ])
 
         # Start subscription
-        self.ts = message_filters.ApproximateTimeSynchronizer(subscribers, 10, 0.1)
+        sync_queue, sync_thresh = 1, 0.1
+        rospy.loginfo("Waiting for topics with time synchroniser (queue {}, {}s tolerance) on '{}'".format(
+            sync_queue, sync_thresh, ', '.join([s.topic for s in subscribers])
+        ))
+        self.ts = message_filters.ApproximateTimeSynchronizer(subscribers, 1, 0.1)
         self.ts.registerCallback(self.run_detector)
 
     def on_shutdown(self):
@@ -80,6 +84,7 @@ class RunClientOnTopic:
         self.publisher_tasks.add_task(self.publish, args, result=result)
         # self.publish(*args, result=result)
 
+    @function_timer.interval_logger(interval=10)
     def publish(self, image_msg, image_info, depth_msg, depth_info, result):
         """Publish function for service results. Meant to be offloaded to another thread.
 
@@ -90,7 +95,6 @@ class RunClientOnTopic:
             depth_info (CameraInfo):  The depth camera info message
             result (GetDetectorResultsResponse):  The result of a call to the GetDetectorResults service api
         """
-
         if self.depth_enabled and depth_msg is not None:
             depth_image = ros_numpy.numpify(depth_msg)
 
