@@ -9,10 +9,8 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   sensor_msgs
-  realsense2_camera
   ros_numpy
   message_generation
-  dynamic_reconfigure
 )
 
 # ==============================================
