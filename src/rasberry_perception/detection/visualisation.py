@@ -251,4 +251,3 @@ class Visualiser:
                 ret.append(GenericMask(x, self.height, self.width))
         return ret
 
-

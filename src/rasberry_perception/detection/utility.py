@@ -13,9 +13,10 @@ import rospy
 
 class WorkerTaskQueue(Queue):
     """Class to allow offloading tasks such as publishing and visualisation"""
-    def __init__(self, num_workers=1, max_size=30):
+    def __init__(self, num_workers=1, max_size=30, discard=True):
         Queue.__init__(self, maxsize=max_size)
         self._stop = Event()
+        self._discard = discard
         self.num_workers = num_workers
         self._start_workers()
 
@@ -32,6 +33,9 @@ class WorkerTaskQueue(Queue):
             **kwargs: Any other keyword args will be passed to the function (task(*args, **kwargs))
 
         """
+        # If discard is true ignore jobs that can't be run right now
+        if self._discard and self.qsize() == self.maxsize:
+            return
         self.put((task, args, kwargs))
 
     def _start_workers(self):

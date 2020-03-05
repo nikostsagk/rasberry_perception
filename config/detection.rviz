@@ -123,8 +123,8 @@ Visualization Manager:
       Value: true
     - Alpha: 1
       Arrow Length: 0.30000001192092896
-      Axes Length: 0.30000001192092896
-      Axes Radius: 0.05000000074505806
+      Axes Length: 0.029999999329447746
+      Axes Radius: 0.004999999888241291
       Class: rviz/PoseArray
       Color: 255; 25; 0
       Enabled: true
@@ -143,7 +143,7 @@ Visualization Manager:
       Axes Radius: 0.004999999888241291
       Class: rviz/PoseArray
       Color: 255; 25; 0
-      Enabled: false
+      Enabled: true
       Head Length: 0.07000000029802322
       Head Radius: 0
       Name: segm_poses
@@ -152,7 +152,7 @@ Visualization Manager:
       Shape: Axes
       Topic: /rasberry_perception/colour/segm_detections
       Unreliable: false
-      Value: false
+      Value: true
     - Alpha: 1
       Auto Size:
         Auto Size Factor: 1
@@ -238,18 +238,18 @@ Visualization Manager:
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.5777114033699036
-        Y: -0.33310335874557495
-        Z: 1.6129792928695679
+        X: -0.04637470468878746
+        Y: 0.21840891242027283
+        Z: 0.605343759059906
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: -1.4152032136917114
+      Pitch: -1.5247957706451416
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 4.697084903717041
+      Yaw: 4.512086868286133
     Saved: ~
 Window Geometry:
   Depth (Colourised):

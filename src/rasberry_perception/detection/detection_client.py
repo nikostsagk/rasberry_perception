@@ -35,7 +35,8 @@ class RunClientOnTopic:
         self.detector = Client()
         self.vis = vis
         if self.vis:
-            self.publisher_tasks = WorkerTaskQueue(num_workers=1, max_size=60)
+            # Discard frame if worker busy
+            self.publisher_tasks = WorkerTaskQueue(num_workers=1, max_size=1, discard=True)
             rospy.on_shutdown(self.on_shutdown)
 
         # Initialise publishers
