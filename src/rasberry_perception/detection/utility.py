@@ -13,8 +13,8 @@ import rospy
 
 class WorkerTaskQueue(Queue):
     """Class to allow offloading tasks such as publishing and visualisation"""
-    def __init__(self, num_workers=1):
-        Queue.__init__(self)
+    def __init__(self, num_workers=1, max_size=30):
+        Queue.__init__(self, maxsize=max_size)
         self._stop = Event()
         self.num_workers = num_workers
         self._start_workers()
@@ -47,8 +47,34 @@ class WorkerTaskQueue(Queue):
             self.task_done()
 
 
-class FunctionTime:
-    """Utility class containing different methods for benchmarking functions"""
+class _FunctionTime:
+    """ Decorator class for creating function timer objects
+
+    Available functions are interval_logger and logger:
+
+    .. code-block:: python
+
+        import time
+        from . import function_timer
+
+        # Print the time every nth (5) run
+        @function_timer.interval_logger(5)
+        def time_me():
+            time.sleep(1)
+
+        # Print the time every run
+        @function_timer.logger()
+        def time_me_always():
+            time.sleep(2)
+
+        while True:
+            time_me()
+            time_me_always()
+
+    Attributes:
+        smooth_window: Number of past values to average the time over
+        log_function: The function used to output the time (default is print)
+    """
     def __init__(self, smooth_window=30, log_function=None):
         self.counter = 0
         if log_function is None:
@@ -56,7 +82,20 @@ class FunctionTime:
         self.log_function = log_function
         self.func_times = deque(maxlen=smooth_window)
 
+    def copy(self):
+        """Returns new FunctionTime object, allows objects to easily be duplicated in one line"""
+        return _FunctionTime(self.func_times.maxlen, log_function=self.log_function)
+
     def interval_logger(self, interval):
+        """ Decorator to log the function time every interval runs
+
+        Args:
+            interval: When to log the time (every interval runs)
+        """
+        # Always return new instance of interval logger
+        return self.copy()._interval_logger(interval)
+
+    def _interval_logger(self, interval):
         interval = interval * (0 < interval)
         self.counter = self.counter * (interval > self.counter)
 
@@ -74,6 +113,10 @@ class FunctionTime:
         return function_time_decorator
 
     def logger(self, method):
+        """ Decorator to log the function time every run"""
+        return self.copy()._logger(method)
+
+    def _logger(self, method):
         def timed(*args, **kwargs):
             ts = timer()
             result = method(*args, **kwargs)
@@ -88,4 +131,4 @@ class FunctionTime:
         return ms, fps
 
 
-function_timer = FunctionTime()
+function_timer = _FunctionTime()
