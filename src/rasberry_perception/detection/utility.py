@@ -7,7 +7,7 @@ from collections import deque
 from timeit import default_timer as timer
 
 from threading import Thread, Event
-from rasberry_perception.detection.interfaces.compat import Queue
+from rasberry_perception.detection.compat import Queue
 import rospy
 
 

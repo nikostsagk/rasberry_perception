@@ -8,7 +8,7 @@ from rasberry_perception.detection.interfaces.default import BaseDetectionServer
 from rasberry_perception.detection.interfaces.registry import DETECTION_REGISTRY
 from rasberry_perception.srv import GetDetectorResults, GetDetectorResultsResponse
 from rasberry_perception.msg import DetectionStatus, Detections, SegmentOfInterest, RegionOfInterest
-from rasberry_perception.detection.interfaces.compat import RosImportsFix
+from rasberry_perception.detection.compat import RosImportsFix
 from rasberry_perception.detection.utility import function_timer
 
 
