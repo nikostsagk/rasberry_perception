@@ -49,9 +49,11 @@ class __DetectionRegistry:
             args = []
         if "self" in args:
             args.remove("self")
-        n_defaults = 0 if defaults is None else len(defaults)
-        required_args = list(args[:-n_defaults])
-        optional_args = dict(zip(args[-n_defaults:], defaults))
+
+        n_defaults = len(defaults)
+        required_args = list(args[0:len(args)-n_defaults])
+        optional_args = dict(zip(args[len(args)-n_defaults:], defaults))
+
         return required_args, optional_args
 
 
