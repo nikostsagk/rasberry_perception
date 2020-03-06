@@ -15,6 +15,7 @@ from rasberry_perception.detection.utility import function_timer
 @DETECTION_REGISTRY.register_detection_backend("mmdetection")
 class MMDetectionServer(BaseDetectionServer):
     def __init__(self, config_path, model_path, device=None):
+        raise DeprecationWarning("MMDet Deprecated")
         try:
             # Backbone specific imports (local import to not break python2.7 environment)
             import ros_numpy
