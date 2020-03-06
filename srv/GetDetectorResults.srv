@@ -1,6 +1,5 @@
 # Service for DeepLearning backend interface with ROS system (sensor_msgs/Image, threshold_param) -> detections
 sensor_msgs/Image image
-float32 score_thresh
 ---
 rasberry_perception/DetectionStatus status
 rasberry_perception/Detections detections

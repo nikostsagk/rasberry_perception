@@ -98,8 +98,8 @@ class RunClientOnTopic:
             depth_info (CameraInfo):  The depth camera info message
             result (GetDetectorResultsResponse):  The result of a call to the GetDetectorResults service api
         """
-        detections = result.detections.detections
-        detections.extend(self._get_test_messages(depth_msg.height, depth_msg.width))
+        detections = [d for d in result.detections.detections if d.info.score >= self.score_thresh]
+        # detections.extend(self._get_test_messages(depth_msg.height, depth_msg.width))
 
         if not len(detections):
             return
@@ -131,6 +131,7 @@ class RunClientOnTopic:
                 # Get localisation from segm
                 segm = detection.seg_roi
                 xv, yv = np.meshgrid(segm.x, segm.y)
+
                 d_roi = depth_image[yv, xv]  # For segm the x,y,z pos is based on median of detected pixels
                 valid_idx = np.where(np.logical_and(d_roi != 0, np.isfinite(d_roi)))
                 if len(valid_idx[0]) and len(valid_idx[1]):
