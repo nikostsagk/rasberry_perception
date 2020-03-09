@@ -11,7 +11,7 @@ import message_filters
 import numpy as np
 import ros_numpy
 import rospy
-from geometry_msgs.msg import Point, PoseArray, Pose
+from geometry_msgs.msg import Point, PoseArray, Pose, Quaternion
 from sensor_msgs.msg import Image, CameraInfo
 
 from rasberry_perception.detection import Client, default_service_name
@@ -119,7 +119,8 @@ class RunClientOnTopic:
                 zp = depth_roi[valid_positions] / 1000.0
                 yp = ((valid_positions[0] + y_offset) - _cy) * zp / _fy
                 xp = ((valid_positions[1] + x_offset) - _cx) * zp / _fx
-                return Pose(position=Point(np.median(xp), np.median(yp), np.median(zp)))
+                return Pose(position=Point(np.median(xp), np.median(yp), np.median(zp)),
+                            orientation=Quaternion(0, 0, 0, 1))
 
             for detection in detections:
                 # TODO: Transform by TF and intrinsics
@@ -217,8 +218,8 @@ def _get_detections_for_topic():
     rospy.init_node(_node_name, anonymous=True)
 
     # get private namespace parameters
-    p_image_ns = rospy.get_param('~image_ns', "/pico_zense/colour")
-    p_depth_ns = rospy.get_param('~depth_ns', "/pico_zense/aligned_depth_to_colour")
+    p_image_ns = rospy.get_param('~image_ns', "/sequence_0/colour")
+    p_depth_ns = rospy.get_param('~depth_ns', "/sequence_0/depth")
     p_score = rospy.get_param('~score', 0.5)
     p_vis = rospy.get_param('~show_vis', True)
 
