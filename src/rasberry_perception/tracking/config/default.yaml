@@ -1,0 +1,17 @@
+bayes_people_tracker:
+  filter_type: "EKF"                                         # The Kalman filter type: EKF = Extended Kalman Filter, UKF = Uncented Kalman Filter
+  prune_named: true                                           # make sure identity tracks are unique (prunes the one with high stdev)
+  std_limit: 5.0                                              # pruning tracks that have std(X) > std_limit
+  cv_noise_params:                                           # The noise for the constant velocity prediction model
+    x: 0.3
+    y: 0.3
+  detectors:                                                 # Add detectors under this namespace
+    perception_detector:                                   # Name of detector (used internally to identify them). Has to be unique.
+      topic: "/rasberry_perception/colour/bbox_detections" # The topic on which the geometry_msgs/PoseArray is published
+      cartesian_noise_params:                              # The noise for the cartesian observation model
+        x: 0.25
+        y: 0.25
+      observation_model: "CARTESIAN"
+      seq_size: 2                                         # minimum `seq_size` number of detections received in `seq_time` seconds (if seq_size is 1, seq_time is not used)
+      seq_time: 0.3
+      matching_algorithm: "NN"                       # The algorthim to match different detections. NN = Nearest Neighbour, NNJPDA = NN Joint Probability Data Association

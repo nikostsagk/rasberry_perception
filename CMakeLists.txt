@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   ros_numpy
   message_generation
+  bayesian_people_tracker
 )
 
 # ==============================================

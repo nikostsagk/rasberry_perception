@@ -1,0 +1,20 @@
+<!--  This file consumes the information published by detector.launch in bayes_people_tracker to track objects -->
+<launch>
+    <arg name="param_file" default="$(find rasberry_perception)/src/rasberry_perception/tracking/config/default.yaml" />
+    <arg name="target_frame" default="/pico_zense_colour_frame" />
+    <arg name="base_frame" default="/pico_zense_colour_frame" />
+<!--     <arg name="camera_frame" default="/pico_zense_frame" /> -->
+
+<!--     <node pkg="tf" type="static_transform_publisher" name="camera_linker" args="0 0 0 0 0 0 /map $(arg camera_frame) 100"/> -->
+
+    <include file="$(find bayes_people_tracker)/launch/people_tracker.launch">
+        <arg name="param_file" value="$(arg param_file)" />
+        <arg name="base_frame" value="$(arg base_frame)" />
+        <arg name="target_frame" value="$(arg target_frame)" />
+        <arg name="positions" value="rasberry_perception/tracker/positions" />
+        <arg name="pose" value="rasberry_perception/tracker/pose" />
+        <arg name="pose_array" value="rasberry_perception/tracker/pose_array" />
+        <arg name="people" value="rasberry_perception/tracker/people" />
+        <arg name="marker" value="rasberry_perception/tracker/marker_array" />
+    </include>
+</launch>
