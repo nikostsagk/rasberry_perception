@@ -53,6 +53,7 @@ class RunClientOnTopic:
         self.depth_enabled = depth_namespace is not None
         if self.depth_enabled:
             self.depth_pub = rospy.Publisher(self.namespace + "depth/image_raw", Image, queue_size=1)
+            self.box_depth_pub = rospy.Publisher(self.namespace + "depth/vis_raw", Image, queue_size=1)
             self.depth_info_pub = rospy.Publisher(self.namespace + "depth/camera_info", CameraInfo, queue_size=1)
             self.depth_bbox_detections_pub = rospy.Publisher(self.namespace + "bbox_detections", PoseArray,
                                                              queue_size=1)
@@ -97,8 +98,8 @@ class RunClientOnTopic:
             depth_info (CameraInfo):  The depth camera info message
             result (GetDetectorResultsResponse):  The result of a call to the GetDetectorResults service api
         """
-        result.detections.detections = [d for d in result.detections.detections if d.info.score >= 0]
-        result.detections.detections.extend(self._get_test_messages(depth_msg.height, depth_msg.width))
+        result.detections.detections = [d for d in result.detections.detections if d.info.score >= self.score_thresh]
+        # result.detections.detections.extend(self._get_test_messages(depth_msg.height, depth_msg.width))
         detections = result.detections.detections
 
 
@@ -107,6 +108,7 @@ class RunClientOnTopic:
 
         if self.depth_enabled and depth_msg is not None:
             depth_image = ros_numpy.numpify(depth_msg)
+            boxes_depth_image = np.zeros_like(depth_image)
 
             fx, fy, cx, cy = depth_info.P[0], depth_info.P[5], depth_info.P[2], depth_info.P[6]
 
@@ -125,6 +127,7 @@ class RunClientOnTopic:
                 bbox = detection.roi
                 xv, yv = np.meshgrid(np.arange(int(bbox.x1), int(bbox.x2)), np.arange(int(bbox.y1), int(bbox.y2)))
                 d_roi = depth_image[yv, xv]  # For bbox the x, y, z pos is based on median of valid depth pixels
+                boxes_depth_image[yv, xv] = depth_image[yv, xv]  # Publish a bbox pixels only image
                 valid_idx = np.where(np.logical_and(d_roi != 0, np.isfinite(d_roi)))
                 if len(valid_idx[0]) and len(valid_idx[1]):
                     bbox_poses.poses.append(_get_pose(d_roi, valid_idx, bbox.x1, bbox.y1, fx, fy, cx, cy))
@@ -140,7 +143,10 @@ class RunClientOnTopic:
                         segm_poses.poses.append(_get_pose(d_roi, valid_idx, bbox.x1, bbox.y1, fx, fy, cx, cy))
 
             # Publish pose arrays
+            box_depth_msg = ros_numpy.msgify(Image, boxes_depth_image, encoding="16UC1")
+            box_depth_msg.header = depth_msg.header
             self.depth_pub.publish(depth_msg)
+            self.box_depth_pub.publish(box_depth_msg)
             self.depth_info_pub.publish(depth_info)
             self.depth_bbox_detections_pub.publish(bbox_poses)
             self.depth_segm_detections_pub.publish(segm_poses)
