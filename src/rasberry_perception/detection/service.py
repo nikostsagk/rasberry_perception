@@ -37,9 +37,7 @@ class Server:
         rospy.ServiceException: If detection server can't be called
     """
     def __init__(self, backend=None, backend_kwargs=None, service_name=default_service_name):
-        self._node_name = service_name + "_server"
-        rospy.init_node(self._node_name)
-
+        self._service_name = service_name
         if backend is None:
             backend = rospy.get_param('~backend', "default")
         if backend not in DETECTION_REGISTRY:
@@ -99,7 +97,7 @@ class Server:
             self.server(**self.server_args)
         except (rospy.ROSInterruptException, KeyboardInterrupt) as e:
             rospy.logerr(e)
-            rospy.logerr("Interrupt Received: Exiting '{}' node".format(self._node_name))
+            rospy.logerr("Interrupt Received: Exiting service server".format(self._service_name))
 
 
 class Client:

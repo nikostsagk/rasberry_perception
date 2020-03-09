@@ -7,7 +7,9 @@
 
 import argparse
 
-from rasberry_perception.detection import Server
+import rospy
+
+from rasberry_perception.detection import Server, default_service_name
 
 
 def _default_arg_parser(args=None):
@@ -30,7 +32,11 @@ def __detection_server_runner():
     # Command line arguments should always over ride ros parameters
     args, args_kwargs = _default_arg_parser()
 
-    server = Server(backend=args.backend, backend_kwargs=args_kwargs)
+    service_name = default_service_name
+    _node_name = service_name + "_server"
+    rospy.init_node(_node_name)
+
+    server = Server(backend=args.backend, backend_kwargs=args_kwargs, service_name=service_name)
     server.run()
 
 
