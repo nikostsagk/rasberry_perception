@@ -23,8 +23,7 @@ from rasberry_perception.msg import Detections, Detection, RegionOfInterest, Seg
 class RunClientOnTopic:
     def __init__(self, image_namespace, depth_namespace=None, score_thresh=0.5, service_name=default_service_name,
             vis=False):
-        self._node_name = service_name + "_client"
-        rospy.init_node(self._node_name, anonymous=True)
+        self._service_name = service_name
         stem = image_namespace.split('/')[-1]
 
         self.namespace = "rasberry_perception/" + stem + "/"
@@ -98,8 +97,10 @@ class RunClientOnTopic:
             depth_info (CameraInfo):  The depth camera info message
             result (GetDetectorResultsResponse):  The result of a call to the GetDetectorResults service api
         """
-        detections = [d for d in result.detections.detections if d.info.score >= self.score_thresh]
-        # detections.extend(self._get_test_messages(depth_msg.height, depth_msg.width))
+        result.detections.detections = [d for d in result.detections.detections if d.info.score >= 0]
+        result.detections.detections.extend(self._get_test_messages(depth_msg.height, depth_msg.width))
+        detections = result.detections.detections
+
 
         if not len(detections):
             return
@@ -130,12 +131,13 @@ class RunClientOnTopic:
 
                 # Get localisation from segm
                 segm = detection.seg_roi
-                xv, yv = np.meshgrid(segm.x, segm.y)
+                if segm.x and segm.y:
+                    xv, yv = np.meshgrid(segm.x, segm.y)
 
-                d_roi = depth_image[yv, xv]  # For segm the x,y,z pos is based on median of detected pixels
-                valid_idx = np.where(np.logical_and(d_roi != 0, np.isfinite(d_roi)))
-                if len(valid_idx[0]) and len(valid_idx[1]):
-                    segm_poses.poses.append(_get_pose(d_roi, valid_idx, bbox.x1, bbox.y1, fx, fy, cx, cy))
+                    d_roi = depth_image[yv, xv]  # For segm the x,y,z pos is based on median of detected pixels
+                    valid_idx = np.where(np.logical_and(d_roi != 0, np.isfinite(d_roi)))
+                    if len(valid_idx[0]) and len(valid_idx[1]):
+                        segm_poses.poses.append(_get_pose(d_roi, valid_idx, bbox.x1, bbox.y1, fx, fy, cx, cy))
 
             # Publish pose arrays
             self.depth_pub.publish(depth_msg)
@@ -204,6 +206,10 @@ class RunClientOnTopic:
 
 
 def _get_detections_for_topic():
+    service_name = default_service_name
+    _node_name = service_name + "_client"
+    rospy.init_node(_node_name, anonymous=True)
+
     # get private namespace parameters
     p_image_ns = rospy.get_param('~image_ns', "/pico_zense/colour")
     p_depth_ns = rospy.get_param('~depth_ns', "/pico_zense/aligned_depth_to_colour")
@@ -215,7 +221,8 @@ def _get_detections_for_topic():
     ))
 
     # TODO: Re-implement depth for now leave as None
-    detector = RunClientOnTopic(image_namespace=p_image_ns, depth_namespace=p_depth_ns, score_thresh=p_score, vis=p_vis)
+    detector = RunClientOnTopic(image_namespace=p_image_ns, depth_namespace=p_depth_ns, score_thresh=p_score, vis=p_vis,
+                                service_name=service_name)
     rospy.spin()
 
 
