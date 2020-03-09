@@ -2,6 +2,8 @@
 
 The rasberry_perception package aims to interleave ROS and deep learning frameworks for perception.
 
+![strawberry_localisation](https://user-images.githubusercontent.com/16948324/76231446-2c98b380-621d-11ea-8624-8e472c2f08f8.gif)
+
 ## Detection Backends
 
 Modular detection backends are available in `rasberry_perception` enabling users to utilise deep learning 
