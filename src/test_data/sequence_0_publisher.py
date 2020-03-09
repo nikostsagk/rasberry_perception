@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 #  Raymond Kirk (Tunstill) Copyright (c) 2020
 #  Email: ray.tunstill@gmail.com
 import pickle
@@ -18,8 +20,8 @@ def __main():
 
     files = sorted(list(str(s) for s in pico_root.glob("*.pkl")))
 
-    fps = 5
-    seconds_limit = 20
+    fps = 10
+    seconds_limit = 30
     frame_limit = fps * seconds_limit
     print("Truncating files array (n={}) to {} seconds (n={}) for {} fps".format(len(files), seconds_limit, frame_limit,
                                                                                  fps))
