@@ -1,16 +1,18 @@
 <launch>
+<!-- Uncomment this block to add the ability to auto-launch a docker environment with the required detection backend
+        otherwise launch a detection backend rosrun rasberry_perception detection_server.py -backend "backend_name" -backend_arg1 "config.yourconfig"
     <arg name="backend" default=""/>
     <group if="$(eval arg('backend') != '')">
         <node pkg="rasberry_perception" name="rasberry_perception_detection_backend" type="run_$(arg backend).sh"
               output="screen"/>
     </group>
+-->
 
-    <arg name="image_topic" default="/realsense_camera/color"/>
-    <arg name="depth_topic" default="/linear_3dof_2d_camera/aligned_depth_to_color"/>
+    <arg name="image_ns" default="/sequence_0/colour"/>
+    <arg name="depth_ns" default="/sequence_0/depth"/>
     <arg name="score" default="0.5"/>
 
-    <node pkg="rasberry_perception" name="rasberry_perception_detector" type="get_detections_for_topic.py"
-          output="screen" respawn="true">
+    <node pkg="rasberry_perception" name="rasberry_perception_client" type="detection_client.py" output="screen" respawn="true">
         <param name="image_ns" type="str" value="$(arg image_ns)"/>
         <param name="depth_ns" type="str" value="$(arg depth_ns)"/>
         <param name="score" type="double" value="$(arg score)"/>
