@@ -4,10 +4,14 @@
 #  Email: ray.tunstill@gmail.com
 import pickle
 
+import cv2
+import geometry_msgs
+import ros_numpy
 import rospy
 from geometry_msgs.msg import Pose
 from sensor_msgs.msg import Image, CameraInfo
 from std_msgs.msg import String
+import tf2_ros
 
 
 def __main():
@@ -21,8 +25,9 @@ def __main():
     files = sorted(list(str(s) for s in pico_root.glob("*.pkl")))
 
     fps = 10
-    seconds_limit = 30
-    frame_limit = fps * seconds_limit
+    seconds_limit = 10
+    frame_limit = int(fps * seconds_limit)
+    assert frame_limit > 0
     print("Truncating files array (n={}) to {} seconds (n={}) for {} fps".format(len(files), seconds_limit, frame_limit,
                                                                                  fps))
     files = files[:frame_limit]
@@ -51,8 +56,23 @@ def __main():
     sequence_starts = rospy.Publisher(republish_namespace + "info", String, queue_size=1)
     current_node = rospy.Publisher(republish_namespace + "current_node", String, queue_size=1)
 
+    # Static pico frame publisher
+    broadcaster = tf2_ros.StaticTransformBroadcaster()
+    static_transformStamped = geometry_msgs.msg.TransformStamped()
+    static_transformStamped.header.stamp = rospy.Time.now()
+    static_transformStamped.header.frame_id = "map"
+    static_transformStamped.child_frame_id = "pico_zense_frame"
+    static_transformStamped.transform.rotation.w = 1.0
+    broadcaster.sendTransform(static_transformStamped)
+    static_transformStamped.header.frame_id = "pico_zense_frame"
+    static_transformStamped.child_frame_id = "pico_zense_colour_frame"
+    broadcaster.sendTransform(static_transformStamped)
+
     from timeit import default_timer as timer
     iteration = 0
+
+    # On iter 0 write the video to file for further validation
+    out = None
 
     while not rospy.is_shutdown():
         print("Running iteration {}".format(iteration))
@@ -64,6 +84,15 @@ def __main():
                 print("Reached frame limit {}>={} for time limit of {} seconds".format(frame_idx, frame_limit,
                                                                                        seconds_limit))
                 break
+
+            if iteration == 0 and out is None:
+                out = cv2.VideoWriter(str(pico_root.parent / "sequence_0to{}_out{}s.avi".format(frame_limit,
+                                                                                                seconds_limit)),
+                                      cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 10,
+                                      (data["rgb"]["image"].width, data["rgb"]["image"].height))
+            if iteration == 0:
+                out.write(ros_numpy.numpify(data["rgb"]["image"]))
+
             now = rospy.Time.now()
             data["rgb"]["image"].header.stamp = now
             data["aligned_depth_to_rgb"]["image"].header.stamp = now
