@@ -35,13 +35,13 @@ class Detectron2Server(BaseDetectionServer):
             from detectron2.config import get_cfg
             from detectron2.data import MetadataCatalog
             from detectron2.engine.defaults import DefaultPredictor
-            from fruit_detection.config import add_fruit_detection_config
+            # from fruit_detection.config import add_fruit_detection_config
         except ImportError:
             raise
 
         self.currently_busy = Event()
         self.cfg = get_cfg()
-        add_fruit_detection_config(self.cfg)
+        # add_fruit_detection_config(self.cfg)
         self.cfg.merge_from_file(config_file)
         if model_file is not None:
             self.cfg.MODEL.WEIGHTS = model_file
