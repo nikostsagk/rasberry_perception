@@ -31,6 +31,5 @@ RUN python3 -m venv backend_venv --clear && \
 
 ## Create entry point for image
 WORKDIR /
-COPY entrypoint.sh .
-ENTRYPOINT ["/bin/bash", "entrypoint.sh"]
+COPY start_backend.sh .
 CMD ["/bin/bash", "-c"]
