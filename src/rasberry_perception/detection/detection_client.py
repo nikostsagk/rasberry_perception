@@ -14,12 +14,13 @@ import numpy as np
 import ros_numpy
 import rospy
 from geometry_msgs.msg import Point, Pose, Quaternion, PoseArray
+from rasberry_perception.msg._TaggedPose import TaggedPose
 from sensor_msgs.msg import Image, CameraInfo
 
 from rasberry_perception.detection import Client, default_service_name
 from rasberry_perception.detection.utility import function_timer, WorkerTaskQueue
 from rasberry_perception.detection.visualisation import Visualiser
-from rasberry_perception.msg import Detections, Detection, RegionOfInterest, SegmentOfInterest
+from rasberry_perception.msg import Detections, Detection, RegionOfInterest, SegmentOfInterest, TaggedPoseArray
 
 
 class RunClientOnTopic:
@@ -56,6 +57,12 @@ class RunClientOnTopic:
 
             # Container for /detection/<class name>/bbox_poses and /detection/<class name>/segm_poses messages
             self.depth_pose_publishers = {}
+
+            # Publish as tagged (by class name)
+            self.tagged_bbox_pose_publisher = rospy.Publisher(self.namespace + "poses/tagged/bbox", TaggedPoseArray,
+                                                              queue_size=1)
+            self.tagged_segm_pose_publisher = rospy.Publisher(self.namespace + "poses/tagged/segm", TaggedPoseArray,
+                                                              queue_size=1)
 
             # Subscribe to depth and depth intrinsic topics
             subscribers.extend([
@@ -98,9 +105,8 @@ class RunClientOnTopic:
 
         self.publish_detections(*args, result=result)
 
-    def _publish_poses(self, poses):
-        """Creates a separate PoseArray publisher for each detected class and pose_origin
-        (maybe in the future implement class based not tag based in the tracker)
+    def _publish_poses(self, poses, tagged_bbox_poses, tagged_segm_poses):
+        """Creates a separate PoseArray publisher for each detected class and pose_origin and as a pose tagged
 
         Args:
             poses (Dict[str: PoseArray]): [Class Name][Origin] to PoseArray lookup of poses
@@ -108,9 +114,14 @@ class RunClientOnTopic:
         if not self.depth_enabled:
             return
 
+        if len(tagged_bbox_poses.poses):
+            self.tagged_bbox_pose_publisher.publish(tagged_bbox_poses)
+        if len(tagged_segm_poses.poses):
+            self.tagged_segm_pose_publisher.publish(tagged_segm_poses)
+
         for class_name, origin_dict in poses.items():
             for origin, pose_array in origin_dict.items():
-                topic = self.namespace + "poses/{}/{}".format(class_name, origin)
+                topic = self.namespace + "poses/by_class/{}/{}".format(class_name.replace(" ", "_"), origin)
                 if topic not in self.depth_pose_publishers:
                     self.depth_pose_publishers[topic] = rospy.Publisher(topic, PoseArray, queue_size=1)
                 self.depth_pose_publishers[topic].publish(pose_array)
@@ -152,7 +163,10 @@ class RunClientOnTopic:
 
             # Publish in the frame of depth_msg.header.frame_id
             # [Class Name][Origin] to PoseArray lookup
-            poses = defaultdict(lambda: defaultdict(lambda: PoseArray(header=depth_msg.header)))
+            poses_header = depth_msg.header
+            poses = defaultdict(lambda: defaultdict(lambda: PoseArray(header=poses_header)))
+            tagged_bbox_poses = TaggedPoseArray(header=poses_header)
+            tagged_segm_poses = TaggedPoseArray(header=poses_header)
 
             for detection in detections:
                 label = detection.class_name
@@ -163,8 +177,9 @@ class RunClientOnTopic:
                 d_roi = depth_image[yv, xv]  # For bbox the x, y, z pos is based on median of valid depth pixels
                 valid_idx = np.where(np.logical_and(d_roi != 0, np.isfinite(d_roi)))
                 if len(valid_idx[0]) and len(valid_idx[1]):
-                    poses[label]["bbox"].poses.append(self._get_pose(d_roi, valid_idx, roi.x1, roi.y1, fx, fy, cx, cy))
-
+                    box_pose = self._get_pose(d_roi, valid_idx, roi.x1, roi.y1, fx, fy, cx, cy)
+                    tagged_bbox_poses.poses.append(TaggedPose(tag=label, pose=box_pose))
+                    poses[label]["bbox"].poses.append(box_pose)
                 if self.visualisation_enabled:
                     boxes_depth_image[yv, xv] = depth_image[yv, xv]  # Publish a bbox pixels only image
 
@@ -176,10 +191,12 @@ class RunClientOnTopic:
                 d_roi = depth_image[yv, xv]  # For segm the x,y,z pos is based on median of detected pixels
                 valid_idx = np.where(np.logical_and(d_roi != 0, np.isfinite(d_roi)))
                 if len(valid_idx[0]) and len(valid_idx[1]):
-                    poses[label]["segm"].poses.append(self._get_pose(d_roi, valid_idx, roi.x1, roi.y1, fx, fy, cx, cy))
+                    segm_pose = self._get_pose(d_roi, valid_idx, roi.x1, roi.y1, fx, fy, cx, cy)
+                    tagged_segm_poses.poses.append(TaggedPose(tag=label, pose=segm_pose))
+                    poses[label]["segm"].poses.append(segm_pose)
 
             # Publish depth poses and 1:1 depth map
-            self._publish_poses(poses)
+            self._publish_poses(poses, tagged_bbox_poses, tagged_segm_poses)
             self.depth_pub.publish(depth_msg)
             self.depth_info_pub.publish(depth_info)
 
@@ -250,7 +267,7 @@ def _get_detections_for_topic():
     # get private namespace parameters
     p_image_ns = rospy.get_param('~image_ns', "/sequence_0/colour")
     p_depth_ns = rospy.get_param('~depth_ns', "/sequence_0/depth")
-    p_score = rospy.get_param('~score', 0.5)
+    p_score = rospy.get_param('~score', 0.7)
     p_vis = rospy.get_param('~show_vis', True)
 
     rospy.loginfo("Camera Topic to Detection ROS: image_namespace={}, depth_namespace={}, score_thresh={}".format(
