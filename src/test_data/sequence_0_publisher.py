@@ -12,6 +12,7 @@ from geometry_msgs.msg import Pose
 from sensor_msgs.msg import Image, CameraInfo
 from std_msgs.msg import String
 import tf2_ros
+from rasberry_perception.detection.compat import input
 
 
 def __main():
@@ -26,9 +27,11 @@ def __main():
 
     fps = 10
     seconds_limit = 10
+    repeat_frames = 1
+    actual_seconds = seconds_limit * repeat_frames
     frame_limit = int(fps * seconds_limit)
     assert frame_limit > 0
-    print("Truncating files array (n={}) to {} seconds (n={}) for {} fps".format(len(files), seconds_limit, frame_limit,
+    print("Truncating files array (n={}) to {} seconds (n={}) for {} fps".format(len(files), actual_seconds, frame_limit,
                                                                                  fps))
     files = files[:frame_limit]
 
@@ -77,9 +80,13 @@ def __main():
     while not rospy.is_shutdown():
         print("Running iteration {}".format(iteration))
         sequence_starts.publish(String("Sequence 0, iteration {} starting".format(iteration)))
+        input("\nStart? [enter]: ")
         start = timer()
 
         for frame_idx, data in enumerate(ram_files):
+            if rospy.is_shutdown():
+                break
+
             if frame_idx >= frame_limit:
                 print("Reached frame limit {}>={} for time limit of {} seconds".format(frame_idx, frame_limit,
                                                                                        seconds_limit))
@@ -93,28 +100,32 @@ def __main():
             if iteration == 0:
                 out.write(ros_numpy.numpify(data["rgb"]["image"]))
 
-            now = rospy.Time.now()
-            data["rgb"]["image"].header.stamp = now
-            data["aligned_depth_to_rgb"]["image"].header.stamp = now
-            data["aligned_depth_to_rgb"]["intrinsics"].header.stamp = now
-            data["aligned_depth_to_rgb"]["colourmap"].header.stamp = now
-            data["rgb"]["intrinsics"].header.stamp = now
+            for _ in range(repeat_frames):
+                now = rospy.Time.now()
+                data["rgb"]["image"].header.stamp = now
+                data["aligned_depth_to_rgb"]["image"].header.stamp = now
+                data["aligned_depth_to_rgb"]["intrinsics"].header.stamp = now
+                data["aligned_depth_to_rgb"]["colourmap"].header.stamp = now
+                data["rgb"]["intrinsics"].header.stamp = now
 
-            image_pub.publish(data["rgb"]["image"])
-            image_info_pub.publish(data["rgb"]["intrinsics"])
-            depth_pub.publish(data["aligned_depth_to_rgb"]["image"])
-            depth_info_pub.publish(data["aligned_depth_to_rgb"]["intrinsics"])
-            depth_map_pub.publish(data["aligned_depth_to_rgb"]["colourmap"])
-            robot_position.publish(data["localisation"]["robot_pose"])
-            if data["localisation"]["current_node"] is not None:
-                current_node.publish(data["localisation"]["current_node"])
+                image_pub.publish(data["rgb"]["image"])
+                image_info_pub.publish(data["rgb"]["intrinsics"])
+                depth_pub.publish(data["aligned_depth_to_rgb"]["image"])
+                depth_info_pub.publish(data["aligned_depth_to_rgb"]["intrinsics"])
+                depth_map_pub.publish(data["aligned_depth_to_rgb"]["colourmap"])
+                robot_position.publish(data["localisation"]["robot_pose"])
+                if data["localisation"]["current_node"] is not None:
+                    current_node.publish(data["localisation"]["current_node"])
 
-            hz.sleep()
+                hz.sleep()
         print("Iteration {} took {} seconds".format(iteration, timer() - start))
         iteration += 1
 
-    print(files)
+    # print(files)
 
 
 if __name__ == "__main__":
-    __main()
+    try:
+        __main()
+    except KeyboardInterrupt:
+        pass
