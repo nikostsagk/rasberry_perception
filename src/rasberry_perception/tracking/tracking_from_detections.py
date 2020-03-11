@@ -11,25 +11,25 @@ import numpy as np
 
 from scipy.optimize import linear_sum_assignment
 
-from rasberry_perception.msg import ImageDetections
+from rasberry_perception.msg import Detections
 
-from tracking.sort import sort
+from rasberry_perception.tracking.sort import Sort
 
 
 class ObjectTrackerNode:
     def __init__(self, detection_topic, tracker_topic, cost_threshold, max_age, min_hits):
-        self.tracker = sort.Sort(max_age=max_age, min_hits=min_hits)
+        self.tracker = Sort(max_age=max_age, min_hits=min_hits)
 
         self.cost_threshold = cost_threshold
 
         # Advertise the result of Object Tracker
-        self.pub_trackers = rospy.Publisher(tracker_topic, ImageDetections, queue_size=1)
+        self.pub_trackers = rospy.Publisher(tracker_topic, Detections, queue_size=1)
 
-        self.sub_detection = rospy.Subscriber(detection_topic, ImageDetections, self.detection_callback)
+        self.sub_detection = rospy.Subscriber(detection_topic, Detections, self.detection_callback)
 
-    def detection_callback(self, detection_msg):
+    def detection_callback(self, pose_array_msg):
         detection_list_xywhs = []
-        bounding_boxes = detection_msg.bounding_boxes
+        bounding_boxes = [d.roi for d in detection_list_xywhs.bounding_boxes]
 
         for b_box in bounding_boxes:
             x1, y1, x2, y2, score = b_box.x1, b_box.y1, b_box.x2, b_box.y2, b_box.score
@@ -78,6 +78,7 @@ class ObjectTrackerNode:
 
 
 def __tracking_from_detections():
+    raise NotImplementedError("Not currently supported in favour of BayesianTracking project for CVPR.")
     rospy.init_node('rasberry_perception_detection_tracker')
 
     detection_topic = rospy.get_param("~detection_topic", "/detection/predictions")
