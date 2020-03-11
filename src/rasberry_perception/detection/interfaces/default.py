@@ -27,6 +27,7 @@ class BaseDetectionServer:
         spin (bool): If True the service spin method called on construction. If false .spin() must be called later.
     """
     def __init__(self, service_name=default_service_name, spin=True):
+        self._last_id = 0  # Last assigned ID
         self.service_name = service_name
         self.currently_busy = Event()
         rospy.loginfo("Creating service {}".format(service_name))
@@ -40,6 +41,10 @@ class BaseDetectionServer:
 
     def get_detector_results(self, request):
         raise NotImplementedError("This is the base detector server intended for internal use only.")
+
+    def _new_id(self):
+        self._last_id += 1
+        return self._last_id - 1
 
 
 @DETECTION_REGISTRY.register_detection_backend("default")
