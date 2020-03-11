@@ -1,5 +1,5 @@
 # Service for DeepLearning backend interface with ROS system (sensor_msgs/Image, threshold_param) -> detections
-sensor_msgs/Image image
+sensor_msgs/Image image # the image to run the backend detector on
 ---
-rasberry_perception/DetectionStatus status
-rasberry_perception/Detections detections
+rasberry_perception/ServiceStatus status # the job completion status
+rasberry_perception/Detections detections # the corresponding imager

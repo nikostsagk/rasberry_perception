@@ -30,11 +30,14 @@ add_service_files(
 add_message_files(
     FILES
     Detection.msg
-    DetectionInfo.msg
     Detections.msg
-    DetectionStatus.msg
     RegionOfInterest.msg
     SegmentOfInterest.msg
+    ServiceStatus.msg
+    TaggedPose.msg
+    TaggedPoseArray.msg
+    TrackDetection.msg
+    TrackerResults.msg
 )
 
 generate_messages(DEPENDENCIES std_msgs sensor_msgs rasberry_perception)

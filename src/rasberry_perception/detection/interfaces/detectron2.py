@@ -35,16 +35,24 @@ class Detectron2Server(BaseDetectionServer):
             from detectron2.config import get_cfg
             from detectron2.data import MetadataCatalog
             from detectron2.engine.defaults import DefaultPredictor
-            # from fruit_detection.config import add_fruit_detection_config
         except ImportError:
             raise
 
         self.currently_busy = Event()
         self.cfg = get_cfg()
-        # add_fruit_detection_config(self.cfg)
+
+        try:
+            from fruit_detection.config import add_fruit_detection_config
+            from fruit_detection.datasets import register_data_set
+            add_fruit_detection_config(self.cfg)
+        except ImportError:
+            raise ImportError("You require Raymond's custom detectron2 version for Fruit Detection")
+
         self.cfg.merge_from_file(config_file)
         if model_file is not None:
             self.cfg.MODEL.WEIGHTS = model_file
+        register_data_set(self.cfg.DATASETS.TEST[0])
+
         self.cfg.freeze()
         metadata = MetadataCatalog.get(self.cfg.DATASETS.TEST[0] if len(self.cfg.DATASETS.TEST) else "__unused")
         self.classes = metadata.get("thing_classes") or _unknown_class()
@@ -83,7 +91,6 @@ class Detectron2Server(BaseDetectionServer):
 
                 scores = instances.scores if instances.has("scores") else None
                 classes = instances.pred_classes if instances.has("pred_classes") else None
-                labels = ["{} {}".format(self.classes[cls_id], scores[idx]) for idx, cls_id in enumerate(classes)]
                 masks = np.asarray(instances.pred_masks) if instances.has("pred_masks") else [None] * len(boxes)
 
                 # if instances.has("pred_classes"):
@@ -100,8 +107,8 @@ class Detectron2Server(BaseDetectionServer):
                             yv, xv = v
                     roi = RegionOfInterest(x1=x1, y1=y1, x2=x2, y2=y2)
                     seg_roi = SegmentOfInterest(x=xv, y=yv)
-                    info = DetectionInfo(score=score, class_id=cls, class_name=self.classes[cls])
-                    detections.detections.append(Detection(roi=roi, seg_roi=seg_roi, info=info))
+                    detections.detections.append(Detection(roi=roi, seg_roi=seg_roi, id=self._new_id(),
+                                                           confidence=score, class_name=self.classes[cls]))
         except Exception as e:
             print("Detectron2Server error: ", e)
             return GetDetectorResultsResponse(status=DetectionStatus(ERROR=True), detections=detections)
