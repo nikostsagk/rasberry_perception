@@ -11,6 +11,11 @@ try:
 except ImportError:
     from queue import Queue
 
+try:
+    input = raw_input
+except NameError:
+    pass
+
 
 class RosImportsFix:
     """Context manager to ignore python libraries installed in ROS distros.
