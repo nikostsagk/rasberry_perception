@@ -28,7 +28,8 @@ def __main():
     fps = 10
     seconds_limit = 10
     repeat_frames = 1
-    actual_seconds = seconds_limit * repeat_frames
+    warmup_frames = 1
+    actual_seconds = (seconds_limit * repeat_frames) + ((warmup_frames - 1) / fps)
     frame_limit = int(fps * seconds_limit)
     assert frame_limit > 0
     print("Truncating files array (n={}) to {} seconds (n={}) for {} fps".format(len(files), actual_seconds, frame_limit,
@@ -100,7 +101,7 @@ def __main():
             if iteration == 0:
                 out.write(ros_numpy.numpify(data["rgb"]["image"]))
 
-            for _ in range(repeat_frames):
+            for _ in range(warmup_frames if frame_idx == 0 else repeat_frames):
                 now = rospy.Time.now()
                 data["rgb"]["image"].header.stamp = now
                 data["aligned_depth_to_rgb"]["image"].header.stamp = now
