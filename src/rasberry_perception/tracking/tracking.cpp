@@ -429,8 +429,9 @@ void Tracking::detectorCallbackTaggedPoseArray(const rasberry_perception::Tagged
         }
 
         position.push_back(poseInTargetCoords.pose.position);
-        if (_use_tags[detector])
-            tags.push_back(pt.tag);  // When tags aren't used the pt.label is replaced with detection ID
+        if (_use_tags[detector]) {
+            tags.push_back(pt.tag);
+        }
     }
 
     if (!position.empty()) {
