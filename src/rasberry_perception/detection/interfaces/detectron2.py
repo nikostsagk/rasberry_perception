@@ -19,7 +19,7 @@ class _unknown_class:
         pass
 
     def __getitem__(self, item):
-        return "unknown"
+        return "class {}".format(item)
 
 
 @DETECTION_REGISTRY.register_detection_backend("detectron2")
