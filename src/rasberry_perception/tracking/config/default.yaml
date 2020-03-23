@@ -1,18 +1,18 @@
 filter_type: "EKF"                                              # The Kalman filter type: EKF = Extended Kalman Filter, UKF = Uncented Kalman Filter
-prune_named: true                                               # make sure identity tracks are unique (prunes the one with high stdev)
-std_limit: 1.0                                                  # pruning tracks that have std(x) > std_limit
+prune_named: false                                               # make sure identity tracks are unique (prunes the one with high stdev)
+std_limit: 0.5                                                  # pruning tracks that have std(x) > std_limit
 cv_noise_params:                                                # The noise for the constant velocity prediction model
-  x: 0.05
-  y: 0.01
-  z: 0.01
+  x: -0.3
+  y: -0.05
+  z: -0.05
 detectors:                                                      # Add detectors under this namespace
-  untagged_class_tracker:                                       # Track all objects without using tags
+  tagged_class_tracker:                                       # Track all objects without using tags
     tagged_topic: "/rasberry_perception/poses/tagged/bbox"
     cartesian_noise_params:                                     # Expected noise in the poses (how good is the localisation)
-      x: 0.05
-      y: 0.10
-      z: 0.03
-      observation_model: "CARTESIAN"                            # CARTESIAN will use CARTESIAN_3D by default
-      matching_algorithm: "NN"                                  # The algorithm to match different detections. NN = Nearest Neighbour, NNJPDA = NN Joint Probability Data Association
-      seq_size: 3                                               # Minimum `seq_size` number of detections received in `seq_time` seconds (if seq_size is 1, seq_time is not used)
-      seq_time: 0.6
+      x: 0.10
+      y: 0.05
+      z: 0.05
+    observation_model: "CARTESIAN"                            # CARTESIAN will use CARTESIAN_3D by default
+    matching_algorithm: "NN_LABELED"                                  # The algorithm to match different detections. NN = Nearest Neighbour, NNJPDA = NN Joint Probability Data Association
+    seq_size: 10                                               # Minimum `seq_size` number of detections received in `seq_time` seconds (if seq_size is 1, seq_time is not used)
+    seq_time: 1.0
