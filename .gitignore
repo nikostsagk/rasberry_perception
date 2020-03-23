@@ -1,3 +1,6 @@
+**/*.avi
+**/*.bag
+**/*.xz
 /docker_export
 **/*.pkl
 
@@ -322,3 +325,4 @@ pyvenv.cfg
 pip-selfcheck.json
 
 # End of https://www.gitignore.io/api/ros,python,intellij,virtualenv,pycharm+all
+/src/test_data/sequence_0to1_out0.1s.avi
