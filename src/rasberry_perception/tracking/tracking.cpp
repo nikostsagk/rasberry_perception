@@ -332,36 +332,38 @@ void Tracking::createVisualisation(const rasberry_perception::TrackerResults &po
     green.g = 200.0F / 255.0F;
     green.b = 0.0F / 255.0F;
 
-    for (int i = 0; i < poses.tracks.size(); i++) {
+    for (const auto & track : poses.tracks) {
         ros::Time now = ros::Time::now();
+        std::string ns = "rasberry_perception/tracking";
+
         visualization_msgs::Marker marker;
         marker.header.frame_id = target_frame;
         marker.header.stamp = now;
         marker.header.seq = ++marker_seq;
-        marker.ns = "rasberry_perception/tracking";
-        marker.id = poses.tracks[i].id;
+        marker.ns = ns;
+        marker.id = track.id;
         marker.type = visualization_msgs::Marker::SPHERE;
-        marker.action = visualization_msgs::Marker::ADD;
-        marker.pose = poses.tracks[i].pose;
+        marker.action = visualization_msgs::Marker::MODIFY;
+        marker.pose = track.pose;
         marker.scale = scale;
         marker.color = red;
-        marker.lifetime = ros::Duration(1);
+        marker.lifetime = ros::Duration(0.2);
         marker_array.markers.push_back(marker);
 
         visualization_msgs::Marker text_marker;
         text_marker.header.frame_id = target_frame;
         text_marker.header.stamp = now;
         text_marker.header.seq = marker.header.seq;
-        text_marker.ns = "rasberry_perception/tracking";
-        text_marker.id = -poses.tracks[i].id;
+        text_marker.ns = ns;
+        text_marker.id = -track.id - 100;
         text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-        text_marker.text = num_to_str<long>(poses.tracks[i].id);
-        text_marker.action = visualization_msgs::Marker::ADD;
-        text_marker.pose = poses.tracks[i].pose;
+        text_marker.text = num_to_str<long>(track.id);
+        text_marker.action = visualization_msgs::Marker::MODIFY;
+        text_marker.pose = track.pose;
         text_marker.pose.position.y -= scale.y * 2;
         text_marker.scale.z = scale.z;
         text_marker.color = green;
-        text_marker.lifetime = ros::Duration(1);
+        text_marker.lifetime = ros::Duration(0.2);
         marker_array.markers.push_back(text_marker);
     }
 
