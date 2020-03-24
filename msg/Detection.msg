@@ -8,5 +8,6 @@ rasberry_perception/SegmentOfInterest seg_roi # represents pixel segmentations (
 
 # Information about the detection (score, class, id etc.)
 int64 id # the unique identifier for this particular detection
+int64 track_id # the unique identifier for this particular detection
 float64 confidence # uncertainty of this detection
 string class_name # the unique class name
