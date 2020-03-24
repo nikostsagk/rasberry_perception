@@ -25,11 +25,11 @@ def __main():
 
     files = sorted(list(str(s) for s in pico_root.glob("*.pkl")))
 
-    fps = 10
-    seconds_limit = 10
+    fps = 15
+    seconds_limit = 20
     repeat_frames = 1
-    warmup_frames = 1
-    actual_seconds = (seconds_limit * repeat_frames) + ((warmup_frames - 1) / fps)
+    warmup_frames = 0
+    actual_seconds = (seconds_limit * repeat_frames) + (warmup_frames / fps)
     frame_limit = int(fps * seconds_limit)
     assert frame_limit > 0
     print("Truncating files array (n={}) to {} seconds (n={}) for {} fps".format(len(files), actual_seconds, frame_limit,
@@ -80,7 +80,6 @@ def __main():
 
     while not rospy.is_shutdown():
         print("Running iteration {}".format(iteration))
-        sequence_starts.publish(String("Sequence 0, iteration {} starting".format(iteration)))
         input("\nStart? [enter]: ")
         start = timer()
 
@@ -121,8 +120,10 @@ def __main():
                 hz.sleep()
         print("Iteration {} took {} seconds".format(iteration, timer() - start))
         iteration += 1
+        sequence_starts.publish(String("Sequence 0, iteration {} starting".format(iteration)))
 
-    # print(files)
+
+# print(files)
 
 
 if __name__ == "__main__":
