@@ -29,25 +29,21 @@ class ObjectTrackerNode:
 
     def detection_callback(self, pose_array_msg):
         detection_list_xywhs = []
-        bounding_boxes = [d.roi for d in detection_list_xywhs.bounding_boxes]
 
-        for b_box in bounding_boxes:
-            x1, y1, x2, y2, score = b_box.x1, b_box.y1, b_box.x2, b_box.y2, b_box.score
-            w, h = x2 - x1, y2 - y1
-            x, y = (x2 + x1) / 2, (y2 + y1) // 2
-            detection_list_xywhs.append([x, y, w+x, h+y, score])
+        for detection in pose_array_msg.detections:
+            r = detection.roi
+            x, y = (r.x2 + r.x1) / 2, (r.y2 + r.y1) / 2
+            detection_list_xywhs.append([x, y, r.x2-r.x1, r.y2-r.y1, detection.confidence * 100])
 
         detection_list_xywhs = np.asarray(detection_list_xywhs)
-
-
 
         # Call the tracker
         tracks = self.tracker.update(detection_list_xywhs)
 
         # Copy the detections
-        bounding_boxes_copy = bounding_boxes
+        detections_copy = pose_array_msg.detections
 
-        tracked_bounding_boxes = []
+        tracked_detections = []
 
         if len(detection_list_xywhs) > 0:
             print(tracks)
@@ -56,7 +52,7 @@ class ObjectTrackerNode:
             C = np.zeros((len(tracks), len(detection_list_xywhs)))
             for i, track in enumerate(tracks):
                 for j, det in enumerate(detection_list_xywhs):
-                    C[i, j] = np.linalg.norm(det[0:-2] - track[0:-2])
+                    C[i, j] = np.linalg.norm(det[0:-1] - track[0:-1])
 
             # apply linear assignment
             row_ind, col_ind = linear_sum_assignment(C)
@@ -64,26 +60,26 @@ class ObjectTrackerNode:
             for i, j in zip(row_ind, col_ind):
                 if C[i, j] < self.cost_threshold and j != 0:
                     id = "id={}".format(tracks[i, 4])
-                    print("{} -> {} with cost {}". format(id, bounding_boxes_copy[j-1].b_box_id, C[i, j]))
-                    trk_bbox = bounding_boxes_copy[j-1]
-                    trk_bbox.b_box_id = id
-                    tracked_bounding_boxes.append(trk_bbox)
+                    print("{} -> {} with cost {}". format(id, detections_copy[j-1].track_id, C[i, j]))
+                    trk_bbox = detections_copy[j-1]
+                    trk_bbox.track_id = id
+                    tracked_detections.append(trk_bbox)
 
             print("---")
         else:
             print("No tracked objects!")
 
-        detection_msg.bounding_boxes = tracked_bounding_boxes
-        self.pub_trackers.publish(detection_msg)
+        pose_array_msg.detections = tracked_detections
+        self.pub_trackers.publish(pose_array_msg)
 
 
 def __tracking_from_detections():
-    raise NotImplementedError("Not currently supported in favour of BayesianTracking project for CVPR.")
-    rospy.init_node('rasberry_perception_detection_tracker')
+    # raise NotImplementedError("Not currently supported in favour of BayesianTracking project for CVPR.")
+    rospy.init_node('rasberry_perception_sort_tracker')
 
-    detection_topic = rospy.get_param("~detection_topic", "/detection/predictions")
-    tracker_topic = rospy.get_param('~tracker_topic', "/detection/tracks")
-    cost_threshold = rospy.get_param('~cost_threshold', 15)
+    detection_topic = rospy.get_param("~detection_topic", "/rasberry_perception/results")
+    tracker_topic = rospy.get_param('~tracker_topic', "/rasberry_perception/results_tracked")
+    cost_threshold = rospy.get_param('~cost_threshold', 50)
     min_hits = rospy.get_param('~min_hits', 1)
     max_age = rospy.get_param('~max_age', 5)
 
