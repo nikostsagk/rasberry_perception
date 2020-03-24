@@ -43,9 +43,13 @@ using namespace Models;
 // rule to detect lost track
 template<class FilterType>
 bool MTRK::isLost(const FilterType *filter, double stdLimit) {
-//    ROS_INFO("var_x: %f, var_y: %f, var_z: %f",filter->X(0,0), filter->X(2,2), filter->X(4,4));
     // track lost if var(x)+var(y)+var(z) > stdLimit^2
-    return filter->X(0, 0) + filter->X(2, 2) + filter->X(4, 4) > sqr(stdLimit);
+    bool is_lost = filter->X(0, 0) + filter->X(2, 2) + filter->X(4, 4) > sqr(stdLimit);
+
+//    ROS_INFO("SUM(var_x: %f, var_y: %f, var_z: %f = %f) > stdLim: %f = %i",filter->X(0,0), filter->X(2,2), filter->X(4,4),
+//             filter->X(0, 0) + filter->X(2, 2) + filter->X(4, 4), sqr(stdLimit), is_lost);
+
+    return is_lost;
 }
 
 // rule to create new track
@@ -60,6 +64,13 @@ bool MTRK::initialize(FilterType *&filter, sequence_t &obsvSeq, observ_model_t o
 
         FM::Vec v((obsvSeq.back().vec - obsvSeq.front().vec) / dt);
 
+//        int cmp_v = 2;
+//        if(v[0] < -cmp_v || v[0] > cmp_v || v[1] < -cmp_v || v[1] > cmp_v || v[2] < -cmp_v || v[2] > cmp_v) {
+//            return false;
+//        }
+//
+//        ROS_INFO_STREAM("v: " << v);
+
         FM::Vec x(6);
         FM::SymMatrix X(6, 6);
 
@@ -70,12 +81,12 @@ bool MTRK::initialize(FilterType *&filter, sequence_t &obsvSeq, observ_model_t o
         x[4] = obsvSeq.back().vec[2];
         x[5] = v[2];
         X.clear();
-        X(0, 0) = sqr(0.2);
-        X(1, 1) = sqr(1.0);
-        X(2, 2) = sqr(0.2);
-        X(3, 3) = sqr(1.0);
-        X(4, 4) = sqr(0.2);
-        X(5, 5) = sqr(1.0);
+        X(0, 0) = sqr(0.01);
+        X(1, 1) = sqr(0.10);
+        X(2, 2) = sqr(0.01);
+        X(3, 3) = sqr(0.10);
+        X(4, 4) = sqr(0.01);
+        X(5, 5) = sqr(0.10);
         filter = new FilterType(6);
         filter->init(x, X);
     }
