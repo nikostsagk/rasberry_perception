@@ -6,7 +6,7 @@ import rospy
 
 from rasberry_perception.detection.utility import function_timer
 from rasberry_perception.srv import GetDetectorResults, GetDetectorResultsResponse
-from rasberry_perception.msg import DetectionStatus
+from rasberry_perception.msg import ServiceStatus
 from rasberry_perception.detection.interfaces.registry import DETECTION_REGISTRY
 
 default_service_name = "get_detections_service"
@@ -58,7 +58,7 @@ class DefaultDetectionServer(BaseDetectionServer):
     """
     def __init__(self, rate=30):
         # Extra initialisation done here
-        status_msg = DetectionStatus(OKAY=True, ERROR=False, BUSY=False)
+        status_msg = ServiceStatus(OKAY=True, ERROR=False, BUSY=False)
         self.default_response = GetDetectorResultsResponse(status=status_msg)
         self._hz_limit = rospy.Rate(rate)
         # Base class must be called at the end due to self.service_server.spin()

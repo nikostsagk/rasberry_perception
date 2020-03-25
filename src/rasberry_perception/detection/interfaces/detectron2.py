@@ -4,8 +4,7 @@ from threading import Event
 
 import numpy as np
 import ros_numpy
-from rasberry_perception.msg import Detections, DetectionStatus, RegionOfInterest, SegmentOfInterest, Detection, \
-    DetectionInfo
+from rasberry_perception.msg import Detections, ServiceStatus, RegionOfInterest, SegmentOfInterest, Detection
 
 from rasberry_perception.detection.interfaces.default import BaseDetectionServer
 from rasberry_perception.detection.interfaces.registry import DETECTION_REGISTRY
