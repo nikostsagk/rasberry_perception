@@ -9,7 +9,7 @@ from rasberry_perception.msg import Detections, ServiceStatus, RegionOfInterest,
 from rasberry_perception.detection.interfaces.default import BaseDetectionServer
 from rasberry_perception.detection.interfaces.registry import DETECTION_REGISTRY
 from rasberry_perception.detection.utility import function_timer
-from rasberry_perception.detection.visualisation import GenericMask
+# from rasberry_perception.detection.visualisation import GenericMask
 from rasberry_perception.srv import GetDetectorResultsResponse, GetDetectorResultsRequest
 
 
@@ -71,7 +71,7 @@ class Detectron2Server(BaseDetectionServer):
             GetDetectorResultsResponse
         """
         if self.currently_busy.is_set():
-            return GetDetectorResultsResponse(status=DetectionStatus(BUSY=True))
+            return GetDetectorResultsResponse(status=ServiceStatus(BUSY=True))
         self.currently_busy.set()
 
         detections = Detections(header=request.image.header)
@@ -86,7 +86,7 @@ class Detectron2Server(BaseDetectionServer):
                 boxes = np.asarray(instances.pred_boxes.tensor) if instances.has("pred_boxes") else None
 
                 if len(boxes) == 0:
-                    return GetDetectorResultsResponse(status=DetectionStatus(), detections=detections)
+                    return GetDetectorResultsResponse(status=ServiceStatus(), detections=detections)
 
                 scores = instances.scores if instances.has("scores") else None
                 classes = instances.pred_classes if instances.has("pred_classes") else None
@@ -110,6 +110,6 @@ class Detectron2Server(BaseDetectionServer):
                                                            confidence=score, class_name=self.classes[cls]))
         except Exception as e:
             print("Detectron2Server error: ", e)
-            return GetDetectorResultsResponse(status=DetectionStatus(ERROR=True), detections=detections)
+            return GetDetectorResultsResponse(status=ServiceStatus(ERROR=True), detections=detections)
 
-        return GetDetectorResultsResponse(status=DetectionStatus(OKAY=True), detections=detections)
+        return GetDetectorResultsResponse(status=ServiceStatus(OKAY=True), detections=detections)
