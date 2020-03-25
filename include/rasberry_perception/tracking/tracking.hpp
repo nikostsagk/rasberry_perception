@@ -70,6 +70,7 @@ private:
     // MEMBER VARIABLES
     tf::TransformListener* listener;
     ros::Publisher pub_results, pub_results_array, pub_markers;
+    std_msgs::Header last_header_;
     std::string target_frame, startup_time_str;
     double tracker_frequency{};
     double startup_time;

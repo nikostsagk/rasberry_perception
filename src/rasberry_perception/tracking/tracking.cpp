@@ -172,6 +172,13 @@ int Tracking::parseParams(ros::NodeHandle n) {
             return -1;
         }
 
+        ROS_INFO("pos_noise_x: %f, pos_noise_y: %f, pos_noise_x: %f, seq_time: %f,  seq_size: %i, fps: %f",
+                pos_noise_x, pos_noise_y, pos_noise_z, seq_time, seq_size, this->tracker_frequency);
+        ROS_INFO_STREAM("pos_noise_y:  " << pos_noise_y);
+        ROS_INFO_STREAM("pos_noise_z:  " << pos_noise_z);
+        ROS_INFO_STREAM("seq_time:  " << seq_time);
+        ROS_INFO_STREAM("seq_size:  " << seq_size);
+
         try {
             if (ekf != nullptr) {
                 ekf->addDetectorModel(
@@ -265,6 +272,10 @@ void Tracking::trackingThread() {
 
             if (!labelled_poses.empty()) {
                 rasberry_perception::TrackerResults poses;
+
+                // Set header to the most recent detection frame
+                poses.header = this->last_header_;
+
                 rasberry_perception::TrackerResults vels;
                 rasberry_perception::TrackerResults vars;
                 std::vector<long> det_ids;
@@ -370,8 +381,7 @@ void Tracking::createVisualisation(const rasberry_perception::TrackerResults &po
     this->publishDetections(marker_array);
 }
 
-void
-Tracking::detectorCallbackPoseArray(const geometry_msgs::PoseArray::ConstPtr &results, const std::string &detector) {
+void Tracking::detectorCallbackPoseArray(const geometry_msgs::PoseArray::ConstPtr &results, const std::string &detector) {
     if (results->poses.empty()) {
         return;
     }
@@ -412,6 +422,9 @@ void Tracking::detectorCallbackTaggedPoseArray(const rasberry_perception::Tagged
         geometry_msgs::PoseStamped poseInTargetCoords;
         poseInCamCoords.header = results->header;
         poseInCamCoords.pose = pt.pose;
+
+        // Set last header to the most recent detection header
+        this->last_header_ = results->header;
 
         //Transform
         try {
