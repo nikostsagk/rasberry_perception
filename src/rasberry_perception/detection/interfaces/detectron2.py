@@ -78,6 +78,8 @@ class Detectron2Server(BaseDetectionServer):
 
         try:
             image = ros_numpy.numpify(request.image)
+            if request.image.encoding == "rgb8":
+                image = image[..., ::-1]
             predictions = self.predictor(image)
             self.currently_busy.clear()
 

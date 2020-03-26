@@ -17,20 +17,23 @@ from rasberry_perception.detection.compat import input
 
 def __main():
     import pathlib
-    pico_root = (pathlib.Path(__file__).parent / "pico_2019_10_11").resolve()
+    pico_root = (pathlib.Path(__file__).parent / "realsense_2019_10_11").resolve()
 
     if not pico_root.is_dir():
-        raise ValueError("Request the download of sequence 0 from Raymond "
+        raise ValueError("Request the download of sequence from Raymond "
                          "http://lcas.lincoln.ac.uk/owncloud/index.php/s/PYEccW0yWvZaSz4/download")
 
     files = sorted(list(str(s) for s in pico_root.glob("*.pkl")))
 
     fps = 15
+    loop = True
     seconds_limit = 20
     repeat_frames = 1
     warmup_frames = 0
-    actual_seconds = (seconds_limit * repeat_frames) + (warmup_frames / fps)
     frame_limit = int(fps * seconds_limit)
+    frame_limit = frame_limit if frame_limit < len(files) else len(files)
+    seconds_limit = frame_limit / fps
+    actual_seconds = (seconds_limit * repeat_frames) + (warmup_frames / fps)
     assert frame_limit > 0
     print("Truncating files array (n={}) to {} seconds (n={}) for {} fps".format(len(files), actual_seconds, frame_limit,
                                                                                  fps))
@@ -47,7 +50,7 @@ def __main():
         # if len(ram_files) > 5:
         #     break
 
-    rospy.init_node("sequence_0_publisher", anonymous=True)
+    rospy.init_node("sequence_publisher", anonymous=True)
     hz = rospy.Rate(fps)
 
     republish_namespace = "sequence_0/"
@@ -65,11 +68,11 @@ def __main():
     static_transformStamped = geometry_msgs.msg.TransformStamped()
     static_transformStamped.header.stamp = rospy.Time.now()
     static_transformStamped.header.frame_id = "map"
-    static_transformStamped.child_frame_id = "pico_zense_frame"
+    static_transformStamped.child_frame_id = "sequence_frame"
     static_transformStamped.transform.rotation.w = 1.0
     broadcaster.sendTransform(static_transformStamped)
-    static_transformStamped.header.frame_id = "pico_zense_frame"
-    static_transformStamped.child_frame_id = "pico_zense_colour_frame"
+    static_transformStamped.header.frame_id = "sequence_frame"
+    static_transformStamped.child_frame_id = "sequence_colour_frame"
     broadcaster.sendTransform(static_transformStamped)
 
     from timeit import default_timer as timer
@@ -80,7 +83,8 @@ def __main():
 
     while not rospy.is_shutdown():
         print("Running iteration {}".format(iteration))
-        input("\nStart? [enter]: ")
+        if not loop:
+            input("\nStart? [enter]: ")
         start = timer()
 
         for frame_idx, data in enumerate(ram_files):
@@ -100,20 +104,32 @@ def __main():
             if iteration == 0:
                 out.write(ros_numpy.numpify(data["rgb"]["image"]))
 
+            def fid(old):
+                for o, n in [("realsense_camera", "sequence"), ("pico_zense", "sequence"), ("color", "colour"),
+                             ("_optical", "")]:
+                    old = old.replace(o, n)
+                return old
+
             for _ in range(warmup_frames if frame_idx == 0 else repeat_frames):
                 now = rospy.Time.now()
                 data["rgb"]["image"].header.stamp = now
-                data["aligned_depth_to_rgb"]["image"].header.stamp = now
-                data["aligned_depth_to_rgb"]["intrinsics"].header.stamp = now
-                data["aligned_depth_to_rgb"]["colourmap"].header.stamp = now
+                data["rgb"]["image"].header.frame_id = fid(data["rgb"]["image"].header.frame_id)
                 data["rgb"]["intrinsics"].header.stamp = now
+                data["rgb"]["intrinsics"].header.frame_id = fid(data["rgb"]["intrinsics"].header.frame_id)
+                data["aligned_depth_to_rgb"]["image"].header.stamp = now
+                data["aligned_depth_to_rgb"]["image"].header.frame_id = fid(data["aligned_depth_to_rgb"]["image"].header.frame_id)
+                data["aligned_depth_to_rgb"]["intrinsics"].header.stamp = now
+                data["aligned_depth_to_rgb"]["intrinsics"].header.frame_id = fid(data["aligned_depth_to_rgb"]["intrinsics"].header.frame_id)
 
                 image_pub.publish(data["rgb"]["image"])
                 image_info_pub.publish(data["rgb"]["intrinsics"])
                 depth_pub.publish(data["aligned_depth_to_rgb"]["image"])
                 depth_info_pub.publish(data["aligned_depth_to_rgb"]["intrinsics"])
-                depth_map_pub.publish(data["aligned_depth_to_rgb"]["colourmap"])
                 robot_position.publish(data["localisation"]["robot_pose"])
+
+                if "colourmap" in data["aligned_depth_to_rgb"]:
+                    data["aligned_depth_to_rgb"]["colourmap"].header.stamp = now
+                    depth_map_pub.publish(data["aligned_depth_to_rgb"]["colourmap"])
                 if data["localisation"]["current_node"] is not None:
                     current_node.publish(data["localisation"]["current_node"])
 

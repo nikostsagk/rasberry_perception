@@ -232,7 +232,7 @@ class RunClientOnTopic:
         vis = Visualiser(ros_numpy.numpify(image_msg))
         vis.draw_detections_message(result)
         vis_image = vis.get_image(overlay_alpha=1.0)
-        vis_msg = ros_numpy.msgify(Image, vis_image, encoding="bgr8")
+        vis_msg = ros_numpy.msgify(Image, vis_image, encoding=image_msg.encoding)
         vis_msg.header = image_msg.header
         self.detections_vis_pub.publish(vis_msg)
 
