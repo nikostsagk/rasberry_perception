@@ -13,6 +13,7 @@ import ros_numpy
 import rospy
 from sensor_msgs.msg import Image, CameraInfo
 
+from rasberry_perception.detection.utility import function_timer
 from rasberry_perception.msg import TrackerResults, Detections
 
 from std_msgs.msg import String
@@ -30,7 +31,7 @@ class TrackLogs:
             message_filters.Subscriber("/rasberry_perception/tracking/results_array", TrackerResults),
         ]
 
-        sync_queue, sync_thresh = 50, 0.2
+        sync_queue, sync_thresh = 200, 0.1
         rospy.loginfo("Waiting for topics with time synchroniser (queue {}, {}s tolerance) on '{}'".format(
             sync_queue, sync_thresh, ', '.join([s.topic for s in subscribers])
         ))
@@ -45,6 +46,7 @@ class TrackLogs:
         self.logs = defaultdict(int)
         print("\n".join(["{}: {}".format(k, v) for k, v in logs.items()]))
 
+    @function_timer.logger
     def _track_callback(self, image_msg, camera_info, detector_results, tracker_results):
         fx, fy, cx, cy = camera_info.P[0], camera_info.P[5], camera_info.P[2], camera_info.P[6]
         image = ros_numpy.numpify(image_msg)
@@ -63,16 +65,13 @@ class TrackLogs:
             y = ((fy * track.pose.position.y) / track.pose.position.z) + cy
 
             if x - sizer >= 0 and x + sizer <= width and y - sizer >= 0 and y + sizer <= height:
-
                 track_centre = np.asarray([x, y])
                 dist_2 = np.sum((dt_centres - track_centre) ** 2, axis=1)
                 closest_dt = np.argmin(dist_2)
-                matched_dt = dt_centres[closest_dt]
+                matched_dt = dt_boxes[closest_dt]
                 match_cost = dist_2[closest_dt]
                 roi_path = track_output_folder / "{:04d}_{}.jpg".format(self.logs[track.id], int(match_cost))
-                xi, yi = matched_dt.astype(np.int)
-
-                roi = image[yi-sizer:yi+sizer, xi-sizer:xi+sizer]
+                roi = image[int(matched_dt.y1):int(matched_dt.y2), int(matched_dt.x1):int(matched_dt.x2)]
                 cv2.imwrite(str(roi_path), roi)
                 self.logs[track.id] += 1
         # print(bounding_boxes)
