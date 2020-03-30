@@ -74,7 +74,7 @@ class Detectron2Server(BaseDetectionServer):
             return GetDetectorResultsResponse(status=ServiceStatus(BUSY=True))
         self.currently_busy.set()
 
-        detections = Detections(header=request.image.header)
+        detections = Detections()
 
         try:
             image = ros_numpy.numpify(request.image)
@@ -88,7 +88,7 @@ class Detectron2Server(BaseDetectionServer):
                 boxes = np.asarray(instances.pred_boxes.tensor) if instances.has("pred_boxes") else None
 
                 if len(boxes) == 0:
-                    return GetDetectorResultsResponse(status=ServiceStatus(), detections=detections)
+                    return GetDetectorResultsResponse(status=ServiceStatus(), results=detections)
 
                 scores = instances.scores if instances.has("scores") else None
                 classes = instances.pred_classes if instances.has("pred_classes") else None
@@ -108,10 +108,10 @@ class Detectron2Server(BaseDetectionServer):
                             yv, xv = v
                     roi = RegionOfInterest(x1=x1, y1=y1, x2=x2, y2=y2)
                     seg_roi = SegmentOfInterest(x=xv, y=yv)
-                    detections.detections.append(Detection(roi=roi, seg_roi=seg_roi, id=self._new_id(),
-                                                           confidence=score, class_name=self.classes[cls]))
+                    detections.objects.append(Detection(roi=roi, seg_roi=seg_roi, id=self._new_id(),
+                                                        confidence=score, class_name=self.classes[cls]))
         except Exception as e:
             print("Detectron2Server error: ", e)
-            return GetDetectorResultsResponse(status=ServiceStatus(ERROR=True), detections=detections)
+            return GetDetectorResultsResponse(status=ServiceStatus(ERROR=True), results=detections)
 
-        return GetDetectorResultsResponse(status=ServiceStatus(OKAY=True), detections=detections)
+        return GetDetectorResultsResponse(status=ServiceStatus(OKAY=True), results=detections)

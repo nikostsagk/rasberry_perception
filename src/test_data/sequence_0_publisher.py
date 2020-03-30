@@ -17,13 +17,15 @@ from rasberry_perception.detection.compat import input
 
 def __main():
     import pathlib
-    pico_root = (pathlib.Path(__file__).parent / "realsense_2019_10_11").resolve()
+    dataset_name = "pico_2019_10_11"
 
-    if not pico_root.is_dir():
+    root = (pathlib.Path(__file__).parent / dataset_name).resolve()
+
+    if not root.is_dir():
         raise ValueError("Request the download of sequence from Raymond "
                          "http://lcas.lincoln.ac.uk/owncloud/index.php/s/PYEccW0yWvZaSz4/download")
 
-    files = sorted(list(str(s) for s in pico_root.glob("*.pkl")))
+    files = sorted(list(str(s) for s in root.glob("*.pkl")))
 
     fps = 15
     loop = True
@@ -97,12 +99,15 @@ def __main():
                 break
 
             if iteration == 0 and out is None:
-                out = cv2.VideoWriter(str(pico_root.parent / "sequence_0to{}_out{}s.avi".format(frame_limit,
-                                                                                                seconds_limit)),
-                                      cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 10,
+                out = cv2.VideoWriter(str(root.parent / "sequence_{}_0to{}_out{}s.avi".format(dataset_name, frame_limit,
+                                                                                              seconds_limit)),
+                                      cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), fps,
                                       (data["rgb"]["image"].width, data["rgb"]["image"].height))
             if iteration == 0:
-                out.write(ros_numpy.numpify(data["rgb"]["image"]))
+                im = ros_numpy.numpify(data["rgb"]["image"])
+                if data["rgb"]["image"].encoding == "rgb8":
+                    im = im[..., ::-1]
+                out.write(im)
 
             def fid(old):
                 for o, n in [("realsense_camera", "sequence"), ("pico_zense", "sequence"), ("color", "colour"),

@@ -2,4 +2,4 @@
 sensor_msgs/Image image # the image to run the backend detector on
 ---
 rasberry_perception/ServiceStatus status # the job completion status
-rasberry_perception/Detections detections # the corresponding imager
+rasberry_perception/Detections results # the corresponding detections

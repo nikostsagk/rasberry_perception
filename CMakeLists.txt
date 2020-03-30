@@ -39,9 +39,7 @@ add_message_files(
     SegmentOfInterest.msg
     ServiceStatus.msg
     TaggedPose.msg
-    TaggedPoseArray.msg
-    TrackDetection.msg
-    TrackerResults.msg
+    TaggedPoseStampedArray.msg
 )
 
 generate_messages(DEPENDENCIES std_msgs sensor_msgs geometry_msgs rasberry_perception)

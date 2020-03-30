@@ -40,6 +40,8 @@ Tracking::Tracking() : detect_seq(0), marker_seq(0) {
     // Declare variables that can be modified by launch file or command line.
     std::string pub_topic_results;
     std::string pub_topic_results_array;
+    std::string pub_topic_pose_results;
+    std::string pub_topic_pose_results_array;
     std::string pub_topic_marker_array;
     std::string reset_on_topic;
 
@@ -48,8 +50,10 @@ Tracking::Tracking() : detect_seq(0), marker_seq(0) {
     // while using different parameters.
     ros::NodeHandle private_nh("~");
     private_nh.param("target_frame", target_frame, std::string("/base_link"));
-    private_nh.param("results", pub_topic_results, std::string("/rasberry_perception/tracking/pose"));
-    private_nh.param("results_array", pub_topic_results_array, std::string("/rasberry_perception/tracking/pose_array"));
+    private_nh.param("results", pub_topic_results, std::string("/rasberry_perception/tracking/results"));
+    private_nh.param("results_array", pub_topic_results_array, std::string("/rasberry_perception/tracking/results_array"));
+    private_nh.param("pose_results", pub_topic_pose_results, std::string("/rasberry_perception/tracking/pose"));
+    private_nh.param("pose_results_array", pub_topic_pose_results_array, std::string("/rasberry_perception/tracking/pose_array"));
     private_nh.param("marker_array", pub_topic_marker_array, std::string("/rasberry_perception/tracking/marker_array"));
     private_nh.param("tracker_frequency", this->tracker_frequency, double(30.0));
     private_nh.param("reset_on", reset_on_topic, std::string(""));
@@ -65,8 +69,10 @@ Tracking::Tracking() : detect_seq(0), marker_seq(0) {
         );
     }
 
-    this->pub_results = private_nh.advertise<rasberry_perception::TrackDetection>(pub_topic_results, 1);
-    this->pub_results_array = private_nh.advertise<rasberry_perception::TrackerResults>(pub_topic_results_array, 1);
+    this->pub_results = private_nh.advertise<rasberry_perception::Detection>(pub_topic_results, 1);
+    this->pub_results_array = private_nh.advertise<rasberry_perception::Detections>(pub_topic_results_array, 1);
+    this->pub_pose_results = private_nh.advertise<rasberry_perception::TaggedPose>(pub_topic_pose_results, 1);
+    this->pub_pose_results_array = private_nh.advertise<rasberry_perception::TaggedPoseStampedArray>(pub_topic_pose_results_array, 1);
     this->pub_markers = private_nh.advertise<visualization_msgs::MarkerArray>(pub_topic_marker_array, 1);
 
     boost::thread tracking_thread(boost::bind(&Tracking::trackingThread, this));
@@ -226,25 +232,36 @@ int Tracking::parseParams(ros::NodeHandle n) {
             );
             return -1;
         }
-        if (detectors[it->first].hasMember("tagged_topic") && detectors[it->first]["tagged_topic"] != "") {
+
+        if (detectors[it->first].hasMember("topic") && detectors[it->first]["topic"] != "") {
             subs.push_back(
-                    n.subscribe<rasberry_perception::TaggedPoseArray>(
+                    n.subscribe<rasberry_perception::Detections>(
+                            (std::string) detectors[it->first]["topic"], 1,
+                            boost::bind(&Tracking::detectorCallback, this, _1, it->first)
+                    )
+            );
+        } else if (detectors[it->first].hasMember("tagged_topic") && detectors[it->first]["tagged_topic"] != "") {
+            subs.push_back(
+                    n.subscribe<rasberry_perception::TaggedPoseStampedArray>(
                             (std::string) detectors[it->first]["tagged_topic"], 1,
                             boost::bind(
-                                    &Tracking::detectorCallbackTaggedPoseArray,
+                                    &Tracking::detectorCallbackTaggedPoseStampedArray,
                                     this, _1, it->first))
             );
-        } else if (detectors[it->first].hasMember("topic") && detectors[it->first]["topic"] != "") {
+        } else if (detectors[it->first].hasMember("pose_topic") && detectors[it->first]["pose_topic"] != "") {
             subs.push_back(
-                    n.subscribe<geometry_msgs::PoseArray>((std::string) detectors[it->first]["topic"], 1,
-                                                          boost::bind(
-                                                                  &Tracking::detectorCallbackPoseArray,
-                                                                  this, _1, it->first))
+                    n.subscribe<geometry_msgs::PoseArray>(
+                            (std::string) detectors[it->first]["pose_topic"], 1,
+                            boost::bind(&Tracking::detectorCallbackPoseArray, this, _1, it->first)
+                    )
             );
         } else {
             ROS_FATAL_STREAM(
-                    "Invalid topic parameter. Please use a topic of type rasberry_perception::TaggedPose for tagged_topic fields and topic for pose array fields."
-                            << (std::string) (it->first));
+                    "Invalid topic parameter. Please use a topic of type for " << (std::string) (it->first) <<
+                    ":\n\t 1. rasberry_perception::Detections for topic fields\n" <<
+                       "\t 2. rasberry_perception::TaggedPoseStampedArray for tagged_topic fields\n" <<
+                       "\t 3. geometry_msgs::PoseArray for pose_topic fields\n"
+            );
             return -1;
         }
     }
@@ -261,7 +278,7 @@ void Tracking::trackingThread() {
         std::map<long, std::string> tags;
         try {
             // Results from the tracked objects thread (detectorCallback)
-            std::map<long, std::vector<rasberry_perception::TrackDetection>> labelled_poses;
+            std::map<long, std::vector<rasberry_perception::Detection>> labelled_poses;
             if (ekf != nullptr) {
                 labelled_poses = ekf->track(&time_sec, tags);
             } else if (ukf != nullptr) {
@@ -271,31 +288,32 @@ void Tracking::trackingThread() {
             }
 
             if (!labelled_poses.empty()) {
-                rasberry_perception::TrackerResults poses;
+                // TODO: Replace this with the last recieved detections message with the fields replaced
+                rasberry_perception::Detections detections;
 
                 // Set header to the most recent detection frame
-                poses.header = this->last_header_;
+//                poses.header = this->last_header_;
 
-                rasberry_perception::TrackerResults vels;
-                rasberry_perception::TrackerResults vars;
+//                rasberry_perception::TrackerResults vels;
+//                rasberry_perception::TrackerResults vars;
                 std::vector<long> det_ids;
 
-                for (std::map<long, std::vector<rasberry_perception::TrackDetection> >::const_iterator it = labelled_poses.begin();
+                for (std::map<long, std::vector<rasberry_perception::Detection> >::const_iterator it = labelled_poses.begin();
                      it != labelled_poses.end(); ++it) {
 
-                    poses.tracks.push_back(it->second[0]);
+//                    detections.poses.push_back(it->second[0]);
                     publishDetections(it->second[0]);  // Publish pose only
-                    vels.tracks.push_back(it->second[1]);
-                    vars.tracks.push_back(it->second[2]);
+//                    vels.tracks.push_back(it->second[1]);
+//                    vars.tracks.push_back(it->second[2]);
 
                     det_ids.push_back(it->first);
                 }
 
                 if (pub_results.getNumSubscribers() || pub_results_array.getNumSubscribers())
-                    publishDetections(poses);
+                    publishDetections(detections);
 
                 if (pub_markers.getNumSubscribers())
-                    createVisualisation(poses);
+                    createVisualisation(detections);
             }
             fps.sleep();
         }
@@ -311,19 +329,27 @@ void Tracking::trackingThread() {
 }
 
 
-void Tracking::publishDetections(const rasberry_perception::TrackDetection &msg) {
+void Tracking::publishDetections(const rasberry_perception::Detection &msg) {
     this->pub_results.publish(msg);
 }
 
-void Tracking::publishDetections(const rasberry_perception::TrackerResults &msg) {
+void Tracking::publishDetections(const rasberry_perception::Detections &msg) {
     this->pub_results_array.publish(msg);
+}
+
+void Tracking::publishDetections(const rasberry_perception::TaggedPose &msg) {
+    this->pub_pose_results.publish(msg);
+}
+
+void Tracking::publishDetections(const rasberry_perception::TaggedPoseStampedArray &msg) {
+    this->pub_pose_results_array.publish(msg);
 }
 
 void Tracking::publishDetections(const visualization_msgs::MarkerArray &msg) {
     this->pub_markers.publish(msg);
 }
 
-void Tracking::createVisualisation(const rasberry_perception::TrackerResults &poses) {
+void Tracking::createVisualisation(const rasberry_perception::Detections &detections) {
     visualization_msgs::MarkerArray marker_array;
 
     geometry_msgs::Vector3 scale;
@@ -343,7 +369,7 @@ void Tracking::createVisualisation(const rasberry_perception::TrackerResults &po
     green.g = 200.0F / 255.0F;
     green.b = 0.0F / 255.0F;
 
-    for (const auto & track : poses.tracks) {
+    for (const auto & object : detections.objects) {
         ros::Time now = ros::Time::now();
         std::string ns = "rasberry_perception/tracking";
 
@@ -352,10 +378,10 @@ void Tracking::createVisualisation(const rasberry_perception::TrackerResults &po
         marker.header.stamp = now;
         marker.header.seq = ++marker_seq;
         marker.ns = ns;
-        marker.id = track.id;
+        marker.id = object.track_id;
         marker.type = visualization_msgs::Marker::SPHERE;
         marker.action = visualization_msgs::Marker::MODIFY;
-        marker.pose = track.pose;
+        marker.pose = object.pose;
         marker.scale = scale;
         marker.color = red;
         marker.lifetime = ros::Duration(0.2);
@@ -366,11 +392,11 @@ void Tracking::createVisualisation(const rasberry_perception::TrackerResults &po
         text_marker.header.stamp = now;
         text_marker.header.seq = marker.header.seq;
         text_marker.ns = ns;
-        text_marker.id = -track.id - 100;
+        text_marker.id = -object.track_id - 100;
         text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-        text_marker.text = num_to_str<long>(track.id);
+        text_marker.text = num_to_str<long>(object.id);
         text_marker.action = visualization_msgs::Marker::MODIFY;
-        text_marker.pose = track.pose;
+        text_marker.pose = object.pose;
         text_marker.pose.position.y -= scale.y * 2;
         text_marker.scale.z = scale.z;
         text_marker.color = green;
@@ -379,6 +405,11 @@ void Tracking::createVisualisation(const rasberry_perception::TrackerResults &po
     }
 
     this->publishDetections(marker_array);
+}
+
+void Tracking::detectorCallback(const rasberry_perception::Detections::ConstPtr &results,
+                                const std::string &detector) {
+    throw std::runtime_error("HEY");
 }
 
 void Tracking::detectorCallbackPoseArray(const geometry_msgs::PoseArray::ConstPtr &results, const std::string &detector) {
@@ -391,8 +422,8 @@ void Tracking::detectorCallbackPoseArray(const geometry_msgs::PoseArray::ConstPt
         throw reset_exception();
     }
 
-    // Shiv between TaggedPoseArray and PoseArray (copy results to TaggedPoseArray with empty tags)
-    rasberry_perception::TaggedPoseArray::Ptr tagged_res(new rasberry_perception::TaggedPoseArray());
+    // Shiv between TaggedPoseStampedArray and PoseArray (copy results to TaggedPoseStampedArray with empty tags)
+    rasberry_perception::TaggedPoseStampedArray::Ptr tagged_res(new rasberry_perception::TaggedPoseStampedArray());
     for (auto &it : results->poses) {
         auto temp_pose = rasberry_perception::TaggedPose();
         temp_pose.pose = it;
@@ -401,11 +432,11 @@ void Tracking::detectorCallbackPoseArray(const geometry_msgs::PoseArray::ConstPt
     }
     tagged_res->header = results->header;
 
-    rasberry_perception::TaggedPoseArray::ConstPtr const_tagged_res(tagged_res);
-    this->detectorCallbackTaggedPoseArray(const_tagged_res, detector);
+    rasberry_perception::TaggedPoseStampedArray::ConstPtr const_tagged_res(tagged_res);
+    this->detectorCallbackTaggedPoseStampedArray(const_tagged_res, detector);
 }
 
-void Tracking::detectorCallbackTaggedPoseArray(const rasberry_perception::TaggedPoseArray::ConstPtr &results,
+void Tracking::detectorCallbackTaggedPoseStampedArray(const rasberry_perception::TaggedPoseStampedArray::ConstPtr &results,
                                                const std::string &detector) {
     if (results->poses.empty()) {
         return;

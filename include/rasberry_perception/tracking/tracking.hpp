@@ -16,11 +16,12 @@
 #ifndef BTRACKING_H
 #define BTRACKING_H
 
-#include "rasberry_perception/tracking/asso_exception.hpp"
 #include "rasberry_perception/TaggedPose.h"
-#include "rasberry_perception/TaggedPoseArray.h"
-#include "rasberry_perception/TrackDetection.h"
-#include "rasberry_perception/TrackerResults.h"
+#include "rasberry_perception/TaggedPoseStampedArray.h"
+#include "rasberry_perception/Detection.h"
+#include "rasberry_perception/Detections.h"
+
+#include "rasberry_perception/tracking/asso_exception.hpp"
 #include "rasberry_perception/tracking/simple_tracking.hpp"
 #include <bayes_tracking/BayesFilter/bayesFlt.hpp>
 #include <boost/bind.hpp>
@@ -32,6 +33,9 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Quaternion.h>
 #include <geometry_msgs/Vector3.h>
+#include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
+
 #include <math.h>
 #include <ros/ros.h>
 #include <ros/time.h>
@@ -39,8 +43,6 @@
 #include <tf/transform_datatypes.h>
 #include <tf/transform_listener.h>
 #include <vector>
-#include <visualization_msgs/Marker.h>
-#include <visualization_msgs/MarkerArray.h>
 #include <XmlRpcValue.h>
 
 
@@ -58,18 +60,24 @@ private:
 
     int parseParams(ros::NodeHandle n);
     void trackingThread();
-    void publishDetections(const rasberry_perception::TrackDetection& msg);
-    void publishDetections(const rasberry_perception::TrackerResults& msg);
-    void publishDetections(const visualization_msgs::MarkerArray& msg);
-    void createVisualisation(const rasberry_perception::TrackerResults& poses);
 
+
+    void publishDetections(const rasberry_perception::Detection& msg);
+    void publishDetections(const rasberry_perception::Detections& msg);
+    void publishDetections(const rasberry_perception::TaggedPose& msg);
+    void publishDetections(const rasberry_perception::TaggedPoseStampedArray& msg);
+
+    void publishDetections(const visualization_msgs::MarkerArray& msg);
+    void createVisualisation(const rasberry_perception::Detections& poses);
+
+    void detectorCallback(const rasberry_perception::Detections::ConstPtr &results, const std::string& detector);
     void detectorCallbackPoseArray(const geometry_msgs::PoseArray::ConstPtr &results, const std::string& detector);
-    void detectorCallbackTaggedPoseArray(const rasberry_perception::TaggedPoseArray::ConstPtr &results, const std::string& detector);
+    void detectorCallbackTaggedPoseStampedArray(const rasberry_perception::TaggedPoseStampedArray::ConstPtr &results, const std::string& detector);
     static void resetCallback(const std_msgs::String::ConstPtr & reset_reason);
 
     // MEMBER VARIABLES
     tf::TransformListener* listener;
-    ros::Publisher pub_results, pub_results_array, pub_markers;
+    ros::Publisher pub_results, pub_results_array, pub_pose_results, pub_pose_results_array, pub_markers;
     std_msgs::Header last_header_;
     std::string target_frame, startup_time_str;
     double tracker_frequency{};

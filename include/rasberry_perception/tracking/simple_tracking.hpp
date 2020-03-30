@@ -23,7 +23,6 @@
 
 #include <ros/ros.h>
 #include <ros/time.h>
-#include "rasberry_perception/TrackDetection.h"
 #include "rasberry_perception/TaggedPose.h"
 #include <bayes_tracking/multitracker.h>
 #include <bayes_tracking/models.h>
@@ -149,9 +148,9 @@ public:
         detectors[name] = det;
     }
 
-    std::map<long, std::vector<rasberry_perception::TrackDetection>> track(double *track_time, std::map<long, std::string> &tags) {
+    std::map<long, std::vector<rasberry_perception::Detection>> track(double *track_time, std::map<long, std::string> &tags) {
         boost::mutex::scoped_lock lock(mutex);
-        std::map<long, std::vector<rasberry_perception::TrackDetection>> result;
+        std::map<long, std::vector<rasberry_perception::Detection>>  result; // bbox id to detection info (including track)
         dt = getTime() - time;
         time += dt;
         if (track_time) *track_time = time;
@@ -190,7 +189,7 @@ public:
                       theta, //orientation
                       sqrt(mtrk[i].filter->X(0, 0)), sqrt(mtrk[i].filter->X(2, 2))//std dev
             );
-            rasberry_perception::TrackDetection pose, vel, var; // position, velocity, variance
+            rasberry_perception::Detection pose, vel, var; // position, velocity, variance
             // If no tag then the label is the track ID
             std::string label = mtrk[i].tag.empty() ? std::to_string(mtrk[i].id) : mtrk[i].tag;
             pose.pose.position.x = mtrk[i].filter->x[0];
@@ -198,24 +197,30 @@ public:
             pose.pose.position.z = mtrk[i].filter->x[4];
             pose.pose.orientation.z = sin(theta / 2);
             pose.pose.orientation.w = cos(theta / 2);
-            pose.tag = mtrk[i].tag;
-            pose.id = mtrk[i].id;
+            pose.id = -1; // TODO: Replace with original detection ID
+            pose.class_name = mtrk[i].tag;
+            pose.track_id = mtrk[i].id;
             result[mtrk[i].id].push_back(pose);
 
             vel.pose.position.x = mtrk[i].filter->x[1];
             vel.pose.position.y = mtrk[i].filter->x[3];
             vel.pose.position.z = mtrk[i].filter->x[5];
-            vel.tag = mtrk[i].tag;
-            vel.id = mtrk[i].id;
+            vel.id = -1; // TODO: Replace with original detection ID
+            vel.class_name = mtrk[i].tag;
+            vel.track_id = mtrk[i].id;
             result[mtrk[i].id].push_back(vel);
 
             var.pose.position.x = mtrk[i].filter->X(0, 0);
             var.pose.position.y = mtrk[i].filter->X(2, 2);
             var.pose.position.z = mtrk[i].filter->X(4, 4);
-            var.tag = mtrk[i].tag;
-            var.id = mtrk[i].id;
-            result[mtrk[i].id].push_back(var);
+            var.id = -1; // TODO: Replace with original detection ID
+            var.class_name = mtrk[i].tag;
+            var.track_id = mtrk[i].id;
+
             tags[mtrk[i].id] = mtrk[i].tag;
+
+            // TODO: Replace track_id with detection ID
+            result[mtrk[i].id].push_back(var);
         }
 
         return result;
