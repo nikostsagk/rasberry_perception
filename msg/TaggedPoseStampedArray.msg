@@ -1,4 +1,4 @@
-# This message is for storing multiple object poses with tags (for tracker)
+# This message is for storing multiple object poses with tags, with reference coordinate frame and timestamp
 #  Raymond Kirk (Tunstill) Copyright (c) 2020
 #  Email: ray.tunstill@gmail.com
 
