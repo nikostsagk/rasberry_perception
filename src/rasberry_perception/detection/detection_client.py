@@ -20,7 +20,7 @@ from sensor_msgs.msg import Image, CameraInfo
 from rasberry_perception.detection import Client, default_service_name
 from rasberry_perception.detection.utility import function_timer, WorkerTaskQueue
 from rasberry_perception.detection.visualisation import Visualiser
-from rasberry_perception.msg import Detections, Detection, RegionOfInterest, SegmentOfInterest, TaggedPoseArray
+from rasberry_perception.msg import Detections, Detection, RegionOfInterest, SegmentOfInterest, TaggedPoseStampedArray
 
 
 class RunClientOnTopic:
@@ -59,10 +59,10 @@ class RunClientOnTopic:
             self.depth_pose_publishers = {}
 
             # Publish as tagged (by class name)
-            self.tagged_bbox_pose_publisher = rospy.Publisher(self.namespace + "poses/tagged/bbox", TaggedPoseArray,
-                                                              queue_size=1)
-            self.tagged_segm_pose_publisher = rospy.Publisher(self.namespace + "poses/tagged/segm", TaggedPoseArray,
-                                                              queue_size=1)
+            self.tagged_bbox_pose_publisher = rospy.Publisher(self.namespace + "poses/tagged/bbox",
+                                                              TaggedPoseStampedArray, queue_size=1)
+            self.tagged_segm_pose_publisher = rospy.Publisher(self.namespace + "poses/tagged/segm",
+                                                              TaggedPoseStampedArray, queue_size=1)
 
             # Subscribe to depth and depth intrinsic topics
             subscribers.extend([
@@ -88,7 +88,7 @@ class RunClientOnTopic:
         rospy.loginfo("Waiting for topics with time synchroniser (queue {}, {}s tolerance) on '{}'".format(
             sync_queue, sync_thresh, ', '.join([s.topic for s in subscribers])
         ))
-        self.ts = message_filters.ApproximateTimeSynchronizer(subscribers, 1, 0.1)
+        self.ts = message_filters.ApproximateTimeSynchronizer(subscribers, sync_queue, sync_thresh, allow_headerless=True)
         self.ts.registerCallback(self.run_detector)
 
     def on_shutdown(self):
@@ -103,7 +103,7 @@ class RunClientOnTopic:
         if not result.status.OKAY:
             return
 
-        self.publish_detections(*args, result=result)
+        self.publish_detections(*args, response=result)
 
     def _publish_poses(self, poses, tagged_bbox_poses, tagged_segm_poses):
         """Creates a separate PoseArray publisher for each detected class and pose_origin and as a pose tagged
@@ -135,7 +135,7 @@ class RunClientOnTopic:
         return Pose(position=Point(np.median(xp), np.median(yp), np.median(zp)), orientation=Quaternion(0, 0, 0, 1))
 
     @function_timer.interval_logger(interval=10)
-    def publish_detections(self, image_msg, image_info, depth_msg, depth_info, result):
+    def publish_detections(self, image_msg, image_info, depth_msg, depth_info, response):
         """Function to publish detections based on the image data and detector result
 
         Args:
@@ -143,16 +143,18 @@ class RunClientOnTopic:
             image_info (CameraInfo): The RGB camera info message
             depth_msg (Image): The aligned depth to image_msg message
             depth_info (CameraInfo):  The depth camera info message
-            result (GetDetectorResultsResponse):  The result of a call to the GetDetectorResults service api
+            response (GetDetectorResultsResponse):  The result of a call to the GetDetectorResults service api
         """
         # Filter detections by the score
-        result.detections.detections = [d for d in result.detections.detections if d.confidence >= self.score_thresh]
+        results = Detections(camera_frame=image_msg, camera_info=image_info)
+        results.objects = [d for d in response.results.objects if d.confidence >= self.score_thresh]
+        for o in results.objects:
+            o.track_id = -1  # Signify this is not a tracked object
 
         # Uncomment this line for dummy detections
-        # result.detections.detections.extend(self._get_test_messages(depth_msg.height, depth_msg.width))
-        detections = result.detections.detections
+        # results.objects.extend(self._get_test_messages(depth_msg.height, depth_msg.width))
 
-        if not len(detections):
+        if not len(results.objects):
             return
 
         if self.depth_enabled and depth_msg is not None:
@@ -165,26 +167,30 @@ class RunClientOnTopic:
             # [Class Name][Origin] to PoseArray lookup
             poses_header = depth_msg.header
             poses = defaultdict(lambda: defaultdict(lambda: PoseArray(header=poses_header)))
-            tagged_bbox_poses = TaggedPoseArray(header=poses_header)
-            tagged_segm_poses = TaggedPoseArray(header=poses_header)
+            tagged_bbox_poses = TaggedPoseStampedArray(header=poses_header)
+            tagged_segm_poses = TaggedPoseStampedArray(header=poses_header)
+            tagged_real_poses = PoseArray(header=poses_header)
 
-            for detection in detections:
-                label = detection.class_name
+            for i in range(len(results.objects)):
+                label = results.objects[i].class_name
 
                 # Get localisation from bbox
-                roi = detection.roi
+                roi = results.objects[i].roi
                 xv, yv = np.meshgrid(np.arange(int(roi.x1), int(roi.x2)), np.arange(int(roi.y1), int(roi.y2)))
                 d_roi = depth_image[yv, xv]  # For bbox the x, y, z pos is based on median of valid depth pixels
                 valid_idx = np.where(np.logical_and(d_roi != 0, np.isfinite(d_roi)))
                 if len(valid_idx[0]) and len(valid_idx[1]):
                     box_pose = self._get_pose(d_roi, valid_idx, roi.x1, roi.y1, fx, fy, cx, cy)
+                    results.objects[i].pose = box_pose
+                    results.objects[i].pose_frame_id = depth_msg.header.frame_id
+
                     tagged_bbox_poses.poses.append(TaggedPose(tag=label, pose=box_pose))
                     poses[label]["bbox"].poses.append(box_pose)
                 if self.visualisation_enabled:
                     boxes_depth_image[yv, xv] = depth_image[yv, xv]  # Publish a bbox pixels only image
 
                 # Get localisation from segm
-                segm = detection.seg_roi
+                segm = results.objects[i].seg_roi
                 if not (segm.x and segm.y):
                     continue
                 xv, yv = np.meshgrid(segm.x, segm.y)
@@ -208,7 +214,7 @@ class RunClientOnTopic:
                 self.box_depth_info_pub.publish(depth_info)
 
         # Publish detection results
-        self.detection_results_pub.publish(result.detections)
+        self.detection_results_pub.publish(results)
 
         # Republish colour images
         self.image_pub.publish(image_msg)
@@ -216,7 +222,7 @@ class RunClientOnTopic:
 
         # Offload the visualisation task <1ms (takes considerable time)
         if self.visualisation_enabled:
-            self.publisher_tasks.add_task(self._vis_publish, (image_msg, result,))
+            self.publisher_tasks.add_task(self._vis_publish, (image_msg, results,))
 
     @function_timer.interval_logger(interval=10)
     def _vis_publish(self, image_msg, result):
@@ -267,7 +273,7 @@ def _get_detections_for_topic():
     # get private namespace parameters
     p_image_ns = rospy.get_param('~image_ns', "/sequence_0/colour")
     p_depth_ns = rospy.get_param('~depth_ns', "/sequence_0/depth")
-    p_score = rospy.get_param('~score', 0.7)
+    p_score = rospy.get_param('~score', 0.5)
     p_vis = rospy.get_param('~show_vis', True)
 
     rospy.loginfo("Camera Topic to Detection ROS: image_namespace={}, depth_namespace={}, score_thresh={}".format(
@@ -275,8 +281,8 @@ def _get_detections_for_topic():
     ))
 
     # TODO: Re-implement depth for now leave as None
-    detector = RunClientOnTopic(image_namespace=p_image_ns, depth_namespace=p_depth_ns, score_thresh=p_score, visualisation_enabled=p_vis,
-                                service_name=service_name)
+    detector = RunClientOnTopic(image_namespace=p_image_ns, depth_namespace=p_depth_ns, score_thresh=p_score,
+                                visualisation_enabled=p_vis, service_name=service_name)
     rospy.spin()
 
 
