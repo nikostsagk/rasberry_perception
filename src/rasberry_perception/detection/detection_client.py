@@ -59,9 +59,9 @@ class RunClientOnTopic:
             self.depth_pose_publishers = {}
 
             # Publish as tagged (by class name)
-            self.tagged_bbox_pose_publisher = rospy.Publisher(self.namespace + "poses/tagged/bbox",
+            self.tagged_bbox_pose_publisher = rospy.Publisher(self.namespace + "poses/bbox",
                                                               TaggedPoseStampedArray, queue_size=1)
-            self.tagged_segm_pose_publisher = rospy.Publisher(self.namespace + "poses/tagged/segm",
+            self.tagged_segm_pose_publisher = rospy.Publisher(self.namespace + "poses/segm",
                                                               TaggedPoseStampedArray, queue_size=1)
 
             # Subscribe to depth and depth intrinsic topics

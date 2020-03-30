@@ -180,10 +180,6 @@ int Tracking::parseParams(ros::NodeHandle n) {
 
         ROS_INFO("pos_noise_x: %f, pos_noise_y: %f, pos_noise_x: %f, seq_time: %f,  seq_size: %i, fps: %f",
                 pos_noise_x, pos_noise_y, pos_noise_z, seq_time, seq_size, this->tracker_frequency);
-        ROS_INFO_STREAM("pos_noise_y:  " << pos_noise_y);
-        ROS_INFO_STREAM("pos_noise_z:  " << pos_noise_z);
-        ROS_INFO_STREAM("seq_time:  " << seq_time);
-        ROS_INFO_STREAM("seq_size:  " << seq_size);
 
         try {
             if (ekf != nullptr) {
@@ -292,21 +288,18 @@ void Tracking::trackingThread() {
                 rasberry_perception::Detections detections;
 
                 // Set header to the most recent detection frame
-//                poses.header = this->last_header_;
+                //poses.header = this->last_header_;
 
-//                rasberry_perception::TrackerResults vels;
-//                rasberry_perception::TrackerResults vars;
-                std::vector<long> det_ids;
+                //rasberry_perception::TrackerResults vels;
+                //rasberry_perception::TrackerResults vars;
 
                 for (std::map<long, std::vector<rasberry_perception::Detection> >::const_iterator it = labelled_poses.begin();
                      it != labelled_poses.end(); ++it) {
 
-//                    detections.poses.push_back(it->second[0]);
-                    publishDetections(it->second[0]);  // Publish pose only
-//                    vels.tracks.push_back(it->second[1]);
-//                    vars.tracks.push_back(it->second[2]);
-
-                    det_ids.push_back(it->first);
+                    detections.objects.push_back(it->second[0]);
+                    publishDetections(it->second[0]);  // Publish detection only
+                    //vels.tracks.push_back(it->second[1]);
+                    //vars.tracks.push_back(it->second[2]);
                 }
 
                 if (pub_results.getNumSubscribers() || pub_results_array.getNumSubscribers())
@@ -394,7 +387,7 @@ void Tracking::createVisualisation(const rasberry_perception::Detections &detect
         text_marker.ns = ns;
         text_marker.id = -object.track_id - 100;
         text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-        text_marker.text = num_to_str<long>(object.id);
+        text_marker.text = num_to_str<long>(object.track_id);
         text_marker.action = visualization_msgs::Marker::MODIFY;
         text_marker.pose = object.pose;
         text_marker.pose.position.y -= scale.y * 2;
@@ -409,6 +402,7 @@ void Tracking::createVisualisation(const rasberry_perception::Detections &detect
 
 void Tracking::detectorCallback(const rasberry_perception::Detections::ConstPtr &results,
                                 const std::string &detector) {
+//    this->last_detections_msg_ = results;
     throw std::runtime_error("HEY");
 }
 

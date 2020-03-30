@@ -6,8 +6,8 @@ cv_noise_params:                                                # The noise for 
   y: 0.010
   z: 0.010
 detectors:                                                      # Add detectors under this namespace
-  tagged_class_tracker:                                       # Track all objects without using tags
-    tagged_topic: "/rasberry_perception/poses/tagged/bbox"
+  default_tracker:                                       # Track all objects without using tags
+    tagged_topic: "/rasberry_perception/poses/bbox"
     cartesian_noise_params:                                     # Expected noise in the poses (how good is the localisation)
       x: 0.0050
       y: 0.0025

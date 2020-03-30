@@ -39,6 +39,25 @@ using namespace std;
 using namespace MTRK;
 using namespace Models;
 
+struct observation_t {
+    FM::Vec vec;
+    int id; // ObservationID
+    double time;
+    string tag;
+    // constructors
+    observation_t() : vec(Empty), time(0.), id(-1) {}
+    observation_t(FM::Vec v) : vec(v), id(-1) {}
+    observation_t(FM::Vec v, double t) : vec(v), time(t), id(-1) {}
+    observation_t(FM::Vec v, double t, string f) : vec(v), time(t), tag(f), id(-1) {}
+    observation_t(FM::Vec v, double t, string f, int d) : vec(v), time(t), tag(f), id(d) {}
+};
+
+template<class FilterType, int xSize>
+class MultiTrackerObserveID : public MultiTracker<FilterType, xSize> {
+
+};
+
+
 // rule to detect lost track
 template<class FilterType>
 bool MTRK::isLost(const FilterType *filter, double stdLimit) {
@@ -284,7 +303,7 @@ private:
     double dt{}, time;
     boost::mutex mutex;
     CVModel3D *cvm{};                   // CV model
-    MultiTracker<FilterType, 6> mtrk; // state [x, v_x, y, v_y, z, v_z]
+    MultiTrackerObserveID<FilterType, 6> mtrk; // state [x, v_x, y, v_y, z, v_z]
     double stdLimit;
     bool prune_named;                  // upper limit for the variance of estimation position
 
