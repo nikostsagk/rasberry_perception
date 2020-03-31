@@ -5,9 +5,13 @@ cv_noise_params:                                                # The noise for 
   x: 0.075
   y: 0.010
   z: 0.010
-detectors:                                                      # Add detectors under this namespace
-  default_tracker:                                       # Track all objects without using tags
-    tagged_topic: "/rasberry_perception/poses/bbox"
+detectors: # Add detectors under this namespace, don't change to be compatible with rasberry_perception tracker.launch
+  default_tracker: # Name of the tracker
+    # By default you must provide either a topic, tagged_topic or pose_topic field (priority in that order)
+    #   topic (str): rasberry_perception/detections.msg (enables *-LABELED matching algorithms and transparent association)
+    #   tagged_topic (str): rasberry_perception/TaggedPoseStampedArray.msg (enables *-LABELED matching algorithms)
+    #   pose_topic (str): geometry_msgs/PoseArray.msg (basic positional based tracking)
+    topic: "/rasberry_perception/results"
     cartesian_noise_params:                                     # Expected noise in the poses (how good is the localisation)
       x: 0.0050
       y: 0.0025
