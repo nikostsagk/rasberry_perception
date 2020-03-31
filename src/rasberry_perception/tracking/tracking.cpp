@@ -40,21 +40,27 @@ Tracking::Tracking() : detect_seq(0), marker_seq(0) {
     // Declare variables that can be modified by launch file or command line.
     std::string pub_topic_results;
     std::string pub_topic_results_array;
+    std::string pub_topic_detection_results;
+    std::string pub_topic_detection_results_array;
     std::string pub_topic_pose_results;
     std::string pub_topic_pose_results_array;
     std::string pub_topic_marker_array;
+    std::string pub_topic_detection_marker_array;
     std::string reset_on_topic;
 
     // Initialize node parameters from launch file or command line.
     // Use a private node handle so that multiple instances of the node can be run simultaneously
     // while using different parameters.
     ros::NodeHandle private_nh("~");
-    private_nh.param("target_frame", target_frame, std::string("/base_link"));
+    private_nh.param("target_frame", target_frame, std::string("sequence_colour_frame"));
     private_nh.param("results", pub_topic_results, std::string("/rasberry_perception/tracking/results"));
     private_nh.param("results_array", pub_topic_results_array, std::string("/rasberry_perception/tracking/results_array"));
+    private_nh.param("detection_results", pub_topic_results, std::string("/rasberry_perception/tracking/detection_results"));
+    private_nh.param("detection_results_array", pub_topic_results_array, std::string("/rasberry_perception/tracking/detections_results_array"));
     private_nh.param("pose_results", pub_topic_pose_results, std::string("/rasberry_perception/tracking/pose"));
     private_nh.param("pose_results_array", pub_topic_pose_results_array, std::string("/rasberry_perception/tracking/pose_array"));
     private_nh.param("marker_array", pub_topic_marker_array, std::string("/rasberry_perception/tracking/marker_array"));
+    private_nh.param("detection_marker_array", pub_topic_detection_marker_array, std::string("/rasberry_perception/tracking/detection_marker_array"));
     private_nh.param("tracker_frequency", this->tracker_frequency, double(30.0));
     private_nh.param("reset_on", reset_on_topic, std::string(""));
 
@@ -71,9 +77,12 @@ Tracking::Tracking() : detect_seq(0), marker_seq(0) {
 
     this->pub_results = private_nh.advertise<rasberry_perception::Detection>(pub_topic_results, 1);
     this->pub_results_array = private_nh.advertise<rasberry_perception::Detections>(pub_topic_results_array, 1);
+    this->pub_detection_results = private_nh.advertise<rasberry_perception::Detection>(pub_topic_detection_results, 1);
+    this->pub_detection_results_array = private_nh.advertise<rasberry_perception::Detections>(pub_topic_detection_results_array, 1);
     this->pub_pose_results = private_nh.advertise<rasberry_perception::TaggedPose>(pub_topic_pose_results, 1);
     this->pub_pose_results_array = private_nh.advertise<rasberry_perception::TaggedPoseStampedArray>(pub_topic_pose_results_array, 1);
     this->pub_markers = private_nh.advertise<visualization_msgs::MarkerArray>(pub_topic_marker_array, 1);
+    this->pub_detection_markers = private_nh.advertise<visualization_msgs::MarkerArray>(pub_topic_detection_marker_array, 1);
 
     boost::thread tracking_thread(boost::bind(&Tracking::trackingThread, this));
 
@@ -266,6 +275,14 @@ int Tracking::parseParams(ros::NodeHandle n) {
     return 0;
 }
 
+template<typename K, typename V>
+static map<V, K> reverse_map(const map<K, V>& m) {
+    map<V, K> r;
+    for (const auto& kv : m)
+        r[kv.second] = kv.first;
+    return r;
+}
+
 void Tracking::trackingThread() {
     ros::Rate fps(tracker_frequency);
     double time_sec = 0.0;
@@ -274,40 +291,81 @@ void Tracking::trackingThread() {
         std::map<long, std::string> tags;
         try {
             // Results from the tracked objects thread (detectorCallback)
-            std::map<long, std::vector<rasberry_perception::Detection>> labelled_poses;
+            track_results tracks;
             if (ekf != nullptr) {
-                labelled_poses = ekf->track(&time_sec, tags);
+                tracks = ekf->track(&time_sec, tags);
             } else if (ukf != nullptr) {
-                labelled_poses = ukf->track(&time_sec, tags);
+                tracks = ukf->track(&time_sec, tags);
             } else if (pf != nullptr) {
-                labelled_poses = pf->track(&time_sec, tags);
+                tracks = pf->track(&time_sec, tags);
             }
 
-            if (!labelled_poses.empty()) {
-                // TODO: Replace this with the last recieved detections message with the fields replaced
-                rasberry_perception::Detections detections;
+            std::map<long, std::vector<rasberry_perception::Detection>> detections = std::get<0>(tracks);
+            std::map<long, long> id_to_track_id = std::get<1>(tracks);
 
-                // Set header to the most recent detection frame
-                //poses.header = this->last_header_;
+            std::map<long, rasberry_perception::Detection> id_to_last_det;
+            for(auto & last_det : this->last_detections_msg_.objects) {
+                id_to_last_det[last_det.id] = last_det;
+            }
 
-                //rasberry_perception::TrackerResults vels;
-                //rasberry_perception::TrackerResults vars;
+            if (!detections.empty()) {
+                ros::Time now =  ros::Time::now();
+                // Publish the markers that are currently visible
+                rasberry_perception::Detections non_occluded_results = this->last_detections_msg_;
+                non_occluded_results.camera_frame.header.frame_id = this->target_frame;
+                non_occluded_results.camera_frame.header.stamp = now;
+                non_occluded_results.camera_info.header.frame_id = this->target_frame;
+                rasberry_perception::TaggedPoseStampedArray tagged_poses;
+                tagged_poses.header = non_occluded_results.camera_info.header;
+                tagged_poses.header.stamp = now;
 
-                for (std::map<long, std::vector<rasberry_perception::Detection> >::const_iterator it = labelled_poses.begin();
-                     it != labelled_poses.end(); ++it) {
+                rasberry_perception::Detections results = non_occluded_results;
+                results.objects.clear();
 
-                    detections.objects.push_back(it->second[0]);
-                    publishDetections(it->second[0]);  // Publish detection only
-                    //vels.tracks.push_back(it->second[1]);
-                    //vars.tracks.push_back(it->second[2]);
+                // Publish a message with only the currently visible detections
+                for(auto & detection : non_occluded_results.objects) {
+                    // Detection has been associated to a track otherwise leave as track id -1
+                    detection.track_id = id_to_track_id.find(detection.id) != id_to_track_id.end() ? id_to_track_id[detection.id] : -1;
+                    detection.pose_frame_id = this->target_frame;
+                    this->pub_detection_results.publish(detection); // rasberry_perception/Detection
                 }
 
-                if (pub_results.getNumSubscribers() || pub_results_array.getNumSubscribers())
-                    publishDetections(detections);
+                // Also publish the tracker results array
+                for(auto & detection : detections) {
+                    // TODO (raymond): Use vel and var as well as pose
+                    rasberry_perception::Detection det = detection.second[0]; // 0=pose, 1=vel, 2=var
 
-                if (pub_markers.getNumSubscribers())
-                    createVisualisation(detections);
+                    // If this track is still in the most recent history publish the information
+                    if(id_to_last_det.find(det.id) != id_to_last_det.end())
+                        if(id_to_track_id[det.id] == det.track_id) {
+                            det.roi = id_to_last_det[det.id].roi;
+                            det.seg_roi = id_to_last_det[det.id].seg_roi;
+                            det.confidence = id_to_last_det[det.id].confidence;
+                        }
+
+                    det.pose_frame_id = this->target_frame;
+                    results.objects.push_back(det);
+                    this->pub_results.publish(det); // rasberry_perception/Detection
+
+                    rasberry_perception::TaggedPose tp; tp.tag = det.class_name; tp.pose = det.pose;
+                    tagged_poses.poses.push_back(tp);
+                    this->pub_pose_results.publish(tp); // rasberry_perception/TaggedPose
+                }
+
+                if (pub_results.getNumSubscribers() || pub_results_array.getNumSubscribers()) {
+                    this->pub_results_array.publish(results); // rasberry_perception/Detections
+                    this->pub_detection_results_array.publish(non_occluded_results); // rasberry_perception/Detections
+                    this->pub_pose_results_array.publish(tagged_poses); // rasberry_perception/TaggedPoseStampedArray
+                }
+
+                if(pub_markers.getNumSubscribers()) {
+                    visualization_msgs::MarkerArray markers = createVisualisationMarkers(results);
+                    this->pub_markers.publish(markers); // visualization_msgs::MarkerArray
+                    visualization_msgs::MarkerArray detection_markers = createVisualisationMarkers(non_occluded_results);
+                    this->pub_detection_markers.publish(detection_markers); // visualization_msgs::MarkerArray
+                }
             }
+
             fps.sleep();
         }
         catch (std::exception &e) {
@@ -321,30 +379,10 @@ void Tracking::trackingThread() {
     }
 }
 
-
-void Tracking::publishDetections(const rasberry_perception::Detection &msg) {
-    this->pub_results.publish(msg);
-}
-
-void Tracking::publishDetections(const rasberry_perception::Detections &msg) {
-    this->pub_results_array.publish(msg);
-}
-
-void Tracking::publishDetections(const rasberry_perception::TaggedPose &msg) {
-    this->pub_pose_results.publish(msg);
-}
-
-void Tracking::publishDetections(const rasberry_perception::TaggedPoseStampedArray &msg) {
-    this->pub_pose_results_array.publish(msg);
-}
-
-void Tracking::publishDetections(const visualization_msgs::MarkerArray &msg) {
-    this->pub_markers.publish(msg);
-}
-
-void Tracking::createVisualisation(const rasberry_perception::Detections &detections) {
+visualization_msgs::MarkerArray Tracking::createVisualisationMarkers(const rasberry_perception::Detections &detections) {
     visualization_msgs::MarkerArray marker_array;
 
+    bool real_size = false;
     geometry_msgs::Vector3 scale;
     scale.x = 0.025;
     scale.y = 0.025;
@@ -363,11 +401,15 @@ void Tracking::createVisualisation(const rasberry_perception::Detections &detect
     green.b = 0.0F / 255.0F;
 
     for (const auto & object : detections.objects) {
+        if(object.track_id == -1) {
+            continue;
+        }
+
         ros::Time now = ros::Time::now();
         std::string ns = "rasberry_perception/tracking";
 
         visualization_msgs::Marker marker;
-        marker.header.frame_id = target_frame;
+        marker.header.frame_id = object.pose_frame_id;
         marker.header.stamp = now;
         marker.header.seq = ++marker_seq;
         marker.ns = ns;
@@ -375,13 +417,21 @@ void Tracking::createVisualisation(const rasberry_perception::Detections &detect
         marker.type = visualization_msgs::Marker::SPHERE;
         marker.action = visualization_msgs::Marker::MODIFY;
         marker.pose = object.pose;
+
+        // TODO (raymond): This feature needs work
+        if(real_size) {
+            scale.x = std::abs(((object.roi.x2 - object.roi.x1) - detections.camera_info.P.elems[2]) * object.pose.position.z / detections.camera_info.P.elems[0]);
+            scale.y = std::abs(((object.roi.y2 - object.roi.y1) - detections.camera_info.P.elems[6]) * object.pose.position.z / detections.camera_info.P.elems[5]);
+            scale.z = scale.x;
+        }
+
         marker.scale = scale;
         marker.color = red;
         marker.lifetime = ros::Duration(0.2);
         marker_array.markers.push_back(marker);
 
         visualization_msgs::Marker text_marker;
-        text_marker.header.frame_id = target_frame;
+        text_marker.header.frame_id = object.pose_frame_id;
         text_marker.header.stamp = now;
         text_marker.header.seq = marker.header.seq;
         text_marker.ns = ns;
@@ -397,13 +447,70 @@ void Tracking::createVisualisation(const rasberry_perception::Detections &detect
         marker_array.markers.push_back(text_marker);
     }
 
-    this->publishDetections(marker_array);
+    return marker_array;
 }
 
 void Tracking::detectorCallback(const rasberry_perception::Detections::ConstPtr &results,
                                 const std::string &detector) {
-//    this->last_detections_msg_ = results;
-    throw std::runtime_error("HEY");
+    if(results->objects.empty()) {
+        return;
+    }
+
+    rasberry_perception::Detections detections(*results);
+
+    // Set last header to the most recent detection header
+    this->last_header_ = detections.camera_info.header;
+    this->last_detections_msg_ = detections;
+
+    std::vector<geometry_msgs::Point> position;
+    std::vector<std::string> tags;
+    std::vector<int> detection_ids;
+
+    for (auto & object : detections.objects) {
+        geometry_msgs::Pose pt = object.pose;
+        if(object.pose_frame_id.empty()) {
+            ROS_WARN("Detection %ld pose_frame_id is empty. Skipping object.", object.id);
+            continue;
+        }
+
+        //Create stamped pose for tf
+        geometry_msgs::PoseStamped pose_in_detection_coords;
+        geometry_msgs::PoseStamped pose_in_target_coords;
+        pose_in_detection_coords.header = detections.camera_info.header;
+        pose_in_detection_coords.pose = pt;
+
+        try {
+            // Transform into given target frame.
+            std::string current_frame = object.pose_frame_id;
+            if (strcmp(target_frame.c_str(), current_frame.c_str()) != 0) {
+                ROS_DEBUG("Transforming received position into %s coordinate system.", target_frame.c_str());
+                listener->waitForTransform(current_frame, target_frame, ros::Time(0),ros::Duration(3.0));
+                listener->transformPose(target_frame, ros::Time(0), pose_in_detection_coords, current_frame, pose_in_target_coords);
+            } else {
+                pose_in_target_coords = pose_in_detection_coords;
+            }
+        } catch (const tf::TransformException &ex) {
+            ROS_WARN("Failed transform: %s", ex.what());
+            return;
+        }
+
+        position.push_back(pose_in_target_coords.pose.position);
+        detection_ids.push_back(object.id);
+
+        if (_use_tags[detector]) {
+            tags.push_back(object.class_name);
+        }
+    }
+
+    if (!position.empty()) {
+        if(ekf != nullptr) {
+            ekf->addObservation(detector, position, this->last_header_.stamp.toSec(), tags, detection_ids);
+        } else if (ukf != nullptr) {
+            ukf->addObservation(detector, position, this->last_header_.stamp.toSec(), tags, detection_ids);
+        } else if (pf != nullptr) {
+            pf->addObservation(detector, position, this->last_header_.stamp.toSec(), tags, detection_ids);
+        }
+    }
 }
 
 void Tracking::detectorCallbackPoseArray(const geometry_msgs::PoseArray::ConstPtr &results, const std::string &detector) {
@@ -438,15 +545,15 @@ void Tracking::detectorCallbackTaggedPoseStampedArray(const rasberry_perception:
 
     std::vector<geometry_msgs::Point> position;
     std::vector<std::string> tags;
+    std::vector<int> detection_ids; // Fill with seq because tagged poses do not have IDS for each detection
 
     for (int i = 0; i < results->poses.size(); i++) {
         rasberry_perception::TaggedPose pt = results->poses[i];
         //Create stamped pose for tf
-        geometry_msgs::PoseStamped poseInCamCoords;
-        geometry_msgs::PoseStamped poseInRobotCoords;
-        geometry_msgs::PoseStamped poseInTargetCoords;
-        poseInCamCoords.header = results->header;
-        poseInCamCoords.pose = pt.pose;
+        geometry_msgs::PoseStamped pose_in_cam_coords;
+        geometry_msgs::PoseStamped pose_in_target_coords;
+        pose_in_cam_coords.header = results->header;
+        pose_in_cam_coords.pose = pt.pose;
 
         // Set last header to the most recent detection header
         this->last_header_ = results->header;
@@ -454,21 +561,22 @@ void Tracking::detectorCallbackTaggedPoseStampedArray(const rasberry_perception:
         //Transform
         try {
             // Transform into given target frame. Default /base
-            if (strcmp(target_frame.c_str(), poseInCamCoords.header.frame_id.c_str()) != 0) {
+            if (strcmp(target_frame.c_str(), pose_in_cam_coords.header.frame_id.c_str()) != 0) {
                 ROS_DEBUG("Transforming received position into %s coordinate system.", target_frame.c_str());
-                listener->waitForTransform(poseInCamCoords.header.frame_id, target_frame, ros::Time(0),
+                listener->waitForTransform(pose_in_cam_coords.header.frame_id, target_frame, ros::Time(0),
                                            ros::Duration(3.0));
-                listener->transformPose(target_frame, ros::Time(0), poseInCamCoords, poseInCamCoords.header.frame_id,
-                                        poseInTargetCoords);
+                listener->transformPose(target_frame, ros::Time(0), pose_in_cam_coords, pose_in_cam_coords.header.frame_id,
+                                        pose_in_target_coords);
             } else {
-                poseInTargetCoords = poseInRobotCoords;
+                pose_in_target_coords = pose_in_cam_coords;
             }
         } catch (const tf::TransformException &ex) {
             ROS_WARN("Failed transform: %s", ex.what());
             return;
         }
 
-        position.push_back(poseInTargetCoords.pose.position);
+        position.push_back(pose_in_target_coords.pose.position);
+        detection_ids.push_back(results->header.seq);
         if (_use_tags[detector]) {
             tags.push_back(pt.tag);
         }
@@ -477,12 +585,12 @@ void Tracking::detectorCallbackTaggedPoseStampedArray(const rasberry_perception:
     if (!position.empty()) {
         if (ekf == nullptr) {
             if (ukf == nullptr) {
-                pf->addObservation(detector, position, results->header.stamp.toSec(), tags);
+                pf->addObservation(detector, position, results->header.stamp.toSec(), tags, detection_ids);
             } else {
-                ukf->addObservation(detector, position, results->header.stamp.toSec(), tags);
+                ukf->addObservation(detector, position, results->header.stamp.toSec(), tags, detection_ids);
             }
         } else {
-            ekf->addObservation(detector, position, results->header.stamp.toSec(), tags);
+            ekf->addObservation(detector, position, results->header.stamp.toSec(), tags, detection_ids);
         }
     }
 }

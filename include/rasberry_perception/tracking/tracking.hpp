@@ -61,14 +61,7 @@ private:
     int parseParams(ros::NodeHandle n);
     void trackingThread();
 
-
-    void publishDetections(const rasberry_perception::Detection& msg);
-    void publishDetections(const rasberry_perception::Detections& msg);
-    void publishDetections(const rasberry_perception::TaggedPose& msg);
-    void publishDetections(const rasberry_perception::TaggedPoseStampedArray& msg);
-
-    void publishDetections(const visualization_msgs::MarkerArray& msg);
-    void createVisualisation(const rasberry_perception::Detections& poses);
+    visualization_msgs::MarkerArray createVisualisationMarkers(const rasberry_perception::Detections& poses);
 
     void detectorCallback(const rasberry_perception::Detections::ConstPtr &results, const std::string& detector);
     void detectorCallbackPoseArray(const geometry_msgs::PoseArray::ConstPtr &results, const std::string& detector);
@@ -77,7 +70,8 @@ private:
 
     // MEMBER VARIABLES
     tf::TransformListener* listener;
-    ros::Publisher pub_results, pub_results_array, pub_pose_results, pub_pose_results_array, pub_markers;
+    ros::Publisher pub_results, pub_results_array, pub_detection_results, pub_detection_results_array, pub_pose_results,
+                   pub_pose_results_array, pub_markers, pub_detection_markers;
     rasberry_perception::Detections last_detections_msg_;
     std_msgs::Header last_header_;
     std::string target_frame, startup_time_str;

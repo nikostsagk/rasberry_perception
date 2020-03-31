@@ -73,6 +73,8 @@ def __main():
     static_transformStamped.child_frame_id = "sequence_frame"
     static_transformStamped.transform.rotation.w = 1.0
     broadcaster.sendTransform(static_transformStamped)
+    static_transformStamped.header.frame_id = "base_link"
+    broadcaster.sendTransform(static_transformStamped)
     static_transformStamped.header.frame_id = "sequence_frame"
     static_transformStamped.child_frame_id = "sequence_colour_frame"
     broadcaster.sendTransform(static_transformStamped)

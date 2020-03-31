@@ -39,24 +39,6 @@ using namespace std;
 using namespace MTRK;
 using namespace Models;
 
-struct observation_t {
-    FM::Vec vec;
-    int id; // ObservationID
-    double time;
-    string tag;
-    // constructors
-    observation_t() : vec(Empty), time(0.), id(-1) {}
-    observation_t(FM::Vec v) : vec(v), id(-1) {}
-    observation_t(FM::Vec v, double t) : vec(v), time(t), id(-1) {}
-    observation_t(FM::Vec v, double t, string f) : vec(v), time(t), tag(f), id(-1) {}
-    observation_t(FM::Vec v, double t, string f, int d) : vec(v), time(t), tag(f), id(d) {}
-};
-
-template<class FilterType, int xSize>
-class MultiTrackerObserveID : public MultiTracker<FilterType, xSize> {
-
-};
-
 
 // rule to detect lost track
 template<class FilterType>
@@ -138,6 +120,8 @@ bool MTRK::initialize(FilterType *&filter, sequence_t &obsvSeq, observ_model_t o
     return true;
 }
 
+typedef std::tuple<std::map<long, std::vector<rasberry_perception::Detection>>, std::map<long, long>> track_results;
+
 template<typename FilterType>
 class SimpleTracking {
 public:
@@ -167,9 +151,10 @@ public:
         detectors[name] = det;
     }
 
-    std::map<long, std::vector<rasberry_perception::Detection>> track(double *track_time, std::map<long, std::string> &tags) {
+    track_results track(double *track_time, std::map<long, std::string> &tags) {
         boost::mutex::scoped_lock lock(mutex);
         std::map<long, std::vector<rasberry_perception::Detection>>  result; // bbox id to detection info (including track)
+        std::map<long, long>  id_to_track_id; // bbox id to detection info (including track)
         dt = getTime() - time;
         time += dt;
         if (track_time) *track_time = time;
@@ -208,6 +193,11 @@ public:
                       theta, //orientation
                       sqrt(mtrk[i].filter->X(0, 0)), sqrt(mtrk[i].filter->X(2, 2))//std dev
             );
+
+            // Update observation to track look up (for republishing Detections.msg with track_ids)
+            for(auto & observation_id : mtrk[i].history)
+                id_to_track_id[observation_id] = mtrk[i].id; // mtrk.id is actually track_id and values in mtrk.history are the bbox ids
+
             rasberry_perception::Detection pose, vel, var; // position, velocity, variance
             // If no tag then the label is the track ID
             std::string label = mtrk[i].tag.empty() ? std::to_string(mtrk[i].id) : mtrk[i].tag;
@@ -216,7 +206,7 @@ public:
             pose.pose.position.z = mtrk[i].filter->x[4];
             pose.pose.orientation.z = sin(theta / 2);
             pose.pose.orientation.w = cos(theta / 2);
-            pose.id = -1; // TODO: Replace with original detection ID
+            pose.id = mtrk[i].history.back(); // ID is equal to the most recent observation
             pose.class_name = mtrk[i].tag;
             pose.track_id = mtrk[i].id;
             result[mtrk[i].id].push_back(pose);
@@ -224,7 +214,7 @@ public:
             vel.pose.position.x = mtrk[i].filter->x[1];
             vel.pose.position.y = mtrk[i].filter->x[3];
             vel.pose.position.z = mtrk[i].filter->x[5];
-            vel.id = -1; // TODO: Replace with original detection ID
+            vel.id = mtrk[i].history.back();
             vel.class_name = mtrk[i].tag;
             vel.track_id = mtrk[i].id;
             result[mtrk[i].id].push_back(vel);
@@ -232,7 +222,7 @@ public:
             var.pose.position.x = mtrk[i].filter->X(0, 0);
             var.pose.position.y = mtrk[i].filter->X(2, 2);
             var.pose.position.z = mtrk[i].filter->X(4, 4);
-            var.id = -1; // TODO: Replace with original detection ID
+            var.id = mtrk[i].history.back();
             var.class_name = mtrk[i].tag;
             var.track_id = mtrk[i].id;
 
@@ -242,11 +232,11 @@ public:
             result[mtrk[i].id].push_back(var);
         }
 
-        return result;
+        return track_results(result, id_to_track_id);
     }
 
     void addObservation(std::string detector_name, const std::vector<geometry_msgs::Point>& obsv, double obsv_time,
-                        std::vector<std::string> tags) {
+                        std::vector<std::string> tags, std::vector<int> detection_ids) {
         boost::mutex::scoped_lock lock(mutex);
         ROS_DEBUG("Adding new observations for detector: %s", detector_name.c_str());
         // add last observation/s to tracker
@@ -278,10 +268,13 @@ public:
                 (*observation)[0] = atan2(li.y, li.x); // bearing
                 (*observation)[1] = sqrt(pow(li.x, 2) + pow(li.y, 2)); // range
             }
-            if (!tags.empty() && count < tags.size())
-                mtrk.addObservation(*observation, obsv_time, tags[count]);
-            else
-                mtrk.addObservation(*observation, obsv_time);
+
+            if (!tags.empty() && count < tags.size()) {
+                mtrk.addObservation(*observation, obsv_time, tags[count], detection_ids[count]);
+            }
+            else {
+                mtrk.addObservation(*observation, obsv_time, detection_ids[count]);
+            }
             count++;
         }
 
@@ -299,16 +292,16 @@ public:
 
 private:
 
-    FM::Vec *observation;           // observation [x, y, z] (z for cartesian)
+    FM::Vec *observation;               // observation [x, y, z] (z for cartesian)
     double dt{}, time;
     boost::mutex mutex;
     CVModel3D *cvm{};                   // CV model
-    MultiTrackerObserveID<FilterType, 6> mtrk; // state [x, v_x, y, v_y, z, v_z]
+    MultiTracker<FilterType, 6> mtrk;   // state [x, v_x, y, v_y, z, v_z]
     double stdLimit;
     bool prune_named;                  // upper limit for the variance of estimation position
 
     typedef struct {
-        CartesianModel3D *ctm;        // Cartesian observation model
+        CartesianModel3D *ctm;      // Cartesian observation model
         PolarModel *plm;            // Polar observation model
         observ_model_t om_flag;     // Observation model flag
         association_t alg;          // Data association algorithm
