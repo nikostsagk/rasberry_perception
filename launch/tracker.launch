@@ -9,12 +9,7 @@
             <node name="tracking" pkg="rasberry_perception" type="rasberry_perception_tracking" output="screen" respawn="true">
                 <rosparam command="load" file="$(arg param_file)"/>
                 <param name="target_frame" value="$(arg target_frame)" type="string"/>
-
                 <param name="tracker_frequency" value="$(arg fps)" type="int"/>
-
-                <param name="results" value="results" type="string"/>
-                <param name="results_array" value="results_array" type="string"/>
-                <param name="marker_array" value="marker_array" type="string"/>
                 <param name="reset_on" value="$(arg reset_on)" type="string"/>
             </node>
     </group>

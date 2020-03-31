@@ -12,9 +12,7 @@ Panels:
         - /TF1/Frames1
         - /TF1/Tree1
         - /MarkerArray1
-        - /DetectionTracks1
         - /DetectionTracks1/Status1
-        - /Class 11
       Splitter Ratio: 0.45155394077301025
     Tree Height: 594
   - Class: rviz/Selection
@@ -289,13 +287,13 @@ Visualization Manager:
       Queue Size: 100
       Value: false
     - Class: rviz/MarkerArray
-      Enabled: true
+      Enabled: false
       Marker Topic: /rasberry_perception/tracking/marker_array
       Name: DetectionTracks
       Namespaces:
-        rasberry_perception/tracking: true
+        {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Alpha: 1
       Arrow Length: 0.30000001192092896
       Axes Length: 0.30000001192092896
@@ -327,6 +325,14 @@ Visualization Manager:
       Shape: Arrow (3D)
       Topic: /rasberry_perception/poses/by_class/class_1/bbox
       Unreliable: false
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /rasberry_perception/tracking/marker_array
+      Name: Tracking Results
+      Namespaces:
+        rasberry_perception/tracking: true
+      Queue Size: 100
       Value: true
   Enabled: true
   Global Options:

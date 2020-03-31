@@ -55,8 +55,8 @@ Tracking::Tracking() : detect_seq(0), marker_seq(0) {
     private_nh.param("target_frame", target_frame, std::string("sequence_colour_frame"));
     private_nh.param("results", pub_topic_results, std::string("/rasberry_perception/tracking/results"));
     private_nh.param("results_array", pub_topic_results_array, std::string("/rasberry_perception/tracking/results_array"));
-    private_nh.param("detection_results", pub_topic_results, std::string("/rasberry_perception/tracking/detection_results"));
-    private_nh.param("detection_results_array", pub_topic_results_array, std::string("/rasberry_perception/tracking/detections_results_array"));
+    private_nh.param("detection_results", pub_topic_detection_results, std::string("/rasberry_perception/tracking/detection_results"));
+    private_nh.param("detection_results_array", pub_topic_detection_results_array, std::string("/rasberry_perception/tracking/detection_results_array"));
     private_nh.param("pose_results", pub_topic_pose_results, std::string("/rasberry_perception/tracking/pose"));
     private_nh.param("pose_results_array", pub_topic_pose_results_array, std::string("/rasberry_perception/tracking/pose_array"));
     private_nh.param("marker_array", pub_topic_marker_array, std::string("/rasberry_perception/tracking/marker_array"));
@@ -319,9 +319,6 @@ void Tracking::trackingThread() {
                 tagged_poses.header = non_occluded_results.camera_info.header;
                 tagged_poses.header.stamp = now;
 
-                rasberry_perception::Detections results = non_occluded_results;
-                results.objects.clear();
-
                 // Publish a message with only the currently visible detections
                 for(auto & detection : non_occluded_results.objects) {
                     // Detection has been associated to a track otherwise leave as track id -1
@@ -329,6 +326,17 @@ void Tracking::trackingThread() {
                     detection.pose_frame_id = this->target_frame;
                     this->pub_detection_results.publish(detection); // rasberry_perception/Detection
                 }
+
+                if(this->pub_detection_results_array.getNumSubscribers())
+                    this->pub_detection_results_array.publish(non_occluded_results); // rasberry_perception/Detections
+
+                if(pub_detection_markers.getNumSubscribers()) {
+                    visualization_msgs::MarkerArray detection_markers = createVisualisationMarkers(non_occluded_results);
+                    this->pub_detection_markers.publish(detection_markers); // visualization_msgs::MarkerArray
+                }
+
+                rasberry_perception::Detections results = non_occluded_results;
+                results.objects.clear();
 
                 // Also publish the tracker results array
                 for(auto & detection : detections) {
@@ -354,15 +362,12 @@ void Tracking::trackingThread() {
 
                 if (pub_results.getNumSubscribers() || pub_results_array.getNumSubscribers()) {
                     this->pub_results_array.publish(results); // rasberry_perception/Detections
-                    this->pub_detection_results_array.publish(non_occluded_results); // rasberry_perception/Detections
                     this->pub_pose_results_array.publish(tagged_poses); // rasberry_perception/TaggedPoseStampedArray
                 }
 
                 if(pub_markers.getNumSubscribers()) {
                     visualization_msgs::MarkerArray markers = createVisualisationMarkers(results);
                     this->pub_markers.publish(markers); // visualization_msgs::MarkerArray
-                    visualization_msgs::MarkerArray detection_markers = createVisualisationMarkers(non_occluded_results);
-                    this->pub_detection_markers.publish(detection_markers); // visualization_msgs::MarkerArray
                 }
             }
 
