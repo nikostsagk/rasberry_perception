@@ -1,10 +1,10 @@
 filter_type: "EKF"                                              # The Kalman filter type: EKF = Extended Kalman Filter, UKF = Uncented Kalman Filter
 prune_named: false                                               # make sure identity tracks are unique (prunes the one with high stdev)
-std_limit: 0.3                                                   # pruning tracks that have std(x) > std_limit
+std_limit: 0.05                                                   # pruning tracks that have std(x) > std_limit
 cv_noise_params:                                                # The noise for the constant velocity prediction model
-  x: 0.075
-  y: 0.010
-  z: 0.010
+  x: 0.1
+  y: 0.04
+  z: 0.04
 detectors: # Add detectors under this namespace, don't change to be compatible with rasberry_perception tracker.launch
   default_tracker: # Name of the tracker
     # By default you must provide either a topic, tagged_topic or pose_topic field (priority in that order)
@@ -13,10 +13,10 @@ detectors: # Add detectors under this namespace, don't change to be compatible w
     #   pose_topic (str): geometry_msgs/PoseArray.msg (basic positional based tracking)
     topic: "/rasberry_perception/results"
     cartesian_noise_params:                                     # Expected noise in the poses (how good is the localisation)
-      x: 0.0050
+      x: 0.0025
       y: 0.0025
       z: 0.0025
     observation_model: "CARTESIAN"                            # CARTESIAN will use CARTESIAN_3D by default
     matching_algorithm: "NN_LABELED"                          # The algorithm to match different detections. NN = Nearest Neighbour, NNJPDA = NN Joint Probability Data Association
-    seq_size: 10                                              # Minimum `seq_size` number of detections received in `seq_time` seconds (if seq_size is 1, seq_time is not used)
-    seq_time: 1.2
+    seq_size: 4                                              # Minimum `seq_size` number of detections received in `seq_time` seconds (if seq_size is 1, seq_time is not used)
+    seq_time: 0.5

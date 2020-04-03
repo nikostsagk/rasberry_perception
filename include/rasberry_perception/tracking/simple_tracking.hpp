@@ -42,12 +42,16 @@ using namespace Models;
 
 // rule to detect lost track
 template<class FilterType>
-bool MTRK::isLost(const FilterType *filter, double stdLimit) {
+bool MTRK::isLost(const MTRK::filter_t<FilterType> *filter_container, double stdLimit) {
     // track lost if var(x)+var(y)+var(z) > stdLimit^2
-    bool is_lost = filter->X(0, 0) + filter->X(2, 2) + filter->X(4, 4) > sqr(stdLimit);
+    double x_covariance = filter_container->filter->X(0, 0);
+    double y_covariance = filter_container->filter->X(2, 2);
+    double z_covariance = filter_container->filter->X(4, 4);
+    double cov_sum = x_covariance + y_covariance + z_covariance;
 
-//    ROS_INFO("SUM(var_x: %f, var_y: %f, var_z: %f = %f) > stdLim: %f = %i",filter->X(0,0), filter->X(2,2), filter->X(4,4),
-//             filter->X(0, 0) + filter->X(2, 2) + filter->X(4, 4), sqr(stdLimit), is_lost);
+    bool is_lost = cov_sum > sqr(stdLimit);
+
+    ROS_INFO("%ld sum(%f) > stdLim: %f = %s", filter_container->id, cov_sum, sqr(stdLimit), is_lost ? "true" : "false");
 
     return is_lost;
 }
@@ -195,8 +199,8 @@ public:
             );
 
             // Update observation to track look up (for republishing Detections.msg with track_ids)
-            for(auto & observation_id : mtrk[i].history)
-                id_to_track_id[observation_id] = mtrk[i].id; // mtrk.id is actually track_id and values in mtrk.history are the bbox ids
+            for(auto & observation_h : mtrk[i].history)
+                id_to_track_id[observation_h.id] = mtrk[i].id; // mtrk.id is actually track_id and values in mtrk.history are the bbox ids
 
             rasberry_perception::Detection pose, vel, var; // position, velocity, variance
             // If no tag then the label is the track ID
@@ -206,7 +210,7 @@ public:
             pose.pose.position.z = mtrk[i].filter->x[4];
             pose.pose.orientation.z = sin(theta / 2);
             pose.pose.orientation.w = cos(theta / 2);
-            pose.id = mtrk[i].history.back(); // ID is equal to the most recent observation
+            pose.id = mtrk[i].history.back().id; // ID is equal to the most recent observation
             pose.class_name = mtrk[i].tag;
             pose.track_id = mtrk[i].id;
             result[mtrk[i].id].push_back(pose);
@@ -214,7 +218,7 @@ public:
             vel.pose.position.x = mtrk[i].filter->x[1];
             vel.pose.position.y = mtrk[i].filter->x[3];
             vel.pose.position.z = mtrk[i].filter->x[5];
-            vel.id = mtrk[i].history.back();
+            vel.id = mtrk[i].history.back().id;
             vel.class_name = mtrk[i].tag;
             vel.track_id = mtrk[i].id;
             result[mtrk[i].id].push_back(vel);
@@ -222,7 +226,7 @@ public:
             var.pose.position.x = mtrk[i].filter->X(0, 0);
             var.pose.position.y = mtrk[i].filter->X(2, 2);
             var.pose.position.z = mtrk[i].filter->X(4, 4);
-            var.id = mtrk[i].history.back();
+            var.id = mtrk[i].history.back().id;
             var.class_name = mtrk[i].tag;
             var.track_id = mtrk[i].id;
 

@@ -91,6 +91,28 @@ Tracking::Tracking() : detect_seq(0), marker_seq(0) {
 }
 
 int Tracking::parseParams(ros::NodeHandle n) {
+    // TODO (raymond): Remove these launch file parameters for testing
+//    n.setParam("filter_type", "EKF");
+//    n.setParam("prune_named", false);
+//    n.setParam("std_limit", 0.3);
+//    XmlRpc::XmlRpcValue noise_t, detectors_t, default_tracker_t, cartesian_noise_params_t;
+//    noise_t["x"] = 0.075;
+//    noise_t["y"] = 0.010;
+//    noise_t["z"] = 0.010;
+//    n.setParam("cv_noise_params", noise_t);
+//    default_tracker_t["topic"] = "/rasberry_perception/results";
+//    cartesian_noise_params_t["x"] = 0.0050;
+//    cartesian_noise_params_t["y"] = 0.0025;
+//    cartesian_noise_params_t["z"] = 0.0025;
+//    default_tracker_t["cartesian_noise_params"] = cartesian_noise_params_t;
+//    default_tracker_t["observation_model"] = "CARTESIAN";
+//    default_tracker_t["matching_algorithm"] = "NN_LABELED";
+//    default_tracker_t["seq_size"] = 10;
+//    default_tracker_t["seq_time"] = 1.2;
+//    detectors_t["default_tracker"] = default_tracker_t;
+//    n.setParam("detectors", detectors_t);
+    // TODO (raymond): Above ^^^^^^^^^^^
+
     std::string filter;
     n.getParam("filter_type", filter);
     ROS_INFO_STREAM("Found filter type: " << filter);
@@ -322,7 +344,8 @@ void Tracking::trackingThread() {
                 // Publish a message with only the currently visible detections
                 for(auto & detection : non_occluded_results.objects) {
                     // Detection has been associated to a track otherwise leave as track id -1
-                    detection.track_id = id_to_track_id.find(detection.id) != id_to_track_id.end() ? id_to_track_id[detection.id] : -1;
+                    detection.track_id = (id_to_track_id.find(detection.id) != id_to_track_id.end() &&
+                            id_to_last_det.find(detection.id) != id_to_last_det.end()) ? id_to_track_id[detection.id] : -1;
                     detection.pose_frame_id = this->target_frame;
                     this->pub_detection_results.publish(detection); // rasberry_perception/Detection
                 }
@@ -373,11 +396,11 @@ void Tracking::trackingThread() {
 
             fps.sleep();
         }
-        catch (std::exception &e) {
+        catch (Bayesian_filter::Numeric_exception &e) {
             ROS_INFO_STREAM("Exception: " << e.what());
             fps.sleep();
         }
-        catch (Bayesian_filter::Numeric_exception &e) {
+        catch (std::exception &e) {
             ROS_INFO_STREAM("Exception: " << e.what());
             fps.sleep();
         }
