@@ -51,7 +51,7 @@ bool MTRK::isLost(const MTRK::filter_t<FilterType> *filter_container, double std
 
     bool is_lost = cov_sum > sqr(stdLimit);
 
-    ROS_INFO("%ld sum(%f) > stdLim: %f = %s", filter_container->id, cov_sum, sqr(stdLimit), is_lost ? "true" : "false");
+//    ROS_INFO("%ld sum(%f) > stdLim: %f = %s", filter_container->id, cov_sum, sqr(stdLimit), is_lost ? "true" : "false");
 
     return is_lost;
 }
@@ -156,31 +156,21 @@ public:
     }
 
     track_results track(double *track_time, std::map<long, std::string> &tags) {
+        // Track is the predication step of the model, add observation is the predictions with new observations
         boost::mutex::scoped_lock lock(mutex);
         std::map<long, std::vector<rasberry_perception::Detection>>  result; // bbox id to detection info (including track)
         std::map<long, long>  id_to_track_id; // bbox id to detection info (including track)
         dt = getTime() - time;
         time += dt;
-        if (track_time) *track_time = time;
 
-        // This function is only for the prediction step of the tracker. Thus, the update step is not performed here
-        // Since the update step is related to observations (from detectors), it is performed in addObservation function, when a new observation comes
-        // for(typename std::map<std::string, detector_model>::const_iterator it = detectors.begin();
-        //    it != detectors.end();
-        //    ++it) {
-        //    // prediction
-        //    cvm->update(dt);
-        //    mtrk.template predict<CVModel>(*cvm);
+        if (track_time)
+            *track_time = time;
 
-        //    // process observations (if available) and update tracks
-        //    mtrk.process(*(it->second.ctm), it->second.alg);
-        //}
         // prediction
         cvm->update(dt);
-        mtrk.template predict<CVModel3D>(*cvm);
-        //detector_model dummy_det;
-        //mtrk.process(*(dummy_det.ctm));
+        mtrk.predict(*cvm);
         mtrk.pruneTracks(stdLimit);
+
         if (prune_named) {
             mtrk.pruneNamedTracks();
         }
@@ -257,9 +247,7 @@ public:
 
         // prediction
         cvm->update(dt);
-        mtrk.template predict<CVModel3D>(*cvm);
-
-        // mtrk.process(*(det.ctm), det.alg);
+        mtrk.predict(*cvm);
 
         int count = 0;
         for (auto & li : obsv) {
