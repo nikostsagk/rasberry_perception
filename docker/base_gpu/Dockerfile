@@ -19,6 +19,7 @@ MAINTAINER Raymond Kirk    "rkirk@lincoln.ac.uk"
 MAINTAINER Nikolaus Wagner "nwagner@lincoln.ac.uk"
 
 ## Install ROS
+ENV ROS_DISTRO melodic
 ENV TZ Europe/London
 RUN rm /etc/apt/sources.list.d/* && \
     apt update && apt install -y software-properties-common lsb-release curl apt-transport-https git && \
@@ -27,19 +28,18 @@ RUN rm /etc/apt/sources.list.d/* && \
     apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654 && \
     ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
     apt update && \
-    apt install -y ros-melodic-ros-base python-catkin-tools python3-venv python3-pip && \
-    rosdep init && \
-    rosdep update
+    apt install -y "ros-$ROS_DISTRO-ros-base" python-catkin-tools python3-venv python3-pip python-rosdep && \
+    rosdep init && rosdep update
 
 ## Clone necessary repositories
 ## TODO (melanoneiro): replace numpy with binary
 WORKDIR /catkin_ws/src
 RUN git clone https://github.com/RaymondKirk/rasberry_perception.git && \
+    git clone https://github.com/RaymondKirk/bayestracking.git && \
     git clone https://github.com/eric-wieser/ros_numpy.git
 
 ## Install ros-dependencies and build the rasberry_perception package
 WORKDIR /catkin_ws
-ENV ROS_DISTRO melodic
 RUN rosdep install --from-paths src --ignore-src -r -y && \
     catkin config --extend /opt/ros/$ROS_DISTRO && \
     catkin build rasberry_perception
