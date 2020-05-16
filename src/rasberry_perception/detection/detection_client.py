@@ -199,8 +199,8 @@ class RunClientOnTopic:
                 valid_idx = np.where(np.logical_and(d_roi != 0, np.isfinite(d_roi)))
                 if len(valid_idx[0]):
                     zp = d_roi[valid_idx[0]] / 1000.0
-                    yp = (np.asarray(segm.y) - cy) * zp / fy
-                    xp = (np.asarray(segm.x) - cx) * zp / fx
+                    yp = (np.asarray(segm.y)[valid_idx[0]] - cy) * zp / fy
+                    xp = (np.asarray(segm.x)[valid_idx[0]] - cx) * zp / fx
                     segm_pose = Pose(position=Point(np.median(xp), np.median(yp), np.median(zp)), orientation=Quaternion(0, 0, 0, 1))
                     tagged_segm_poses.poses.append(TaggedPose(tag=label, pose=segm_pose))
                     poses[label]["segm"].poses.append(segm_pose)
@@ -241,7 +241,7 @@ class RunClientOnTopic:
         """
         vis = Visualiser(ros_numpy.numpify(image_msg))
         vis.draw_detections_message(result)
-        vis_image = vis.get_image(overlay_alpha=1.0)
+        vis_image = vis.get_image(overlay_alpha=0.5)
         vis_msg = ros_numpy.msgify(Image, vis_image, encoding=image_msg.encoding)
         vis_msg.header = image_msg.header
         self.detections_vis_pub.publish(vis_msg)
