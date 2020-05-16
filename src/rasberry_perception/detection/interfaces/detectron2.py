@@ -24,7 +24,7 @@ class _unknown_class:
 @DETECTION_REGISTRY.register_detection_backend("detectron2")
 class Detectron2Server(BaseDetectionServer):
     _supported_revision = "2a571ea55bd3111118063c666735bc81d36ff4de"
-    _supported_version = "0.1.1"
+    _supported_version = "0.1.2"
 
     def __init__(self, config_file, model_file=None):
         try:
@@ -39,22 +39,23 @@ class Detectron2Server(BaseDetectionServer):
 
         self.currently_busy = Event()
         self.cfg = get_cfg()
+        self.classes = _unknown_class()
 
         try:
             from fruit_detection.config import add_fruit_detection_config
             from fruit_detection.datasets import register_data_set
             add_fruit_detection_config(self.cfg)
+            self.cfg.merge_from_file(config_file)
+            register_data_set(self.cfg.DATASETS.TEST[0])
+            metadata = MetadataCatalog.get(self.cfg.DATASETS.TEST[0] if len(self.cfg.DATASETS.TEST) else "__unused")
+            self.classes = metadata.get("thing_classes")
         except ImportError:
-            raise ImportError("You require Raymond's custom detectron2 version for Fruit Detection")
+            self.cfg.merge_from_file(config_file)
 
-        self.cfg.merge_from_file(config_file)
         if model_file is not None:
             self.cfg.MODEL.WEIGHTS = model_file
-        register_data_set(self.cfg.DATASETS.TEST[0])
-
         self.cfg.freeze()
-        metadata = MetadataCatalog.get(self.cfg.DATASETS.TEST[0] if len(self.cfg.DATASETS.TEST) else "__unused")
-        self.classes = metadata.get("thing_classes") or _unknown_class()
+
         self.predictor = DefaultPredictor(self.cfg)
 
         # Base class must be called at the end due to self.service_server.spin()

@@ -191,13 +191,17 @@ class RunClientOnTopic:
 
                 # Get localisation from segm
                 segm = results.objects[i].seg_roi
+
                 if not (segm.x and segm.y):
                     continue
-                xv, yv = np.meshgrid(segm.x, segm.y)
-                d_roi = depth_image[yv, xv]  # For segm the x,y,z pos is based on median of detected pixels
+
+                d_roi = depth_image[segm.y, segm.x]  # For segm the x,y,z pos is based on median of detected pixels
                 valid_idx = np.where(np.logical_and(d_roi != 0, np.isfinite(d_roi)))
-                if len(valid_idx[0]) and len(valid_idx[1]):
-                    segm_pose = self._get_pose(d_roi, valid_idx, roi.x1, roi.y1, fx, fy, cx, cy)
+                if len(valid_idx[0]):
+                    zp = d_roi[valid_idx[0]] / 1000.0
+                    yp = (np.asarray(segm.y) - cy) * zp / fy
+                    xp = (np.asarray(segm.x) - cx) * zp / fx
+                    segm_pose = Pose(position=Point(np.median(xp), np.median(yp), np.median(zp)), orientation=Quaternion(0, 0, 0, 1))
                     tagged_segm_poses.poses.append(TaggedPose(tag=label, pose=segm_pose))
                     poses[label]["segm"].poses.append(segm_pose)
 

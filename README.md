@@ -4,13 +4,23 @@ The rasberry_perception package aims to interleave ROS and deep learning framewo
 
 ![strawberry_localisation](https://user-images.githubusercontent.com/16948324/76231446-2c98b380-621d-11ea-8624-8e472c2f08f8.gif)
 
+## Installation
+
+This project is dependent on a modified version of [LCAS/bayestracking](LCAS/bayestracking).
+
+```
+cd catkin_ws/src
+git clone https://github.com/RaymondKirk/bayestracking
+catkin build rasberry_perception
+```
+
 ## Detection Backends
 
 Modular detection backends are available in `rasberry_perception` enabling users to utilise deep learning 
-frameworks/non-ros methods to detect objects. This functionality is provided via a ros service `GetDetectorResults`. 
-This modular approach enables things such as Python3 in Python2 ros environments.
+frameworks/non-ros methods to detect objects. This functionality provided via a ros service `GetDetectorResults`. 
+This modular approach enables things such as Python3 DL backends in Python2 ros environments.
 
-To run the detection backend service run the command below replacing backend with a listed one below or your own:
+To run the detection backend service run the command below replacing backend with a listed one below, or your own:
 
 ```bash 
 rosrun rasberry_perception detection_server.py backend:="" backend_arg1:=""
@@ -28,18 +38,6 @@ and the detector with the command below:
 ```bash
 roslaunch rasberry_perception detector.launch colour_ns:='' depth_ns:='' score:='' backend:="<your backend>"
 ```
-
-### Default `backend:="default"`
-
-The default backend will return an empty object when called.
-
-### MMDetection `backend:="mmdetection"`
-
-This backend adds support for the popular deep learning framework mmdetection in PyTorch. 
-Specifically a private research branch of mmdetection maintained by [Raymond](https://github.com/RaymondKirk).
-
-Before running the backend service, source the appropriate packages from the private repo and pass 
-`config_path:=""`, `model_path:=""` and optionally `device=""`.
 
 ### Adding a new detection backend 
 

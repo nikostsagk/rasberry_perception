@@ -341,6 +341,7 @@ void Tracking::trackingThread() {
                 tagged_poses.header = non_occluded_results.camera_info.header;
                 tagged_poses.header.stamp = now;
 
+
                 // Publish a message with only the currently visible detections
                 for(auto & detection : non_occluded_results.objects) {
                     // Detection has been associated to a track otherwise leave as track id -1

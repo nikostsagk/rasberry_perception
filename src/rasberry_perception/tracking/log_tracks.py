@@ -5,82 +5,123 @@
 from collections import defaultdict
 from copy import deepcopy
 
-import cv2
-import message_filters
-import numpy as np
 import pathlib
 import ros_numpy
 import rospy
-from sensor_msgs.msg import Image, CameraInfo
+from std_msgs.msg import String
+
+import cv2
+import numpy as np
 
 from rasberry_perception.detection.utility import function_timer
-from rasberry_perception.msg import TrackerResults, Detections
+from rasberry_perception.msg import Detections
+from threading import Event
 
-from std_msgs.msg import String
+import matplotlib
+matplotlib.use("TkAgg")
+import matplotlib.pyplot as plt
 
 
 class TrackLogs:
-    def __init__(self):
+    def __init__(self, bbox_save_dir="", reset_on="", plot_tracks_file=""):
         # Subscribers
         self.logs = defaultdict(int)
 
-        subscribers = [
-            message_filters.Subscriber("/rasberry_perception/colour/image_raw", Image),
-            message_filters.Subscriber("/rasberry_perception/colour/camera_info", CameraInfo),
-            message_filters.Subscriber("/rasberry_perception/results", Detections),
-            message_filters.Subscriber("/rasberry_perception/tracking/results_array", TrackerResults),
-        ]
+        if reset_on:
+            self.reset_on = rospy.Subscriber(reset_on, String, callback=self._dump)
 
-        sync_queue, sync_thresh = 200, 0.1
-        rospy.loginfo("Waiting for topics with time synchroniser (queue {}, {}s tolerance) on '{}'".format(
-            sync_queue, sync_thresh, ', '.join([s.topic for s in subscribers])
-        ))
+        if bbox_save_dir:
+            self.save_dir = bbox_save_dir
+            self.write_bbox_sub = rospy.Subscriber("/rasberry_perception/tracking/detection_results_array",
+                                                   Detections, self._bbox_write_callback, queue_size=200)
 
-        self.reset_on = rospy.Subscriber("/sequence_0/info", String, callback=self._dump)
-        # self.tracker_results = rospy.Subscriber("/rasberry_perception/tracking/results_array", String, callback=self._dump)
-        self.ts = message_filters.ApproximateTimeSynchronizer(subscribers, sync_queue, sync_thresh, allow_headerless=True)
-        self.ts.registerCallback(self._track_callback)
+        self._plot = bool(plot_tracks_file)
+        if self._plot:
+            self.canvas_history = 0
+            self.tracks_history = defaultdict(lambda: dict(x=[], y=[]))
+            self.fig, self.ax = plt.subplots()
+            self.fig.set_tight_layout(True)
+            self.fig_updated = Event()
+            self.plot_tracks_sub = rospy.Subscriber("/rasberry_perception/tracking/detection_results_array",
+                                                    Detections, self._plot_tracks_callback, queue_size=200)
 
     def _dump(self, reset_msg):
-        logs = deepcopy(self.logs)
+        self.canvas_history = 0
         self.logs = defaultdict(int)
-        print("\n".join(["{}: {}".format(k, v) for k, v in logs.items()]))
+        self.tracks_history = defaultdict(lambda: dict(x=[], y=[]))
+
+    def spin(self):
+        if not self._plot:
+            rospy.spin()
+        while not rospy.is_shutdown():
+            if self.fig_updated.is_set():
+                self.fig_updated.clear()
+            self.plt_show()
 
     @function_timer.logger
-    def _track_callback(self, image_msg, camera_info, detector_results, tracker_results):
-        fx, fy, cx, cy = camera_info.P[0], camera_info.P[5], camera_info.P[2], camera_info.P[6]
+    def _bbox_write_callback(self, tracker_detections):
+        image_msg = tracker_detections.camera_frame
+
         image = ros_numpy.numpify(image_msg)
         height, width = image.shape[:2]
-        size = 128  # TODO: Extract the actual bounding boxes by finding the matching track<->detection
-        sizer = size // 2
 
-        dt_boxes = [d.roi for d in detector_results.detections]
-        dt_centres = np.asarray([[(r.x2 + r.x1) / 2, (r.y2 + r.y1) / 2] for r in dt_boxes])
-
-        for track in tracker_results.tracks:
-            track_output_folder = pathlib.Path(__file__).parent / "data" / str(track.id)
+        for track in tracker_detections.objects:
+            track_output_folder = pathlib.Path(__file__).parent / self.save_dir / str(track.track_id)
             if not track_output_folder.exists():
                 track_output_folder.mkdir()
-            x = ((fx * track.pose.position.x) / track.pose.position.z) + cx
-            y = ((fy * track.pose.position.y) / track.pose.position.z) + cy
 
-            if x - sizer >= 0 and x + sizer <= width and y - sizer >= 0 and y + sizer <= height:
-                track_centre = np.asarray([x, y])
-                dist_2 = np.sum((dt_centres - track_centre) ** 2, axis=1)
-                closest_dt = np.argmin(dist_2)
-                matched_dt = dt_boxes[closest_dt]
-                match_cost = dist_2[closest_dt]
-                roi_path = track_output_folder / "{:04d}_{}.jpg".format(self.logs[track.id], int(match_cost))
-                roi = image[int(matched_dt.y1):int(matched_dt.y2), int(matched_dt.x1):int(matched_dt.x2)]
+            if track.roi.x1 >= 0 and track.roi.x2 <= width and track.roi.y1 >= 0 and track.roi.y2 <= height:
+                roi_path = track_output_folder / "{:04d}.jpg".format(self.logs[track.track_id])
+                roi = image[int(track.roi.y1):int(track.roi.y2), int(track.roi.x1):int(track.roi.x2)]
                 cv2.imwrite(str(roi_path), roi)
-                self.logs[track.id] += 1
+                self.logs[track.track_id] += 1
         # print(bounding_boxes)
+
+    def plt_show(self):
+        plt.cla()
+
+        self.ax.set_xlim([0, 1280])
+        self.ax.set_ylim([0, 720])
+
+        # Plot line histories
+        for track_id, track_data in self.tracks_history.items():
+            self.ax.plot(track_data["x"], track_data["y"], label=str(track_id))
+
+        # self.ax.legend(ncol=len(self.tracks_history))
+
+        self.fig.canvas.draw()
+        plt.pause(0.001)
+
+    @function_timer.logger
+    def _plot_tracks_callback(self, tracker_detections):
+        image_msg = tracker_detections.camera_frame
+        fx, fy, cx, cy = tracker_detections.camera_info.P[0], tracker_detections.camera_info.P[5], \
+                         tracker_detections.camera_info.P[2], tracker_detections.camera_info.P[6]
+
+        image = ros_numpy.numpify(image_msg)
+        height, width = image.shape[:2]
+
+        # Add to track histories
+        for track in tracker_detections.objects:
+            x = ((fx * track.pose.position.x) / (track.pose.position.z + np.finfo(float).eps)) + cx
+            y = ((fy * track.pose.position.y) / (track.pose.position.z + np.finfo(float).eps)) + cy
+            if 0 <= x <= width and 0 <= y <= height:
+                self.tracks_history[track.track_id]["x"].append(x)
+                self.tracks_history[track.track_id]["y"].append(y)
+
+        # self.ax.imshow(image)
+        self.fig_updated.set()
+        print(self.canvas_history)
+        self.canvas_history += 1
 
 
 def __log_unique_tracks():
     rospy.init_node('rasberry_tracking_logs', anonymous=True)
-    tracer = TrackLogs()
-    rospy.spin()
+    reset_on = "/sequence_0/info"
+    bbox_save_dir = "data"
+    plot_tracks_file = ""  # "tracks.gif"
+    tracer = TrackLogs(bbox_save_dir, reset_on, plot_tracks_file)
+    tracer.spin()
 
 
 if __name__ == '__main__':
