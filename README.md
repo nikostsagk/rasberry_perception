@@ -6,7 +6,7 @@ The rasberry_perception package aims to interleave ROS and deep learning framewo
 
 ## Installation
 
-This project is dependent on a modified version of [LCAS/bayestracking](LCAS/bayestracking). 
+This project is dependent on a modified version of [LCAS/bayestracking](LCAS/bayestracking). Cuda 10.2 is required to run the base_gpu dockers. 
 
 ```
 cd catkin_ws/src

@@ -10,7 +10,7 @@
 ##   docker build -t rasberry_perception:detectron2 .
 ##
 ## Run with:
-##   docker run --network host --gpus all --name detectron2 --rm -it rasberry_perception:detectron2
+##
 ##
 
 FROM rasberry_perception:base_gpu
@@ -28,6 +28,9 @@ RUN python3 -m venv backend_venv --clear && \
     git clone https://github.com/facebookresearch/detectron2.git && \
     cd detectron2 && pip install -e . && \
     deactivate 
+
+## Add backends
+COPY r50_packaged /r50_packaged/
 
 ## Create entry point for image
 WORKDIR /

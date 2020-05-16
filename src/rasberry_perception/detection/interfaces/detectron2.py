@@ -23,8 +23,7 @@ class _unknown_class:
 
 @DETECTION_REGISTRY.register_detection_backend("detectron2")
 class Detectron2Server(BaseDetectionServer):
-    _supported_revision = "2a571ea55bd3111118063c666735bc81d36ff4de"
-    _supported_version = "0.1.2"
+    _supported_version = "0.1.3"
 
     def __init__(self, config_file, model_file=None):
         try:
