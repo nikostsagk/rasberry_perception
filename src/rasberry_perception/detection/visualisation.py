@@ -4,7 +4,6 @@
 import colorsys
 
 import cv2
-import matplotlib.colors as mplc
 import numpy as np
 
 __all__ = ["Visualiser"]
@@ -187,7 +186,8 @@ class Visualiser:
     def draw_text(self, text, position, font_scale=1.0, color=None, font=None, thickness=1):
         if color is None:
             color = np.asarray((1.0, 1.0, 1.0))
-        color = np.maximum(list(mplc.to_rgb(color)), 0.2)
+
+        color = np.maximum(list(color), 0.2)
         color[np.argmax(color)] = max(0.8, np.max(color))
         color = tuple(int(i * 255) for i in color)
         position = tuple(int(i) for i in position)
@@ -230,8 +230,7 @@ class Visualiser:
     """
     def _change_color_brightness(self, color, brightness_factor):
         assert brightness_factor >= -1.0 and brightness_factor <= 1.0
-        color = mplc.to_rgb(color)
-        polygon_color = colorsys.rgb_to_hls(*mplc.to_rgb(color))
+        polygon_color = colorsys.rgb_to_hls(*list(color))
         modified_lightness = polygon_color[1] + (brightness_factor * polygon_color[1])
         modified_lightness = 0.0 if modified_lightness < 0.0 else modified_lightness
         modified_lightness = 1.0 if modified_lightness > 1.0 else modified_lightness
