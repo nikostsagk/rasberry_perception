@@ -2,8 +2,12 @@
 cd $(cd -P -- "$(dirname -- "$0")" && pwd -P)
 image_name="rasberry_perception:$1"
 
-# Docker Container = "$SHARE_TOKEN:$SHARE_PASSWORD"
+# We use 'docker save rasberry_perception:backend_name | gzip > rasberry_perception_backend_name.tar.gz' to host our
+#   docker containers on nextcloud and then download and 'docker load < rasberry_perception_backend_name.tar.gz' to simulate
+#   pulling a container from docker hub. You can also build the dockers locally (see docker/backend_name/dockerfile for details)
 declare -A docker_hub
+# To add a docker container to the hub add it to the array below
+#   format: docker_hub["rasberry_perception:backend_name"]="$SHARE_TOKEN:$SHARE_PASSWORD"
 docker_hub["rasberry_perception:detectron2"]="NAaW3EZzAKpzdRN"
 
 echo "Looking for docker image '${image_name}' locally"
