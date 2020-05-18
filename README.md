@@ -1,8 +1,8 @@
 # rasberry_perception
 
-The rasberry_perception package aims to interleave ROS and deep learning frameworks for perception. If using any of the models in research please contact [Raymond Kirk](https://github.com/RaymondKirk) to obtain the relevant citation and ensure no conflict of interest.
-
 ![strawberry_localisation](https://user-images.githubusercontent.com/16948324/76231446-2c98b380-621d-11ea-8624-8e472c2f08f8.gif)
+
+The rasberry_perception package aims to interleave ROS and deep learning frameworks for perception. If using any of the models in research please contact [Raymond Kirk](https://github.com/RaymondKirk) to obtain the relevant citation and ensure no conflict of interest.
 
 ## Quick start
 
@@ -12,15 +12,14 @@ roslaunch rasberry_perception detector.launch backend=:"detectron2" image_ns:="/
 
 ## Installation
 
-This project is dependent on a modified version of [LCAS/bayestracking](LCAS/bayestracking). Cuda 10.2 is required to run the base_gpu dockers. 
+This project is dependent on a modified version of LCAS/bayestracking found at [RaymondKirk/bayestracking](https://github.com/RaymondKirk/bayestracking). [Cuda 10.2](https://developer.nvidia.com/cuda-downloads?target_os=Linux&target_arch=x86_64&target_distro=Ubuntu&target_version=1804&target_type=deblocal) must be installed locally to run gpu based backends. 
 
 ```
 cd catkin_ws/src
 git clone https://github.com/RaymondKirk/bayestracking
+git clone https://github.com/RaymondKirk/rasberry_perception
 catkin build rasberry_perception
 ```
-
-## Usage
 
 ## Detection Backends
 
@@ -50,54 +49,38 @@ roslaunch rasberry_perception detector.launch colour_ns:='' depth_ns:='' score:=
 ### Adding a new detection backend 
 
 Adding custom backends such as TensorFlow, PyTorch, Detectron, Onnx etc. to `rasberry_perception` is easy. 
+See [interfaces](src/rasberry_perception/detection/interfaces/) for examples.
 
-Just create a custom class as shown below, inherit from the base, and register it's backend name in the detection registry. 
-Note you have to place the custom class inside the 
-[registry file](src/deep_learning_ros/compatibility_layer/registry.py) found here `src/deep_learning_ros/compatibility_layer/registry.py`.
-This can be avoided in future releases if we start to amass a large collection of supported backends.
+A simple example is given below, inherit from the base, register the name in the detection registry and finally add to 
+the all definition [here](src/rasberry_perception/detection/interfaces/__init__.py). 
 
 
 ```python
-from rasberry_perception.srv import GetDetectorResultsResponse
-from deep_learning_ros.compatibility_layer.detection_server import _DetectorResultsServer
-from deep_learning_ros.compatibility_layer.registry import DETECTION_REGISTRY
+import ros_numpy
+from rasberry_perception.detection.interfaces.default import BaseDetectionServer
+from rasberry_perception.msg import Detections, ServiceStatus
 
 @DETECTION_REGISTRY.register_detection_backend("CustomBackendName")
-class CustomVisionBackend(_DetectorResultsServer):
-    def __init__(self, custom_arg1, custom_arg2, default_arg1="hello"):
-        # Do your custom initialisation logic here (custom imports etc)
-        _DetectorResultsServer.__init__(self)
+class CustomVisionBackend(BaseDetectionServer):
+    # These args are passed from ros parameters when running the backend
+    def __init__(self, custom_arg1, custom_arg2, default_arg1="hello"): 
+        # Do your imports here i.e import image_to_results_function
+        # Do initialisation code here
+        self.busy = False 
+        BaseDetectionServer.__init__(self)  # Spins the server and waits for requests!
 
     def get_detector_results(self, request):
-        # Implement your custom backend logic here (return a GetDetectorResultsResponse object)
-       return GetDetectorResultsResponse()
+        if self.busy:  # Example of other status responses
+            return GetDetectorResultsResponse(status=ServiceStatus(BUSY=True))
+        # Populate a detections message
+        detections = Detections()
+        # i.e. detections = image_to_results_function(image=ros_numpy.numpify(request.image))
+        return GetDetectorResultsResponse(status=ServiceStatus(OKAY=True), results=detections)
 ```
 
 When launching the detection server via `rosrun` you can pass in arguments to your custom backend as you would usually.
 The node will fail if you do not pass any non-default arguments such as `custom_arg1` and `custom_arg2` in the example.
 
 ```bash
-rosrun rasberry_perception detection_server.py _custom_arg1:="a1" _custom_arg2:="a2" _default_arg1"="world"
-```
-
-## Docker
-
-First of all build the base docker image using your current cloned repo.
-
-```bash
-docker build -f ./docker/base/Dockerfile $(rospack find rasberry_perception) -t rasberry_perception:base
-
-# or for gpu
-docker build -f ./docker/base_gpu/Dockerfile $(rospack find rasberry_perception) -t rasberry_perception:base_gpu
-```
-
-Build the backend of your choice.
-
-```bash
-bash docker/mmdetection/get_mmdetection.sh
-# Move your model and config files to docker/mmdetection
-docker build -t rasberry_perception:mmdetection docker/mmdetection/
-
-# Run the backend 
-docker run --network host --gpus all -it rasberry_perception:mmdetection /start
+rosrun rasberry_perception detection_server.py  backend:="CustomBackendName" _custom_arg1:="a1" _custom_arg2:="a2" _default_arg1"="world"
 ```
