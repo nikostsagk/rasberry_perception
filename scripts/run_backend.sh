@@ -28,9 +28,11 @@ if ! docker image inspect "$image_name" >/dev/null 2>&1 ; then
     mkdir "/tmp/rasberry_perception/docker/" -p
     cd /tmp/rasberry_perception/docker/ || exit 1
 
-    if ! [ -f "${share_name}" ]; then
+    if [ ! -f "${share_name}" ]; then
         echo "Downloading ${share_name}"
         curl  -k -u "$share_key" https://lcas.lincoln.ac.uk/nextcloud/public.php/webdav/ -o "${share_name}"
+    else
+        echo -e "File  already exists. Delete to re-download:\nrm /tmp/rasberry_perception/docker/${share_name}"
     fi
 
     echo "Loading container /tmp/rasberry_perception/docker/${share_name} into docker"
