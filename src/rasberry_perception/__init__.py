@@ -13,3 +13,6 @@ __email__ = "ray.tunstill@gmail.com"
 __copyright__ = 'Copyright 2020, rasberry_perception'
 __license__ = 'See LICENCE in project root'
 __version__ = '0.0.0'
+
+from detection import *
+from tracking import *

@@ -8,7 +8,7 @@ image_name="rasberry_perception:$1"
 declare -A docker_hub
 # To add a docker container to the hub add it to the array below
 #   format: docker_hub["rasberry_perception:backend_name"]="$SHARE_TOKEN:$SHARE_PASSWORD"
-docker_hub["rasberry_perception:detectron2"]="NAaW3EZzAKpzdRN"
+docker_hub["rasberry_perception:detectron2"]="aML3CsGDCyBSsZr:nBSGXo2KfA"
 
 echo "Looking for docker image '${image_name}' locally"
 
