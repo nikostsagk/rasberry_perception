@@ -8,6 +8,9 @@
 ## Build with:
 ##   docker build -t rasberry_perception:base_gpu .
 ##
+## Save with:
+##   docker save rasberry_perception:base_gpu | gzip > rasberry_perception_base_gpu.tar.gz
+##
 ## Run with:
 ##   docker run --network host --gpus all --name base_gpu --rm -it rasberry_perception:base_gpu /bin/bash
 ##
@@ -22,28 +25,30 @@ MAINTAINER Nikolaus Wagner "nwagner@lincoln.ac.uk"
 ENV ROS_DISTRO melodic
 ENV TZ Europe/London
 RUN rm /etc/apt/sources.list.d/* && \
-    DEBIAN_FRONTEND=noninteractive apt update && DEBIAN_FRONTEND=noninteractive apt install -y software-properties-common lsb-release curl apt-transport-https git && \
+    DEBIAN_FRONTEND=noninteractive apt update --no-install-recommends && \
+    DEBIAN_FRONTEND=noninteractive apt install -y software-properties-common lsb-release curl apt-transport-https git --no-install-recommends && \
     rm -rf /var/lib/apt/lists/* && \
     echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list && \
     apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654 && \
     ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
     DEBIAN_FRONTEND=noninteractive apt update
-RUN DEBIAN_FRONTEND=noninteractive apt install -y ros-${ROS_DISTRO}-catkin && \
-    DEBIAN_FRONTEND=noninteractive apt install -y ros-${ROS_DISTRO}-ros-base python-catkin-tools python3-venv python3-pip && \
-    DEBIAN_FRONTEND=noninteractive apt install -y python-rosdep && rosdep init && rosdep update
+RUN DEBIAN_FRONTEND=noninteractive apt install -y ros-${ROS_DISTRO}-catkin --no-install-recommends && \
+    DEBIAN_FRONTEND=noninteractive apt install -y ros-${ROS_DISTRO}-ros-base python-catkin-tools python3-venv python3-pip --no-install-recommends && \
+    DEBIAN_FRONTEND=noninteractive apt install -y python-rosdep --no-install-recommends && rosdep init && rosdep update
 
 ## Clone necessary repositories
-## TODO (melanoneiro): replace numpy with binary
 WORKDIR /catkin_ws/src
 RUN git clone https://github.com/RaymondKirk/rasberry_perception.git && \
-    git clone https://github.com/RaymondKirk/bayestracking.git && \
-    git clone https://github.com/eric-wieser/ros_numpy.git
+    git clone https://github.com/RaymondKirk/bayestracking.git
 
 ## Install ros-dependencies and build the rasberry_perception package
 WORKDIR /catkin_ws
 RUN rosdep install --from-paths src --ignore-src -r -y && \
     catkin config --extend /opt/ros/$ROS_DISTRO && \
     catkin build rasberry_perception
+
+# Docker clean-up
+RUN rm -rf /var/lib/apt/lists/*
 
 ## Create entry point for image
 WORKDIR /

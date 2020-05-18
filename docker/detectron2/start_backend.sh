@@ -2,5 +2,5 @@
 set -e
 
 # RUN detectron2 backend
-source "/home/appuser/detectron2_venv/bin/activate" && \
+source "/detectron2_venv/bin/activate" && \
 rosrun rasberry_perception detection_server.py --backend detectron2 --config-file /r50_packaged/config.yaml
