@@ -25,11 +25,15 @@ if ! docker image inspect "$image_name" >/dev/null 2>&1 ; then
         exit 1
     fi
 
-    echo "Downloading ${share_name}"
     mkdir "/tmp/rasberry_perception/docker/" -p
     cd /tmp/rasberry_perception/docker/ || exit 1
-    curl  -k -u "$share_key" https://lcas.lincoln.ac.uk/nextcloud/public.php/webdav/ -o "${share_name}"
-    echo "Loading container ${share_name} into docker"
+
+    if ! [ -f "${share_name}" ]; then
+        echo "Downloading ${share_name}"
+        curl  -k -u "$share_key" https://lcas.lincoln.ac.uk/nextcloud/public.php/webdav/ -o "${share_name}"
+    fi
+
+    echo "Loading container /tmp/rasberry_perception/docker/${share_name} into docker"
     docker load < "${share_name}"
 
     if ! docker image inspect "$image_name" >/dev/null 2>&1 ; then
