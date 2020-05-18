@@ -28,7 +28,7 @@ def __main():
     files = sorted(list(str(s) for s in root.glob("*.pkl")))
 
     fps = 15
-    loop = False
+    loop = True
     seconds_limit = 20
     repeat_frames = 1
     warmup_frames = 0

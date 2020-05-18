@@ -18,11 +18,13 @@
     <arg name="image_ns" default="/camera/color"/>
     <arg name="depth_ns" default="/camera/aligned_depth_to_color"/>
     <arg name="score" default="0.5"/>
+    <arg name="show_vis" default="false"/>
 
     <node pkg="rasberry_perception" name="rasberry_perception_detector" type="detection_client.py" output="screen" respawn="true">
 >>>>>>> 5de2510... refactor: Rework containerisation of detections backends
         <param name="image_ns" type="str" value="$(arg image_ns)"/>
         <param name="depth_ns" type="str" value="$(arg depth_ns)"/>
         <param name="score" type="double" value="$(arg score)"/>
+        <param name="show_vis" type="bool" value="$(arg show_vis)"/>
     </node>
 </launch>

@@ -19,4 +19,4 @@ detectors: # Add detectors under this namespace, don't change to be compatible w
     observation_model: "CARTESIAN"                            # CARTESIAN will use CARTESIAN_3D by default
     matching_algorithm: "NN_LABELED"                          # The algorithm to match different detections. NN = Nearest Neighbour, NNJPDA = NN Joint Probability Data Association
     seq_size: 2                                              # Minimum `seq_size` number of detections received in `seq_time` seconds (if seq_size is 1, seq_time is not used)
-    seq_time: 0.3
+    seq_time: 0.6

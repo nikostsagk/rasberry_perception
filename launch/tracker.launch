@@ -2,8 +2,8 @@
 <launch>
     <arg name="param_file" default="$(find rasberry_perception)/src/rasberry_perception/tracking/config/default.yaml" />
     <arg name="target_frame" default="/sequence_colour_frame" />
-    <arg name="reset_on" default="" />  <!-- Reset when this topic is published too (std_msgs/String) -->
-    <arg name="fps" default="10" />
+    <arg name="reset_on" default="/sequence_0/info" />  <!-- Reset when this topic is published too (std_msgs/String) -->
+    <arg name="fps" default="4" />
 
     <group ns="rasberry_perception">
             <node name="tracking" pkg="rasberry_perception" type="rasberry_perception_tracking" output="screen" respawn="true">
