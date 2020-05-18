@@ -22,14 +22,15 @@ MAINTAINER Nikolaus Wagner "nwagner@lincoln.ac.uk"
 ENV ROS_DISTRO melodic
 ENV TZ Europe/London
 RUN rm /etc/apt/sources.list.d/* && \
-    apt update && apt install -y software-properties-common lsb-release curl apt-transport-https git && \
+    DEBIAN_FRONTEND=noninteractive apt update && DEBIAN_FRONTEND=noninteractive apt install -y software-properties-common lsb-release curl apt-transport-https git && \
     rm -rf /var/lib/apt/lists/* && \
     echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list && \
     apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654 && \
     ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
-    apt update && \
-    apt install -y "ros-$ROS_DISTRO-ros-base" python-catkin-tools python3-venv python3-pip python-rosdep && \
-    rosdep init && rosdep update
+    DEBIAN_FRONTEND=noninteractive apt update
+RUN DEBIAN_FRONTEND=noninteractive apt install -y ros-${ROS_DISTRO}-catkin && \
+    DEBIAN_FRONTEND=noninteractive apt install -y ros-${ROS_DISTRO}-ros-base python-catkin-tools python3-venv python3-pip && \
+    DEBIAN_FRONTEND=noninteractive apt install -y python-rosdep && rosdep init && rosdep update
 
 ## Clone necessary repositories
 ## TODO (melanoneiro): replace numpy with binary
