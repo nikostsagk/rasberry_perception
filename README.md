@@ -4,6 +4,12 @@ The rasberry_perception package aims to interleave ROS and deep learning framewo
 
 ![strawberry_localisation](https://user-images.githubusercontent.com/16948324/76231446-2c98b380-621d-11ea-8624-8e472c2f08f8.gif)
 
+## Quick start
+
+```bash
+roslaunch rasberry_perception detector.launch backend=:"detectron2" image_ns:="/your_camera/colour" depth_ns:="/your_camera/depth" score="0.5"
+```
+
 ## Installation
 
 This project is dependent on a modified version of [LCAS/bayestracking](LCAS/bayestracking). Cuda 10.2 is required to run the base_gpu dockers. 
