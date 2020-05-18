@@ -4,7 +4,7 @@
         otherwise launch a detection backend rosrun rasberry_perception detection_server.py -backend "backend_name" -backend_arg1 "config.yourconfig"
     <arg name="backend" default=""/>
     <group if="$(eval arg('backend') != '')">
-        <node pkg="rasberry_perception" name="rasberry_perception_detection_backend" type="run_backend.sh" args="$(arg backend)" output="screen"/>
+        <node pkg="rasberry_perception" name="rasberry_perception_detection_backend" type="run_backend.sh" args="$(arg backend)" output="screen" required="true"/>
     </group>
 -->
 
