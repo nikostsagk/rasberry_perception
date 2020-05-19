@@ -15,4 +15,3 @@ __license__ = 'See LICENCE in project root'
 __version__ = '0.0.0'
 
 from detection import *
-from tracking import *

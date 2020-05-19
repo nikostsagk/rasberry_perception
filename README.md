@@ -12,11 +12,10 @@ roslaunch rasberry_perception detector.launch backend:="detectron2" password:="o
 
 ## Installation
 
-This project is dependent on a modified version of LCAS/bayestracking found at [RaymondKirk/bayestracking](https://github.com/RaymondKirk/bayestracking). [Cuda 10.2](https://developer.nvidia.com/cuda-downloads?target_os=Linux&target_arch=x86_64&target_distro=Ubuntu&target_version=1804&target_type=deblocal) must be installed locally to run gpu based backends. 
+[Cuda 10.2](https://developer.nvidia.com/cuda-downloads?target_os=Linux&target_arch=x86_64&target_distro=Ubuntu&target_version=1804&target_type=deblocal) must be installed locally to run gpu based backends. 
 
 ```bash
 cd catkin_ws/src
-git clone https://github.com/RaymondKirk/bayestracking
 git clone https://github.com/RaymondKirk/rasberry_perception
 catkin build rasberry_perception
 ```

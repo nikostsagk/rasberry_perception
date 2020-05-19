@@ -12,12 +12,8 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   sensor_msgs
   geometry_msgs
-  visualization_msgs
   message_generation
-  bayes_tracking  # Must be the version from the github.com/RaymondKirk/bayes_tracking repo
 )
-
-find_package(Boost REQUIRED COMPONENTS thread)
 
 # ==============================================
 # Python scripts setup
@@ -66,28 +62,15 @@ add_message_files(
     TaggedPoseStampedArray.msg
 )
 
-generate_messages(DEPENDENCIES std_msgs sensor_msgs geometry_msgs visualization_msgs rasberry_perception)
-
-catkin_package(
-  INCLUDE_DIRS include
-  CATKIN_DEPENDS roscpp tf std_msgs sensor_msgs geometry_msgs visualization_msgs bayes_tracking
-)
+generate_messages(DEPENDENCIES std_msgs sensor_msgs geometry_msgs rasberry_perception)
 
 # ==============================================
 # Build
 # ==============================================
 
-include_directories( include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} )
-add_executable(${PROJECT_NAME}_tracking src/${PROJECT_NAME}/tracking/tracking.cpp )
-add_dependencies(${PROJECT_NAME}_tracking ${PROJECT_NAME}_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
-target_link_libraries(${PROJECT_NAME}_tracking ${catkin_LIBRARIES} ${Boost_LIBRARIES} )
-
 # ==============================================
 # Install
 # ==============================================
-
-install(TARGETS ${PROJECT_NAME}_tracking ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION} LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION} RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION} )
-install(DIRECTORY include/${PROJECT_NAME}/tracking/ DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION} FILES_MATCHING PATTERN "*.hpp" PATTERN ".git" EXCLUDE )
 
 install(DIRECTORY "launch" "config" DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 

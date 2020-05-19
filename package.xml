@@ -25,8 +25,6 @@
   <build_depend>sensor_msgs</build_depend>
   <build_depend>geometry_msgs</build_depend>
   <build_depend>message_generation</build_depend>
-  <build_depend>visualization_msgs</build_depend>
-  <build_depend>bayes_tracking</build_depend>
   <build_depend>tf</build_depend>
 
   <!-- Core dependencies -->
@@ -36,10 +34,8 @@
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
-  <exec_depend>visualization_msgs</exec_depend>
   <exec_depend>message_runtime</exec_depend>
   <exec_depend>ros_numpy</exec_depend>
-  <exec_depend>bayes_tracking</exec_depend>
 
   <!-- Python dependencies  -->
   <exec_depend version_gte="1.13.3">python-numpy</exec_depend>

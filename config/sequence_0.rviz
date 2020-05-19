@@ -12,7 +12,6 @@ Panels:
         - /TF1/Frames1
         - /TF1/Tree1
         - /MarkerArray1
-        - /DetectionTracks1/Status1
       Splitter Ratio: 0.45155394077301025
     Tree Height: 594
   - Class: rviz/Selection
@@ -331,7 +330,7 @@ Visualization Manager:
       Marker Topic: /rasberry_perception/tracking/marker_array
       Name: Tracking Results
       Namespaces:
-        rasberry_perception/tracking: true
+        {}
       Queue Size: 100
       Value: true
   Enabled: true
