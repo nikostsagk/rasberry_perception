@@ -134,6 +134,10 @@ class RunClientOnTopic:
         xp = ((valid_positions[1] + x_offset) - _cx) * zp / _fx
         return Pose(position=Point(np.median(xp), np.median(yp), np.median(zp)), orientation=Quaternion(0, 0, 0, 1))
 
+    @staticmethod
+    def __check_pose_empty(p):
+        return all([getattr(o, a, 0) == 0 for a in ["x", "y", "z", "w"] for o in [p.position, p.orientation]])
+
     @function_timer.interval_logger(interval=10)
     def publish_detections(self, image_msg, image_info, depth_msg, depth_info, response):
         """Function to publish detections based on the image data and detector result
@@ -183,11 +187,14 @@ class RunClientOnTopic:
                 xv, yv = np.meshgrid(np.arange(int(roi.x1), int(roi.x2)), np.arange(int(roi.y1), int(roi.y2)))
                 d_roi = depth_image[yv, xv]  # For bbox the x, y, z pos is based on median of valid depth pixels
                 valid_idx = np.where(np.logical_and(d_roi != 0, np.isfinite(d_roi)))
-                if len(valid_idx[0]) and len(valid_idx[1]):
-                    box_pose = self._get_pose(d_roi, valid_idx, roi.x1, roi.y1, fx, fy, cx, cy)
-                    results.objects[i].pose = box_pose
-                    results.objects[i].pose_frame_id = depth_msg.header.frame_id
 
+                infer_pose_from_depth = self.__check_pose_empty(results.objects[i].pose)
+                if len(valid_idx[0]) and len(valid_idx[1]):
+                    box_pose = results.objects[i].pose
+                    if infer_pose_from_depth:
+                        box_pose = self._get_pose(d_roi, valid_idx, roi.x1, roi.y1, fx, fy, cx, cy)
+                        results.objects[i].pose = box_pose
+                        results.objects[i].pose_frame_id = depth_msg.header.frame_id
                     tagged_bbox_poses.poses.append(TaggedPose(tag=label, pose=box_pose))
                     poses[label]["bbox"].poses.append(box_pose)
                 if self.visualisation_enabled:
@@ -209,7 +216,8 @@ class RunClientOnTopic:
                                      orientation=Quaternion(0, 0, 0, 1))
                     tagged_segm_poses.poses.append(TaggedPose(tag=label, pose=segm_pose))
                     poses[label]["segm"].poses.append(segm_pose)
-                    results.objects[i].pose = segm_pose  # should be more accurate so use this as default
+                    if infer_pose_from_depth:
+                        results.objects[i].pose = segm_pose  # should be more accurate so use this as default
 
             # Publish depth poses and 1:1 depth map
             self._publish_poses(poses, tagged_bbox_poses, tagged_segm_poses)
