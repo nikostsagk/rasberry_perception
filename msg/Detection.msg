@@ -6,7 +6,7 @@
 rasberry_perception/RegionOfInterest roi # Represents bounding box detections
 rasberry_perception/SegmentOfInterest seg_roi # Represents pixel segmentation (masks)
 
-# Pose information (camera position of detected objects)
+# Pose information (position of the detected object in the pose_frame_id frame (if blank assume in the camera frame))
 string pose_frame_id
 geometry_msgs/Pose pose
 

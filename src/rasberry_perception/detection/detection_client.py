@@ -205,6 +205,7 @@ class RunClientOnTopic:
                                      orientation=Quaternion(0, 0, 0, 1))
                     tagged_segm_poses.poses.append(TaggedPose(tag=label, pose=segm_pose))
                     poses[label]["segm"].poses.append(segm_pose)
+                    results.objects[i].pose = segm_pose  # should be more accurate so use this as default
 
             # Publish depth poses and 1:1 depth map
             self._publish_poses(poses, tagged_bbox_poses, tagged_segm_poses)
