@@ -151,7 +151,7 @@ class RunClientOnTopic:
         results.camera_frame = image_msg  # TODO: Is it safe to assume the detection server won't add weird things here?
         results.camera_info = image_info
         # TODO: Is it safe to assume if all tracks have id==0 then they're not tracks?
-        if all([d.track_id == 0 for d in results.objects]):
+        if len(results.objects) > 1 and all([d.track_id == 0 for d in results.objects]):
             for o in results.objects:
                 o.track_id = -1  # Signify this is not a tracked object
 
