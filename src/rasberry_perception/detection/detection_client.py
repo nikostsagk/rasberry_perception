@@ -289,8 +289,8 @@ def _get_detections_for_topic():
     rospy.init_node(_node_name, anonymous=True)
 
     # get private namespace parameters
-    p_image_ns = rospy.get_param('~image_ns', "/sequence_0/colour")
-    p_depth_ns = rospy.get_param('~depth_ns', "/sequence_0/depth")
+    p_image_ns = rospy.get_param('~image_ns', "/camera/colour")
+    p_depth_ns = rospy.get_param('~depth_ns', "/camera/depth")
     p_score = rospy.get_param('~score', 0.5)
     p_vis = rospy.get_param('~show_vis', True)
 

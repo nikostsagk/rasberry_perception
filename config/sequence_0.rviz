@@ -98,7 +98,7 @@ Visualization Manager:
       Value: false
     - Class: rviz/Image
       Enabled: false
-      Image Topic: /sequence_0/colour/image_raw
+      Image Topic: /camera/colour/image_raw
       Max Value: 1
       Median window: 5
       Min Value: 0
@@ -110,7 +110,7 @@ Visualization Manager:
       Value: false
     - Class: rviz/Image
       Enabled: false
-      Image Topic: /sequence_0/depth/cmap_raw
+      Image Topic: /camera/depth/cmap_raw
       Max Value: 1
       Median window: 5
       Min Value: 0
