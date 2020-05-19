@@ -7,7 +7,7 @@ The rasberry_perception package aims to interleave ROS and deep learning framewo
 ## Quick start
 
 ```bash
-roslaunch rasberry_perception detector.launch backend:="detectron2" password:="obtain_from_raymond" image_ns:="/your_camera/colour" depth_ns:="/your_camera/depth" score="0.5"
+roslaunch rasberry_perception detector.launch backend:="detectron2" password:="obtain_from_raymond" image_ns:="/your_camera/colour" depth_ns:="/your_camera/depth" score:="0.5"
 ```
 
 ## Installation
