@@ -7,36 +7,42 @@
 <package format="2">
   <name>rasberry_perception</name>
   <version>0.0.1</version>
-  <description>The rasberry_perception package</description>
+  <description>
+    The rasberry_perception package.
+    Used for bridging the gap between research frameworks for object detection and ROS enabled robots.
+  </description>
 
-  <maintainer email="ray.tunstill@gmail.com">Raymond</maintainer>
+  <maintainer email="rkirk@lincoln.ac.uk">Raymond Kirk</maintainer>
+  <maintainer email="ray.tunstill@gmail.com">Raymond Tunstill</maintainer>
 
-  <license>see LICENSE in project root</license>
+  <url type="repository">https://github.com/RaymondKirk/rasberry_perception</url>
+  <license>MIT</license>
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>rospy</build_depend>
   <build_depend>std_msgs</build_depend>
-  <build_depend>message_generation</build_depend>
-  <build_depend>ros_numpy</build_depend>
-  <build_depend>bayes_tracking</build_depend>
+  <build_depend>sensor_msgs</build_depend>
   <build_depend>geometry_msgs</build_depend>
-  <build_depend>tf</build_depend>
+  <build_depend>message_generation</build_depend>
   <build_depend>visualization_msgs</build_depend>
+  <build_depend>bayes_tracking</build_depend>
+  <build_depend>tf</build_depend>
 
-  <build_export_depend>roscpp</build_export_depend>
-  <build_export_depend>rospy</build_export_depend>
-  <build_export_depend>std_msgs</build_export_depend>
-  <build_export_depend>ros_numpy</build_export_depend>
-  <build_export_depend>bayes_tracking</build_export_depend>
-
+  <!-- Core dependencies -->
   <exec_depend>roscpp</exec_depend>
+  <exec_depend>tf</exec_depend>
   <exec_depend>rospy</exec_depend>
   <exec_depend>std_msgs</exec_depend>
-  <exec_depend>ros_numpy</exec_depend>
-  <exec_depend>message_runtime</exec_depend>
-  <exec_depend>bayes_tracking</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
-  <exec_depend>tf</exec_depend>
   <exec_depend>visualization_msgs</exec_depend>
+  <exec_depend>message_runtime</exec_depend>
+  <exec_depend>ros_numpy</exec_depend>
+  <exec_depend>bayes_tracking</exec_depend>
+
+  <!-- Python dependencies  -->
+  <exec_depend version_gte="1.13.3">python-numpy</exec_depend>
+  <exec_depend version_gte="3.2.0">python-opencv</exec_depend>
+  <exec_depend version_gte="1.0.1">python-pathlib</exec_depend>
 </package>

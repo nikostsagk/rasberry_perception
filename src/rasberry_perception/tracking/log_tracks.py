@@ -17,10 +17,6 @@ from rasberry_perception.detection.utility import function_timer
 from rasberry_perception.msg import Detections
 from threading import Event
 
-import matplotlib
-matplotlib.use("TkAgg")
-import matplotlib.pyplot as plt
-
 
 class TrackLogs:
     def __init__(self, bbox_save_dir="", reset_on="", plot_tracks_file=""):
@@ -34,8 +30,15 @@ class TrackLogs:
             self.save_dir = bbox_save_dir
             self.write_bbox_sub = rospy.Subscriber("/rasberry_perception/tracking/detection_results_array",
                                                    Detections, self._bbox_write_callback, queue_size=200)
-
         self._plot = bool(plot_tracks_file)
+        try:
+            import matplotlib
+            matplotlib.use("TkAgg")
+            import matplotlib.pyplot as plt
+        except ImportError:
+            print("Please install matplotlib to enable plotting")
+            self._plot = False
+
         if self._plot:
             self.canvas_history = 0
             self.tracks_history = defaultdict(lambda: dict(x=[], y=[]))
@@ -54,9 +57,10 @@ class TrackLogs:
         if not self._plot:
             rospy.spin()
         while not rospy.is_shutdown():
-            if self.fig_updated.is_set():
-                self.fig_updated.clear()
-            self.plt_show()
+            if self._plot:
+                if self.fig_updated.is_set():
+                    self.fig_updated.clear()
+                self.plt_show()
 
     @function_timer.logger
     def _bbox_write_callback(self, tracker_detections):
@@ -78,6 +82,8 @@ class TrackLogs:
         # print(bounding_boxes)
 
     def plt_show(self):
+        if not self._plot:
+            return
         plt.cla()
 
         self.ax.set_xlim([0, 1280])
@@ -110,9 +116,10 @@ class TrackLogs:
                 self.tracks_history[track.track_id]["y"].append(y)
 
         # self.ax.imshow(image)
-        self.fig_updated.set()
-        print(self.canvas_history)
-        self.canvas_history += 1
+        if self._plot:
+            self.fig_updated.set()
+            print(self.canvas_history)
+            self.canvas_history += 1
 
 
 def __log_unique_tracks():

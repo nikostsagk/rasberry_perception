@@ -14,7 +14,7 @@ roslaunch rasberry_perception detector.launch backend=:"detectron2" password=:"o
 
 This project is dependent on a modified version of LCAS/bayestracking found at [RaymondKirk/bayestracking](https://github.com/RaymondKirk/bayestracking). [Cuda 10.2](https://developer.nvidia.com/cuda-downloads?target_os=Linux&target_arch=x86_64&target_distro=Ubuntu&target_version=1804&target_type=deblocal) must be installed locally to run gpu based backends. 
 
-```
+```bash
 cd catkin_ws/src
 git clone https://github.com/RaymondKirk/bayestracking
 git clone https://github.com/RaymondKirk/rasberry_perception
@@ -24,26 +24,17 @@ catkin build rasberry_perception
 ## Detection Backends
 
 Modular detection backends are available in `rasberry_perception` enabling users to utilise deep learning 
-frameworks/non-ros methods to detect objects. This functionality provided via a ros service `GetDetectorResults`. 
-This modular approach enables things such as Python3 DL backends in Python2 ros environments.
+frameworks/non-ros methods to detect objects. 
 
-To run the detection backend service run the command below replacing backend with a listed one below, or your own:
+You can try to launch both the backend and detector with the command below:
 
-```bash 
+```bash
+# Run together (will download the backend from docker_hub if it exists)
+roslaunch rasberry_perception detector.launch colour_ns:="" depth_ns:="" score:="" show_vis:="" backend:="" backend_arg1:=""
+
+# Or run separately! (Will use a local installation of the backend if available)
 rosrun rasberry_perception detection_server.py backend:="" backend_arg1:=""
-```
-
-Then you can launch the detector:
-
-```bash
 roslaunch rasberry_perception detector.launch colour_ns:='' depth_ns:='' score:=''
-```
-
-Alternatively if a `run_$backend.sh` script exists in `scripts/docker_backends/` you can launch both the docker backend
-and the detector with the command below:
-
-```bash
-roslaunch rasberry_perception detector.launch colour_ns:='' depth_ns:='' score:='' backend:="<your backend>"
 ```
 
 ### Adding a new detection backend 
@@ -51,8 +42,9 @@ roslaunch rasberry_perception detector.launch colour_ns:='' depth_ns:='' score:=
 Adding custom backends such as TensorFlow, PyTorch, Detectron, Onnx etc. to `rasberry_perception` is easy. 
 See [interfaces](src/rasberry_perception/detection/interfaces/) for examples.
 
-A simple example is given below, inherit from the base, register the name in the detection registry and finally add to 
-the all definition [here](src/rasberry_perception/detection/interfaces/__init__.py). 
+A simple example given in four steps, register the name in the detection registry with the class decorator (1), inherit from the 
+base (2), implement the service call logic (3) and finally add to the `__all__` definition 
+[here](src/rasberry_perception/detection/interfaces/__init__.py) (4). 
 
 
 ```python
@@ -60,8 +52,8 @@ import ros_numpy
 from rasberry_perception.detection.interfaces.default import BaseDetectionServer
 from rasberry_perception.msg import Detections, ServiceStatus
 
-@DETECTION_REGISTRY.register_detection_backend("CustomBackendName")
-class CustomVisionBackend(BaseDetectionServer):
+@DETECTION_REGISTRY.register_detection_backend("CustomBackendName")  # (1)
+class CustomVisionBackend(BaseDetectionServer):  # (2)
     # These args are passed from ros parameters when running the backend
     def __init__(self, custom_arg1, custom_arg2, default_arg1="hello"): 
         # Do your imports here i.e import image_to_results_function
@@ -69,7 +61,7 @@ class CustomVisionBackend(BaseDetectionServer):
         self.busy = False 
         BaseDetectionServer.__init__(self)  # Spins the server and waits for requests!
 
-    def get_detector_results(self, request):
+    def get_detector_results(self, request):  # (3)
         if self.busy:  # Example of other status responses
             return GetDetectorResultsResponse(status=ServiceStatus(BUSY=True))
         # Populate a detections message
@@ -78,8 +70,9 @@ class CustomVisionBackend(BaseDetectionServer):
         return GetDetectorResultsResponse(status=ServiceStatus(OKAY=True), results=detections)
 ```
 
-When launching the detection server via `rosrun` you can pass in arguments to your custom backend as you would usually.
-The node will fail if you do not pass any non-default arguments such as `custom_arg1` and `custom_arg2` in the example.
+When launching the detection server via `rosrun` or `roslaunch` you can pass in arguments to your custom backend as you 
+would usually. The node will fail if you do not pass any non-default arguments such as `custom_arg1` and `custom_arg2` 
+in the example.
 
 ```bash
 rosrun rasberry_perception detection_server.py  backend:="CustomBackendName" _custom_arg1:="a1" _custom_arg2:="a2" _default_arg1"="world"

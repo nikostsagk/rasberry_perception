@@ -1,13 +1,10 @@
 #  Raymond Kirk (Tunstill) Copyright (c) 2020
 #  Email: ray.tunstill@gmail.com
 
-import colorsys
-
 import cv2
 import numpy as np
 
 __all__ = ["Visualiser"]
-
 
 _COLORS = np.array([0.000, 0.447, 0.741, 0.850, 0.325, 0.098, 0.929, 0.694, 0.125, 0.494, 0.184, 0.556, 0.466, 0.674,
                     0.188, 0.301, 0.745, 0.933, 0.635, 0.078, 0.184, 0.300, 0.300, 0.300, 0.600, 0.600, 0.600, 1.000,
@@ -26,6 +23,50 @@ _COLORS = np.array([0.000, 0.447, 0.741, 0.850, 0.325, 0.098, 0.929, 0.694, 0.12
                     0.000, 0.333, 0.000, 0.000, 0.500, 0.000, 0.000, 0.667, 0.000, 0.000, 0.833, 0.000, 0.000, 1.000,
                     0.000, 0.000, 0.000, 0.143, 0.143, 0.143, 0.857, 0.857, 0.857, 1.000, 1.000, 1.000]
                    ).astype(np.float32).reshape(-1, 3)
+
+
+def rgb_to_hls(red, green, blue):
+    max_channel_value = max(red, green, blue)
+    min_channel_value = min(red, green, blue)
+    lightness = (min_channel_value + max_channel_value) / 2.0
+    if min_channel_value == max_channel_value:
+        return 0.0, lightness, 0.0
+    if lightness <= 0.5:
+        saturation = (max_channel_value - min_channel_value) / (max_channel_value + min_channel_value)
+    else:
+        saturation = (max_channel_value - min_channel_value) / (2.0 - max_channel_value - min_channel_value)
+    rc = (max_channel_value - red) / (max_channel_value - min_channel_value)
+    gc = (max_channel_value - green) / (max_channel_value - min_channel_value)
+    bc = (max_channel_value - blue) / (max_channel_value - min_channel_value)
+    if red == max_channel_value:
+        hue = bc - gc
+    elif green == max_channel_value:
+        hue = 2.0 + rc - bc
+    else:
+        hue = 4.0 + gc - rc
+    hue = (hue / 6.0) % 1.0
+    return hue, lightness, saturation
+
+
+def hls_to_rgb(hue, lightness, saturation):
+    def _v(m_1, m_2, hue_v):
+        hue_v = hue_v % 1.0
+        if hue_v < (1.0 / 6.0):
+            return m_1 + (m_2 - m_1) * hue_v * 6.0
+        if hue_v < 0.5:
+            return m_2
+        if hue_v < (2.0 / 3.0):
+            return m_1 + (m_2 - m_1) * ((2.0 / 3.0) - hue_v) * 6.0
+        return m_1
+
+    if saturation == 0.0:
+        return lightness, lightness, lightness
+    if lightness <= 0.5:
+        m2 = lightness * (1.0 + saturation)
+    else:
+        m2 = lightness + saturation - (lightness * saturation)
+    m1 = 2.0 * lightness - m2
+    return _v(m1, m2, hue + (1.0 / 3.0)), _v(m1, m2, hue), _v(m1, m2, hue - (1.0 / 3.0))
 
 
 def random_color(rgb=False, maximum=255):
@@ -150,7 +191,7 @@ class Visualiser:
 
             if labels is not None:
                 lighter_color = self._change_color_brightness(color, brightness_factor=0.7)
-                self.draw_text_for_box(labels[i], bbox=boxes[i], font_scale=1.0 / 8.0, color=lighter_color, thickness=2)
+                self.draw_text_for_box(labels[i], bbox=boxes[i], color=lighter_color, thickness=2)
 
     def get_image(self, overlay_alpha=0.5):
         canvas = self.img.copy()
@@ -164,14 +205,28 @@ class Visualiser:
     """
     Primitive drawing functions:
     """
-    def draw_text_for_box(self, text, bbox, font_scale=1.0, color=None, origin="above top left", thickness=1):
+
+    def draw_text_for_box(self, text, bbox, font_scale=None, color=None, origin="above top left", thickness=1,
+            bbox_scale=1.0 / 8.0):
         # If box height is passed scale relative to box height * font_scale
         font = cv2.FONT_HERSHEY_COMPLEX
 
         x0, y0, x1, y1 = bbox
         bbox_height = y1 - y0
-        text_height = min(max(self._min_text_height, bbox_height * font_scale), self._max_text_height)
-        font_scale = cv2.getFontScaleFromHeight(font, int(text_height), thickness)
+
+        # Use 1/8th bbox or min as min_text_height
+        text_height = min(max(self._min_text_height, bbox_height * bbox_scale), self._max_text_height)
+
+        if not font_scale:
+            # apt version of opencv doesn't have this function
+            if hasattr(cv2, "getFontScaleFromHeight"):
+                font_scale = cv2.getFontScaleFromHeight(font, int(text_height), thickness)
+            else:  # Reasonable default for cv2.FONT_HERSHEY_COMPLEX
+                font_ascii = (9 + 12 * 16) + (16 << 8) + (32 << 8)
+                font_base_line = font_ascii & 15
+                font_cap_line = (font_ascii >> 4) & 15
+                font_scale = (int(text_height) - (thickness + 1) / 2.0) / (font_cap_line + font_base_line)
+
         (label_width, label_height), baseline = cv2.getTextSize(text, font, font_scale, thickness)
         pad = 0.7
         box_pad = min(int((1 - pad) * label_width), int((1 - pad) * label_height))
@@ -228,13 +283,14 @@ class Visualiser:
     """
     Internal methods:
     """
+
     def _change_color_brightness(self, color, brightness_factor):
         assert brightness_factor >= -1.0 and brightness_factor <= 1.0
-        polygon_color = colorsys.rgb_to_hls(*list(color))
+        polygon_color = rgb_to_hls(*list(color))
         modified_lightness = polygon_color[1] + (brightness_factor * polygon_color[1])
         modified_lightness = 0.0 if modified_lightness < 0.0 else modified_lightness
         modified_lightness = 1.0 if modified_lightness > 1.0 else modified_lightness
-        modified_color = colorsys.hls_to_rgb(polygon_color[0], modified_lightness, polygon_color[2])
+        modified_color = hls_to_rgb(polygon_color[0], modified_lightness, polygon_color[2])
         return modified_color
 
     def _convert_boxes(self, boxes):
@@ -249,4 +305,3 @@ class Visualiser:
             else:
                 ret.append(GenericMask(x, self.height, self.width))
         return ret
-

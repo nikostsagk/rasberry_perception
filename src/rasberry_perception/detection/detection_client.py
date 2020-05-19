@@ -14,13 +14,13 @@ import numpy as np
 import ros_numpy
 import rospy
 from geometry_msgs.msg import Point, Pose, Quaternion, PoseArray
-from rasberry_perception.msg._TaggedPose import TaggedPose
 from sensor_msgs.msg import Image, CameraInfo
 
 from rasberry_perception.detection import Client, default_service_name
 from rasberry_perception.detection.utility import function_timer, WorkerTaskQueue
 from rasberry_perception.detection.visualisation import Visualiser
-from rasberry_perception.msg import Detections, Detection, RegionOfInterest, SegmentOfInterest, TaggedPoseStampedArray
+from rasberry_perception.msg import Detections, Detection, RegionOfInterest, SegmentOfInterest, TaggedPoseStampedArray,\
+    TaggedPose
 
 
 class RunClientOnTopic:
@@ -201,7 +201,8 @@ class RunClientOnTopic:
                     zp = d_roi[valid_idx[0]] / 1000.0
                     yp = (np.asarray(segm.y)[valid_idx[0]] - cy) * zp / fy
                     xp = (np.asarray(segm.x)[valid_idx[0]] - cx) * zp / fx
-                    segm_pose = Pose(position=Point(np.median(xp), np.median(yp), np.median(zp)), orientation=Quaternion(0, 0, 0, 1))
+                    segm_pose = Pose(position=Point(np.median(xp), np.median(yp), np.median(zp)),
+                                     orientation=Quaternion(0, 0, 0, 1))
                     tagged_segm_poses.poses.append(TaggedPose(tag=label, pose=segm_pose))
                     poses[label]["segm"].poses.append(segm_pose)
 
@@ -284,7 +285,6 @@ def _get_detections_for_topic():
         p_image_ns, p_depth_ns, p_score
     ))
 
-    # TODO: Re-implement depth for now leave as None
     detector = RunClientOnTopic(image_namespace=p_image_ns, depth_namespace=p_depth_ns, score_thresh=p_score,
                                 visualisation_enabled=p_vis, service_name=service_name)
     rospy.spin()
