@@ -108,7 +108,7 @@ class Detectron2Server(BaseDetectionServer):
                             yv, xv = v
                     roi = RegionOfInterest(x1=x1, y1=y1, x2=x2, y2=y2)
                     seg_roi = SegmentOfInterest(x=xv, y=yv)
-                    detections.objects.append(Detection(roi=roi, seg_roi=seg_roi, id=self._new_id(),
+                    detections.objects.append(Detection(roi=roi, seg_roi=seg_roi, id=self._new_id(), track_id=-1,
                                                         confidence=score, class_name=self.classes[cls]))
         except Exception as e:
             print("Detectron2Server error: ", e)

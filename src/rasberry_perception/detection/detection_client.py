@@ -146,10 +146,14 @@ class RunClientOnTopic:
             response (GetDetectorResultsResponse):  The result of a call to the GetDetectorResults service api
         """
         # Filter detections by the score
-        results = Detections(camera_frame=image_msg, camera_info=image_info)
+        results = response.results
         results.objects = [d for d in response.results.objects if d.confidence >= self.score_thresh]
-        for o in results.objects:
-            o.track_id = -1  # Signify this is not a tracked object
+        results.camera_frame = image_msg  # TODO: Is it safe to assume the detection server won't add weird things here?
+        results.camera_info = image_info
+        # TODO: Is it safe to assume if all tracks have id==0 then they're not tracks?
+        if all([d.track_id == 0 for d in results.objects]):
+            for o in results.objects:
+                o.track_id = -1  # Signify this is not a tracked object
 
         # Uncomment this line for dummy detections
         # results.objects.extend(self._get_test_messages(depth_msg.height, depth_msg.width))
