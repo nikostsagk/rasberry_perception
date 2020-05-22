@@ -64,6 +64,8 @@ add_message_files(
 
 generate_messages(DEPENDENCIES std_msgs sensor_msgs geometry_msgs rasberry_perception)
 
+catkin_package(CATKIN_DEPENDS message_runtime std_msgs sensor_msgs geometry_msgs)
+
 # ==============================================
 # Build
 # ==============================================
