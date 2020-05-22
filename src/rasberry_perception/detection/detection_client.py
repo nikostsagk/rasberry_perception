@@ -50,6 +50,7 @@ class RunClientOnTopic:
         self.detection_results_pub = rospy.Publisher(self.namespace + "results", Detections, queue_size=1)
 
         # Initialise depth publishers/subscribers
+        self.all_pose_publishers = {}
         if self.depth_enabled:
             # These topics will republish the depth image (to ensure a 1:1 detection/source lookup)
             self.depth_pub = rospy.Publisher(self.namespace + "depth/image_raw", Image, queue_size=1)
@@ -59,9 +60,9 @@ class RunClientOnTopic:
             self.depth_pose_publishers = {}
 
             # Publish as tagged (by class name)
-            self.tagged_bbox_pose_publisher = rospy.Publisher(self.namespace + "poses/bbox",
+            self.tagged_bbox_pose_publisher = rospy.Publisher(self.namespace + "poses/tagged/bbox",
                                                               TaggedPoseStampedArray, queue_size=1)
-            self.tagged_segm_pose_publisher = rospy.Publisher(self.namespace + "poses/segm",
+            self.tagged_segm_pose_publisher = rospy.Publisher(self.namespace + "poses/tagged/segm",
                                                               TaggedPoseStampedArray, queue_size=1)
 
             # Subscribe to depth and depth intrinsic topics
@@ -119,12 +120,21 @@ class RunClientOnTopic:
         if len(tagged_segm_poses.poses):
             self.tagged_segm_pose_publisher.publish(tagged_segm_poses)
 
+        all_poses = {}
         for class_name, origin_dict in poses.items():
             for origin, pose_array in origin_dict.items():
                 topic = self.namespace + "poses/by_class/{}/{}".format(class_name.replace(" ", "_"), origin)
                 if topic not in self.depth_pose_publishers:
                     self.depth_pose_publishers[topic] = rospy.Publisher(topic, PoseArray, queue_size=1)
+                if pose_array.header.frame_id not in all_poses:
+                    all_poses[pose_array.header.frame_id] = PoseArray(header=pose_array.header)
+                all_poses[pose_array.header.frame_id].poses.extend(pose_array.poses)
                 self.depth_pose_publishers[topic].publish(pose_array)
+        for frame_id, pose_array in all_poses.items():
+            if frame_id not in self.all_pose_publishers:
+                self.all_pose_publishers[frame_id] = rospy.Publisher(self.namespace + "poses/all/{}".format(frame_id),
+                                                                     PoseArray, queue_size=1)
+            self.all_pose_publishers[frame_id].publish(pose_array)
 
     @staticmethod
     def _get_pose(depth_roi, valid_positions, x_offset, y_offset, _fx, _fy, _cx, _cy):
@@ -219,6 +229,7 @@ class RunClientOnTopic:
                     if infer_pose_from_depth:
                         results.objects[i].pose = segm_pose  # should be more accurate so use this as default
 
+                poses[label]["pose"].poses.append(results.objects[i].pose)
             # Publish depth poses and 1:1 depth map
             self._publish_poses(poses, tagged_bbox_poses, tagged_segm_poses)
             self.depth_pub.publish(depth_msg)
