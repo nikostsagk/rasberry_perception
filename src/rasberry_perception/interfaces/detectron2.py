@@ -6,10 +6,11 @@ import numpy as np
 import ros_numpy
 from rasberry_perception.msg import Detections, ServiceStatus, RegionOfInterest, SegmentOfInterest, Detection
 
-from rasberry_perception.detection.interfaces.default import BaseDetectionServer
-from rasberry_perception.detection.interfaces.registry import DETECTION_REGISTRY
-from rasberry_perception.detection.utility import function_timer
-# from rasberry_perception.detection.visualisation import GenericMask
+
+from rasberry_perception.interfaces.default import BaseDetectionServer
+from rasberry_perception.interfaces.registry import DETECTION_REGISTRY
+from rasberry_perception.utility import function_timer
+# from rasberry_perception.visualisation import GenericMask
 from rasberry_perception.srv import GetDetectorResultsResponse, GetDetectorResultsRequest
 
 
@@ -28,10 +29,10 @@ class Detectron2Server(BaseDetectionServer):
     def __init__(self, config_file, model_file=None):
         try:
             from detectron2 import __version__ as version
-            if version != self._supported_version:
+            if version != Detectron2Server._supported_version:
                 raise RuntimeError("Supported version is '{}', you have '{}'.".format(self._supported_version, version))
             from detectron2.config import get_cfg
-            from detectron2.data import MetadataCatalog
+            from detectron2.data import MetadataCatalog, DatasetCatalog
             from detectron2.engine.defaults import DefaultPredictor
         except ImportError:
             raise
@@ -46,8 +47,9 @@ class Detectron2Server(BaseDetectionServer):
             add_fruit_detection_config(self.cfg)
             self.cfg.merge_from_file(config_file)
             register_data_set(self.cfg.DATASETS.TEST[0])
+            DatasetCatalog.get(self.cfg.DATASETS.TEST[0])
             metadata = MetadataCatalog.get(self.cfg.DATASETS.TEST[0] if len(self.cfg.DATASETS.TEST) else "__unused")
-            self.classes = metadata.get("thing_classes")
+            self.classes = metadata.get("thing_classes") or _unknown_class()
         except ImportError:
             self.cfg.merge_from_file(config_file)
 
@@ -74,7 +76,7 @@ class Detectron2Server(BaseDetectionServer):
             return GetDetectorResultsResponse(status=ServiceStatus(BUSY=True))
         self.currently_busy.set()
 
-        detections = Detections()
+        detections = Detections(camera_frame=request.image)
 
         try:
             image = ros_numpy.numpify(request.image)
