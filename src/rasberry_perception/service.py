@@ -5,7 +5,7 @@ import sys
 import rospy
 
 from rasberry_perception.srv import GetDetectorResults
-from rasberry_perception.detection import DETECTION_REGISTRY, default_service_name
+from rasberry_perception import DETECTION_REGISTRY, default_service_name
 
 
 class Server:
@@ -20,7 +20,7 @@ class Server:
         backend_kwargs (dict): Appropriate arguments required by the backend. If none they're defined by the ros
             param server.
         service_name (str): Underlying service name to start based on (shouldn't change from
-            rasberry_perception.detection.default_service_name) unless overridden in custom interface backend
+            rasberry_perception.default_service_name) unless overridden in custom interface backend
 
     Attributes:
         server_args (dict): Key, Value pairs of appropriate ros parameters for the chosen backend. Default would be
@@ -106,7 +106,7 @@ class Client:
     Args:
         timeout (int): How long to wait between polling for the service to become available
         service_name (str): Underlying service name to connect to (shouldn't change from
-            rasberry_perception.detection.default_service_name) unless overridden in custom interface backend
+            rasberry_perception.default_service_name) unless overridden in custom interface backend
 
     Examples:
         >>> client = Client()

@@ -4,10 +4,10 @@ from threading import Event
 
 import rospy
 
-from rasberry_perception.detection.utility import function_timer
+from rasberry_perception.utility import function_timer
 from rasberry_perception.srv import GetDetectorResults, GetDetectorResultsResponse
 from rasberry_perception.msg import ServiceStatus
-from rasberry_perception.detection.interfaces.registry import DETECTION_REGISTRY
+from rasberry_perception.interfaces.registry import DETECTION_REGISTRY
 
 default_service_name = "get_detections_service"
 

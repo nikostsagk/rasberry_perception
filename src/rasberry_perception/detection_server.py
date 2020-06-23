@@ -9,7 +9,7 @@ import argparse
 
 import rospy
 
-from rasberry_perception.detection import Server, default_service_name
+from rasberry_perception import Server, default_service_name
 
 
 def _default_arg_parser(args=None):

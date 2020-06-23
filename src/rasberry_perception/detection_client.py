@@ -16,9 +16,9 @@ import rospy
 from geometry_msgs.msg import Point, Pose, Quaternion, PoseArray
 from sensor_msgs.msg import Image, CameraInfo
 
-from rasberry_perception.detection import Client, default_service_name
-from rasberry_perception.detection.utility import function_timer, WorkerTaskQueue
-from rasberry_perception.detection.visualisation import Visualiser
+from rasberry_perception import Client, default_service_name
+from rasberry_perception.utility import function_timer, WorkerTaskQueue
+from rasberry_perception.visualisation import Visualiser
 from rasberry_perception.msg import Detections, Detection, RegionOfInterest, SegmentOfInterest, TaggedPoseStampedArray,\
     TaggedPose
 
@@ -74,6 +74,8 @@ class RunClientOnTopic:
         if self.visualisation_enabled:
             # Draw the detection message visually
             self.detections_vis_pub = rospy.Publisher(self.namespace + "vis/detection/image_raw", Image, queue_size=1)
+            self.detections_vis_info_pub = rospy.Publisher(self.namespace + "vis/detection/camera_info", CameraInfo,
+                                                           queue_size=1)
 
             # Worker thread to do the heavy lifting of the detections visualisation
             self.publisher_tasks = WorkerTaskQueue(num_workers=1, max_size=1, discard=True)
@@ -251,10 +253,10 @@ class RunClientOnTopic:
 
         # Offload the visualisation task <1ms (takes considerable time)
         if self.visualisation_enabled:
-            self.publisher_tasks.add_task(self._vis_publish, (image_msg, results,))
+            self.publisher_tasks.add_task(self._vis_publish, (image_msg, image_info, results,))
 
     @function_timer.interval_logger(interval=10)
-    def _vis_publish(self, image_msg, result):
+    def _vis_publish(self, image_msg, image_info, result):
         """Publish function for service results. Meant to be offloaded to another thread.
 
         Args:
@@ -269,7 +271,10 @@ class RunClientOnTopic:
         vis_image = vis.get_image(overlay_alpha=0.5)
         vis_msg = ros_numpy.msgify(Image, vis_image, encoding=image_msg.encoding)
         vis_msg.header = image_msg.header
+        vis_info = image_info
+        vis_info.header = vis_msg.header
         self.detections_vis_pub.publish(vis_msg)
+        self.detections_vis_info_pub.publish(vis_info)
 
 
     def _get_test_messages(self, max_y, max_x, n_grid=2, box_height=200, box_width=200):
@@ -300,8 +305,8 @@ def _get_detections_for_topic():
     rospy.init_node(_node_name, anonymous=True)
 
     # get private namespace parameters
-    p_image_ns = rospy.get_param('~image_ns', "/camera/colour")
-    p_depth_ns = rospy.get_param('~depth_ns', "/camera/depth")
+    p_image_ns = rospy.get_param('~image_ns', "/sequence_0/colour")
+    p_depth_ns = rospy.get_param('~depth_ns', "/sequence_0/depth")
     p_score = rospy.get_param('~score', 0.5)
     p_vis = rospy.get_param('~show_vis', True)
 

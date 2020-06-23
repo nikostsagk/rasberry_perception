@@ -48,7 +48,7 @@ base (2), implement the service call logic (3) and finally add to the `__all__` 
 
 ```python
 import ros_numpy
-from rasberry_perception.detection.interfaces.default import BaseDetectionServer
+from rasberry_perception.interfaces.default import BaseDetectionServer
 from rasberry_perception.msg import Detections, ServiceStatus
 
 @DETECTION_REGISTRY.register_detection_backend("CustomBackendName")  # (1)
