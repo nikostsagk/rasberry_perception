@@ -10,6 +10,10 @@ rasberry_perception/SegmentOfInterest seg_roi # Represents pixel segmentation (m
 string pose_frame_id
 geometry_msgs/Pose pose
 
+# ReIdentification Features (some models output descriptors, default is empty list)
+float64[] reid_vector
+float64[] reid_logits
+
 # Information about the detection (score, class, id etc.)
 int64 id # The unique identifier for this particular detection
 int64 track_id # The unique identifier for this particular track (0 or -1 if invalid)
