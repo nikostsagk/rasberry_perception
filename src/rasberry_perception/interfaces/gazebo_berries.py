@@ -5,14 +5,10 @@ from threading import Event
 import ros_numpy
 from rasberry_perception.msg import Detections, ServiceStatus, RegionOfInterest, SegmentOfInterest, Detection
 
-from rasberry_perception.detection.interfaces.default import BaseDetectionServer
-from rasberry_perception.detection.interfaces.registry import DETECTION_REGISTRY
-from rasberry_perception.detection.utility import function_timer
+from rasberry_perception.interfaces.default import BaseDetectionServer
+from rasberry_perception.interfaces.registry import DETECTION_REGISTRY
+from rasberry_perception.utility import function_timer
 from rasberry_perception.srv import GetDetectorResultsResponse, GetDetectorResultsRequest
-
-from geometry_msgs.msg import PoseStamped
-import rospy
-import tf2_geometry_msgs
 
 
 class _unknown_class:
@@ -27,6 +23,9 @@ class _unknown_class:
 class GazeboRenderedBerriesServer(BaseDetectionServer):
     def __init__(self, keyword="strawberry", ref_frame='camera1d435e_camera'):
         try:
+            from geometry_msgs.msg import PoseStamped
+            import rospy
+            import tf2_geometry_msgs
             import rospy
             import tf2_ros
             import tf2_geometry_msgs
