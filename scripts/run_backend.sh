@@ -12,6 +12,7 @@ password=$2
 #   format: docker_hub["rasberry_perception:backend_name"]="$SHARE_TOKEN:$SHARE_PASSWORD"
 declare -A docker_hub
 docker_hub["rasberry_perception:detectron2"]="niq2GG66GoWdxjt:${password}"
+docker_hub["rasberry_perception:fruit_reid"]="DqS38eHzLGbHpqR:${password}"
 
 echo "Looking for docker image '${image_name}' locally"
 
