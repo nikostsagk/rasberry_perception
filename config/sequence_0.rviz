@@ -8,14 +8,6 @@ Panels:
         - /Status1
         - /Colourised Depth1/Status1
         - /Colourised Depth1/Auto Size1
-        - /RGB1
-        - /Depth (Colourised)1
-        - /rasberry_perception1/poses/unknown/bbox1/Status1
-        - /TF1/Frames1
-        - /TF1/Tree1
-        - /MarkerArray1
-        - /Camera1
-        - /Camera1/Visibility1
       Splitter Ratio: 0.45155394077301025
     Tree Height: 594
   - Class: rviz/Selection
@@ -36,7 +28,7 @@ Panels:
     Experimental: true
     Name: Time
     SyncMode: 0
-    SyncSource: perception/depth_bbox
+    SyncSource: Detections Visualisation
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -101,7 +93,7 @@ Visualization Manager:
       Use rainbow: true
       Value: false
     - Class: rviz/Image
-      Enabled: false
+      Enabled: true
       Image Topic: /sequence_0/colour/image_raw
       Max Value: 1
       Median window: 5
@@ -111,9 +103,9 @@ Visualization Manager:
       Queue Size: 2
       Transport Hint: raw
       Unreliable: false
-      Value: false
+      Value: true
     - Class: rviz/Image
-      Enabled: false
+      Enabled: true
       Image Topic: /sequence_0/depth/cmap_raw
       Max Value: 1
       Median window: 5
@@ -123,252 +115,111 @@ Visualization Manager:
       Queue Size: 2
       Transport Hint: raw
       Unreliable: false
-      Value: false
-    - Class: rviz/Group
-      Displays:
-        - Class: rviz/Image
-          Enabled: true
-          Image Topic: /rasberry_perception/vis/detection/image_raw
-          Max Value: 1
-          Median window: 5
-          Min Value: 0
-          Name: perception/image
-          Normalize Range: true
-          Queue Size: 2
-          Transport Hint: raw
-          Unreliable: false
-          Value: true
-        - Alpha: 1
-          Arrow Length: 0.30000001192092896
-          Axes Length: 0.029999999329447746
-          Axes Radius: 0.004999999888241291
-          Class: rviz/PoseArray
-          Color: 255; 25; 0
-          Enabled: true
-          Head Length: 0.07000000029802322
-          Head Radius: 0.029999999329447746
-          Name: poses/unknown/bbox
-          Shaft Length: 0.23000000417232513
-          Shaft Radius: 0.009999999776482582
-          Shape: Axes
-          Topic: /rasberry_perception/poses/unknown/bbox
-          Unreliable: false
-          Value: true
-        - Alpha: 1
-          Auto Size:
-            Auto Size Factor: 1
-            Value: true
-          Autocompute Intensity Bounds: true
-          Autocompute Value Bounds:
-            Max Value: 10
-            Min Value: -10
-            Value: true
-          Axis: Z
-          Channel Name: intensity
-          Class: rviz/DepthCloud
-          Color: 255; 255; 255
-          Color Image Topic: /rasberry_perception/colour/image_raw
-          Color Transformer: RGB8
-          Color Transport Hint: raw
-          Decay Time: 0
-          Depth Map Topic: /rasberry_perception/depth/image_raw
-          Depth Map Transport Hint: raw
-          Enabled: false
-          Invert Rainbow: false
-          Max Color: 255; 255; 255
-          Max Intensity: 4096
-          Min Color: 0; 0; 0
-          Min Intensity: 0
-          Name: perception/depth
-          Occlusion Compensation:
-            Occlusion Time-Out: 30
-            Value: false
-          Position Transformer: XYZ
-          Queue Size: 5
-          Selectable: true
-          Size (Pixels): 3
-          Style: Flat Squares
-          Topic Filter: true
-          Use Fixed Frame: true
-          Use rainbow: true
-          Value: false
-        - Alpha: 1
-          Auto Size:
-            Auto Size Factor: 1
-            Value: true
-          Autocompute Intensity Bounds: true
-          Autocompute Value Bounds:
-            Max Value: 10
-            Min Value: -10
-            Value: true
-          Axis: Z
-          Channel Name: intensity
-          Class: rviz/DepthCloud
-          Color: 255; 255; 255
-          Color Image Topic: /rasberry_perception/colour/image_raw
-          Color Transformer: RGB8
-          Color Transport Hint: raw
-          Decay Time: 0
-          Depth Map Topic: /rasberry_perception/vis/bbox_points/image_raw
-          Depth Map Transport Hint: raw
-          Enabled: true
-          Invert Rainbow: false
-          Max Color: 255; 255; 255
-          Max Intensity: 4096
-          Min Color: 0; 0; 0
-          Min Intensity: 0
-          Name: perception/depth_bbox
-          Occlusion Compensation:
-            Occlusion Time-Out: 30
-            Value: false
-          Position Transformer: XYZ
-          Queue Size: 5
-          Selectable: true
-          Size (Pixels): 3
-          Style: Flat Squares
-          Topic Filter: true
-          Use Fixed Frame: true
-          Use rainbow: true
-          Value: true
-      Enabled: true
-      Name: rasberry_perception
-    - Class: rviz/Group
-      Displays: ~
+      Value: true
+    - Alpha: 1
+      Auto Size:
+        Auto Size Factor: 1
+        Value: true
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/DepthCloud
+      Color: 255; 255; 255
+      Color Image Topic: /rasberry_perception/colour/image_raw
+      Color Transformer: RGB8
+      Color Transport Hint: raw
+      Decay Time: 0
+      Depth Map Topic: /rasberry_perception/depth/image_raw
+      Depth Map Transport Hint: raw
       Enabled: false
-      Name: rasberry_perception/tracking
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 4096
+      Min Color: 0; 0; 0
+      Min Intensity: 0
+      Name: Depth
+      Occlusion Compensation:
+        Occlusion Time-Out: 30
+        Value: false
+      Position Transformer: XYZ
+      Queue Size: 5
+      Selectable: true
+      Size (Pixels): 3
+      Style: Flat Squares
+      Topic Filter: true
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: false
     - Alpha: 1
       Arrow Length: 0.30000001192092896
-      Axes Length: 0.30000001192092896
-      Axes Radius: 0.009999999776482582
+      Axes Length: 0.029999999329447746
+      Axes Radius: 0.004999999888241291
       Class: rviz/PoseArray
       Color: 255; 25; 0
-      Enabled: false
+      Enabled: true
       Head Length: 0.07000000029802322
       Head Radius: 0.029999999329447746
-      Name: PoseArray
+      Name: All Poses
       Shaft Length: 0.23000000417232513
       Shaft Radius: 0.009999999776482582
-      Shape: Arrow (Flat)
-      Topic: /rasberry_perception/tracker/pose_array
+      Shape: Axes
+      Topic: /rasberry_perception/poses/all/sequence_colour_frame
       Unreliable: false
-      Value: false
-    - Class: rviz/TF
-      Enabled: false
-      Frame Timeout: 15
-      Frames:
-        All Enabled: false
-      Marker Scale: 1
-      Name: TF
-      Show Arrows: true
-      Show Axes: true
-      Show Names: true
-      Tree:
-        {}
-      Update Interval: 0
-      Value: false
-    - Alpha: 1
-      Axes Length: 1
-      Axes Radius: 0.10000000149011612
-      Class: rviz/Pose
-      Color: 255; 25; 0
-      Enabled: false
-      Head Length: 0.30000001192092896
-      Head Radius: 0.10000000149011612
-      Name: Pose
-      Shaft Length: 1
-      Shaft Radius: 0.05000000074505806
-      Shape: Arrow
-      Topic: /rasberry_perception/tracker/pose
-      Unreliable: false
-      Value: false
-    - Class: rviz/MarkerArray
-      Enabled: false
-      Marker Topic: /rasberry_perception/tracker/marker_array
-      Name: MarkerArray
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: false
-    - Class: rviz/MarkerArray
-      Enabled: false
-      Marker Topic: /rasberry_perception/tracking/marker_array
-      Name: DetectionTracks
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: false
-    - Alpha: 1
-      Arrow Length: 0.30000001192092896
-      Axes Length: 0.30000001192092896
-      Axes Radius: 0.009999999776482582
-      Class: rviz/PoseArray
-      Color: 255; 25; 0
-      Enabled: false
-      Head Length: 0.019999999552965164
-      Head Radius: 0.029999999329447746
-      Name: Class 0
-      Shaft Length: 0.019999999552965164
-      Shaft Radius: 0.009999999776482582
-      Shape: Arrow (3D)
-      Topic: /rasberry_perception/poses/by_class/class_0/bbox
-      Unreliable: false
-      Value: false
-    - Alpha: 1
-      Arrow Length: 0.30000001192092896
-      Axes Length: 0.30000001192092896
-      Axes Radius: 0.009999999776482582
-      Class: rviz/PoseArray
-      Color: 138; 226; 52
-      Enabled: false
-      Head Length: 0.019999999552965164
-      Head Radius: 0.029999999329447746
-      Name: Class 1
-      Shaft Length: 0.019999999552965164
-      Shaft Radius: 0.009999999776482582
-      Shape: Arrow (3D)
-      Topic: /rasberry_perception/poses/by_class/class_1/bbox
-      Unreliable: false
-      Value: false
-    - Class: rviz/MarkerArray
-      Enabled: true
-      Marker Topic: /rasberry_perception/tracking/marker_array
-      Name: Tracking Results
-      Namespaces:
-        rasberry_perception/tracking: true
-      Queue Size: 100
       Value: true
-    - Class: rviz/Camera
+    - Class: rviz/Image
       Enabled: true
-      Image Rendering: background and overlay
       Image Topic: /rasberry_perception/vis/detection/image_raw
-      Name: Camera
-      Overlay Alpha: 0
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
+      Name: Detections Visualisation
+      Normalize Range: true
       Queue Size: 2
       Transport Hint: raw
       Unreliable: false
       Value: true
-      Visibility:
-        Class 0: true
-        Class 1: true
-        Colourised Depth: true
-        Depth (Colourised): true
-        DetectionTracks: true
-        Grid: true
-        MarkerArray: true
-        Pose: true
-        PoseArray: true
-        RGB: true
-        TF: true
-        Tracking Results: true
+    - Alpha: 1
+      Auto Size:
+        Auto Size Factor: 1
         Value: true
-        rasberry_perception:
-          Value: false
-          perception/depth: true
-          perception/depth_bbox: true
-          perception/image: true
-          poses/unknown/bbox: true
-        rasberry_perception/tracking: true
-      Zoom Factor: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/DepthCloud
+      Color: 255; 255; 255
+      Color Image Topic: /rasberry_perception/colour/image_raw
+      Color Transformer: RGB8
+      Color Transport Hint: raw
+      Decay Time: 0
+      Depth Map Topic: /rasberry_perception/vis/bbox_points/image_raw
+      Depth Map Transport Hint: raw
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 4096
+      Min Color: 0; 0; 0
+      Min Intensity: 0
+      Name: Detections Depth Cloud
+      Occlusion Compensation:
+        Occlusion Time-Out: 30
+        Value: false
+      Position Transformer: XYZ
+      Queue Size: 5
+      Selectable: true
+      Size (Pixels): 3
+      Style: Flat Squares
+      Topic Filter: true
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -418,16 +269,16 @@ Visualization Manager:
       Yaw: 4.7319464683532715
     Saved: ~
 Window Geometry:
-  Camera:
-    collapsed: false
   Depth (Colourised):
+    collapsed: false
+  Detections Visualisation:
     collapsed: false
   Displays:
     collapsed: false
   Height: 1052
   Hide Left Dock: false
   Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd0000000400000000000001560000037efc020000000afb0000001200530065006c0065006300740069006f006e010000003d0000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c00610079007301000000de000002dd000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000c00430061006d0065007200610200000211000000e600000449000003a5fb0000000c00430061006d006500720061020000091800000112000003b20000024c00000001000002d20000037efc0200000008fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d00000148000000a400fffffffb0000002400440065007000740068002000280043006f006c006f0075007200690073006500640029000000003d0000007f0000001600fffffffb0000000c00430061006d006500720061010000003d000001ac0000001600fffffffb0000002000700065007200630065007000740069006f006e002f0069006d00610067006501000001ef000001cc0000001600fffffffb000000060052004700420000000235000001860000001600fffffffb0000000a0049006d006100670065010000038f000001950000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000007450000003efc0100000002fb0000000800540069006d00650100000000000007450000031b00fffffffb0000000800540069006d00650100000000000004500000000000000000000003110000037e00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000003930000037efc020000000afb0000001200530065006c0065006300740069006f006e010000003d0000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c00610079007301000000de000002dd000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000c00430061006d00650072006102000002110000009300000449000003a5fb0000000c00430061006d006500720061020000091800000112000003b20000024c00000001000003200000037efc0200000008fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d00000148000000a400fffffffb0000002400440065007000740068002000280043006f006c006f0075007200690073006500640029010000003d000000b20000001600fffffffb0000000c00430061006d006500720061010000003d000001ac0000000000000000fb000000300044006500740065006300740069006f006e0073002000560069007300750061006c00690073006100740069006f006e01000000f5000001d30000001600fffffffb0000000600520047004201000002ce000000ed0000001600fffffffb0000000a0049006d006100670065010000038f000001950000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000007450000003efc0100000002fb0000000800540069006d00650100000000000007450000031b00fffffffb0000000800540069006d00650100000000000004500000000000000000000000860000037e00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   RGB:
     collapsed: false
   Selection:
@@ -441,5 +292,3 @@ Window Geometry:
   Width: 1861
   X: 59
   Y: 0
-  perception/image:
-    collapsed: false
