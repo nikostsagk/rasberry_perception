@@ -76,7 +76,7 @@ class Detectron2Server(BaseDetectionServer):
             return GetDetectorResultsResponse(status=ServiceStatus(BUSY=True))
         self.currently_busy.set()
 
-        detections = Detections(camera_frame=request.image)
+        detections = Detections()
 
         try:
             image = ros_numpy.numpify(request.image)

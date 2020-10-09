@@ -167,7 +167,9 @@ class RunClientOnTopic:
         # Filter detections by the score
         results = response.results
         results.objects = [d for d in response.results.objects if d.confidence >= self.score_thresh]
-        results.camera_frame = image_msg  # TODO: Is it safe to assume the detection server won't add weird things here?
+        if self.publish_source:
+            # TODO: Is it safe to assume the detection server won't add weird things here?
+            results.camera_frame = image_msg
         results.camera_info = image_info
         # TODO: Is it safe to assume if all tracks have id==0 then they're not tracks?
         if len(results.objects) > 1 and all([d.track_id == 0 for d in results.objects]):
@@ -282,28 +284,6 @@ class RunClientOnTopic:
         self.detections_vis_info_pub.publish(vis_info)
 
 
-    def _get_test_messages(self, max_y, max_x, n_grid=2, box_height=200, box_width=200):
-        """Internal use only. Returns a list of fake detections
-
-        Args:
-            max_y (int): Max y position (height) of the bounding boxes
-            max_x (int): Max x position (width) of the bounding boxes
-        """
-        detections = []
-        margin = 20
-        max_y -= box_height + (margin * 2)
-        max_x -= box_width + (margin * 2)
-
-        for i in range(n_grid + 1):
-            y = max_y * (i / n_grid) + margin
-            for j in range(n_grid + 1):
-                x = max_x * (j / n_grid) + margin
-                roi = RegionOfInterest(x1=x, x2=x + box_width, y1=y, y2=y + box_height)
-                seg_roi = SegmentOfInterest(x=range(int(roi.x1), int(roi.x2)), y=range(int(roi.y1), int(roi.y2)))
-                detections.append(Detection(confidence=np.random.uniform(), class_name="test", roi=roi, seg_roi=seg_roi))
-        return detections
-
-
 def _get_detections_for_topic():
     service_name = default_service_name
     _node_name = service_name + "_client"
@@ -313,16 +293,19 @@ def _get_detections_for_topic():
     p_image_ns = rospy.get_param('~image_ns', "/sequence_0/colour")
     p_depth_ns = rospy.get_param('~depth_ns', "/sequence_0/depth")
     p_score = rospy.get_param('~score', 0.5)
-    p_vis = rospy.get_param('~show_vis', True)
+    p_vis = rospy.get_param('~show_vis', False)
     p_source = rospy.get_param('~publish_source', False)
 
     rospy.loginfo("Camera Topic to Detection ROS: image_namespace={}, depth_namespace={}, score_thresh={}, "
                   "visualisation_enabled={}, publish_source={}".format(p_image_ns, p_depth_ns, p_score, p_vis,
                                                                        p_source))
 
-    detector = RunClientOnTopic(image_namespace=p_image_ns, depth_namespace=p_depth_ns, score_thresh=p_score,
-                                visualisation_enabled=p_vis, service_name=service_name, publish_source=p_source)
-    rospy.spin()
+    try:
+        detector = RunClientOnTopic(image_namespace=p_image_ns, depth_namespace=p_depth_ns, score_thresh=p_score,
+                                    visualisation_enabled=p_vis, service_name=service_name, publish_source=p_source)
+        rospy.spin()
+    except (KeyboardInterrupt, rospy.ROSInterruptException) as e:
+        print("Exiting node due to interrupt:", e)
 
 
 if __name__ == '__main__':
