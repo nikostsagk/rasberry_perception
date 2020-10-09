@@ -13,14 +13,13 @@
 ##   docker save rasberry_perception:detectron2 | gzip > rasberry_perception_detectron2.tar.gz
 ##
 ## Run with:
-##   docker run --network host --gpus all --name base_gpu --rm -it rasberry_perception:detectron2
+##   docker run --network host --gpus all --name detectron2_backend --rm -it rasberry_perception:detectron2
 ##
 
 FROM rasberry_perception:base_gpu
 
 ## Meta information
 MAINTAINER Raymond Kirk    "rkirk@lincoln.ac.uk"
-MAINTAINER Nikolaus Wagner "nwagner@lincoln.ac.uk"
 
 # Set FORCE_CUDA because during `docker build` cuda is not accessible
 ENV FORCE_CUDA="1"
