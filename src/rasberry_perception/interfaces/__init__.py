@@ -6,5 +6,6 @@ from .registry import DETECTION_REGISTRY
 from .default import DefaultDetectionServer, default_service_name
 from .detectron2 import Detectron2Server
 from .gazebo_berries import GazeboRenderedBerriesServer
+from .fruitcast import FruitCastServer
 
-__all__ = ["GazeboRenderedBerriesServer", "Detectron2Server", "DefaultDetectionServer"]
+__all__ = ["FruitCastServer", "GazeboRenderedBerriesServer", "Detectron2Server", "DefaultDetectionServer"]
