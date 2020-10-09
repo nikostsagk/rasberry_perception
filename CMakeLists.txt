@@ -55,6 +55,7 @@ add_message_files(
     FILES
     Detection.msg
     Detections.msg
+    ObjectSize.msg
     RegionOfInterest.msg
     SegmentOfInterest.msg
     ServiceStatus.msg

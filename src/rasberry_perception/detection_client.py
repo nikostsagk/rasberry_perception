@@ -20,7 +20,7 @@ from rasberry_perception import Client, default_service_name
 from rasberry_perception.utility import function_timer, WorkerTaskQueue
 from rasberry_perception.visualisation import Visualiser
 from rasberry_perception.msg import Detections, Detection, RegionOfInterest, SegmentOfInterest, TaggedPoseStampedArray,\
-    TaggedPose
+    TaggedPose, ObjectSize
 
 
 class RunClientOnTopic:
@@ -142,12 +142,30 @@ class RunClientOnTopic:
             self.all_pose_publishers[frame_id].publish(pose_array)
 
     @staticmethod
-    def _get_pose(depth_roi, valid_positions, x_offset, y_offset, _fx, _fy, _cx, _cy):
+    def _reject_outliers(data, m=2., method="median"):
+        if not data.size or not data.all():
+            return data
+        if method == "std":
+            return data[abs(data - np.mean(data)) < m * np.std(data)]
+        elif method == "median":
+            d = np.abs(data - np.median(data))
+            m_dev = np.median(d)
+            s = d / (m_dev if m_dev else 1.)
+            return data[s < m]
+        else:
+            raise ValueError("Method must be std or median")
+
+    @staticmethod
+    def _get_pose(depth_roi, valid_positions, x_offset, y_offset, _fx, _fy, _cx, _cy, return_size=False):
         """Utility function to get a pose from a set of (y, x) points within a depth map"""
         zp = depth_roi[valid_positions] / 1000.0
         yp = ((valid_positions[0] + y_offset) - _cy) * zp / _fy
         xp = ((valid_positions[1] + x_offset) - _cx) * zp / _fx
-        return Pose(position=Point(np.median(xp), np.median(yp), np.median(zp)), orientation=Quaternion(0, 0, 0, 1))
+        ret = Pose(position=Point(np.median(xp), np.median(yp), np.median(zp)), orientation=Quaternion(0, 0, 0, 1))
+        if return_size:
+            w, h, d = [np.ptp(RunClientOnTopic._reject_outliers(da)) for da in [xp, yp, zp]]
+            ret = (ret, ObjectSize(w, h, d))
+        return ret
 
     @staticmethod
     def __check_pose_empty(p):
@@ -209,8 +227,9 @@ class RunClientOnTopic:
                 if len(valid_idx[0]) and len(valid_idx[1]):
                     box_pose = results.objects[i].pose
                     if infer_pose_from_depth:
-                        box_pose = self._get_pose(d_roi, valid_idx, roi.x1, roi.y1, fx, fy, cx, cy)
+                        box_pose, size = self._get_pose(d_roi, valid_idx, roi.x1, roi.y1, fx, fy, cx, cy, True)
                         results.objects[i].pose = box_pose
+                        results.objects[i].size = size
                         results.objects[i].pose_frame_id = depth_msg.header.frame_id
                     tagged_bbox_poses.poses.append(TaggedPose(tag=label, pose=box_pose))
                     poses[label]["bbox"].poses.append(box_pose)
@@ -231,6 +250,10 @@ class RunClientOnTopic:
                     xp = (np.asarray(segm.x)[valid_idx[0]] - cx) * zp / fx
                     segm_pose = Pose(position=Point(np.median(xp), np.median(yp), np.median(zp)),
                                      orientation=Quaternion(0, 0, 0, 1))
+                    # Overwrite the bbox extracted size if segm available
+                    results.objects[i].size = ObjectSize(*[
+                        np.ptp(RunClientOnTopic._reject_outliers(da)) for da in [xp, yp, zp]
+                    ])
                     tagged_segm_poses.poses.append(TaggedPose(tag=label, pose=segm_pose))
                     poses[label]["segm"].poses.append(segm_pose)
                     if infer_pose_from_depth:

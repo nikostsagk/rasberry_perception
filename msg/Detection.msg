@@ -10,6 +10,9 @@ rasberry_perception/SegmentOfInterest seg_roi # Represents pixel segmentation (m
 string pose_frame_id
 geometry_msgs/Pose pose
 
+# Estimated sizes from bbox depth and segm depth
+rasberry_perception/ObjectSize size # Size extracted from depth points of bbox (or segm if available)
+
 # ReIdentification Features (some models output descriptors, default is empty list)
 float64[] reid_vector
 float64[] reid_logits
