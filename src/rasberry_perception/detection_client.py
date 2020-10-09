@@ -25,21 +25,23 @@ from rasberry_perception.msg import Detections, Detection, RegionOfInterest, Seg
 
 class RunClientOnTopic:
     def __init__(self, image_namespace, depth_namespace=None, score_thresh=0.5, service_name=default_service_name,
-                 visualisation_enabled=False):
+                 visualisation_enabled=False, publish_source=False):
         # Initialise class members
         self.score_thresh = score_thresh
         self._service_name = service_name
         self.namespace = "rasberry_perception/"
         self.depth_enabled = depth_namespace is not None
         self.visualisation_enabled = visualisation_enabled
+        self.publish_source = publish_source
 
         # Wait for connection to detection service
         self.detector = Client()
 
         # Initialise colour publishers/subscribers
-        # These topics will republish the colour image (to ensure a 1:1 detection/source lookup)
-        self.image_pub = rospy.Publisher(self.namespace + "colour/image_raw", Image, queue_size=1)
-        self.image_info_pub = rospy.Publisher(self.namespace + "colour/camera_info", CameraInfo, queue_size=1)
+        if self.publish_source:
+            # These topics will republish the colour image (to ensure a 1:1 detection/source lookup)
+            self.image_pub = rospy.Publisher(self.namespace + "colour/image_raw", Image, queue_size=1)
+            self.image_info_pub = rospy.Publisher(self.namespace + "colour/camera_info", CameraInfo, queue_size=1)
 
         subscribers = [
             message_filters.Subscriber(image_namespace + "/image_raw", Image),
@@ -52,9 +54,10 @@ class RunClientOnTopic:
         # Initialise depth publishers/subscribers
         self.all_pose_publishers = {}
         if self.depth_enabled:
-            # These topics will republish the depth image (to ensure a 1:1 detection/source lookup)
-            self.depth_pub = rospy.Publisher(self.namespace + "depth/image_raw", Image, queue_size=1)
-            self.depth_info_pub = rospy.Publisher(self.namespace + "depth/camera_info", CameraInfo, queue_size=1)
+            if self.publish_source:
+                # These topics will republish the depth image (to ensure a 1:1 detection/source lookup)
+                self.depth_pub = rospy.Publisher(self.namespace + "depth/image_raw", Image, queue_size=1)
+                self.depth_info_pub = rospy.Publisher(self.namespace + "depth/camera_info", CameraInfo, queue_size=1)
 
             # Container for /detection/<class name>/bbox_poses and /detection/<class name>/segm_poses messages
             self.depth_pose_publishers = {}
@@ -234,8 +237,9 @@ class RunClientOnTopic:
                 poses[label]["pose"].poses.append(results.objects[i].pose)
             # Publish depth poses and 1:1 depth map
             self._publish_poses(poses, tagged_bbox_poses, tagged_segm_poses)
-            self.depth_pub.publish(depth_msg)
-            self.depth_info_pub.publish(depth_info)
+            if self.publish_source:
+                self.depth_pub.publish(depth_msg)
+                self.depth_info_pub.publish(depth_info)
 
             if self.visualisation_enabled:
                 # Publish bbox points only depth map
@@ -248,8 +252,9 @@ class RunClientOnTopic:
         self.detection_results_pub.publish(results)
 
         # Republish colour images
-        self.image_pub.publish(image_msg)
-        self.image_info_pub.publish(image_info)
+        if self.publish_source:
+            self.image_pub.publish(image_msg)
+            self.image_info_pub.publish(image_info)
 
         # Offload the visualisation task <1ms (takes considerable time)
         if self.visualisation_enabled:
@@ -309,13 +314,14 @@ def _get_detections_for_topic():
     p_depth_ns = rospy.get_param('~depth_ns', "/sequence_0/depth")
     p_score = rospy.get_param('~score', 0.5)
     p_vis = rospy.get_param('~show_vis', True)
+    p_source = rospy.get_param('~publish_source', False)
 
-    rospy.loginfo("Camera Topic to Detection ROS: image_namespace={}, depth_namespace={}, score_thresh={}".format(
-        p_image_ns, p_depth_ns, p_score
-    ))
+    rospy.loginfo("Camera Topic to Detection ROS: image_namespace={}, depth_namespace={}, score_thresh={}, "
+                  "visualisation_enabled={}, publish_source={}".format(p_image_ns, p_depth_ns, p_score, p_vis,
+                                                                       p_source))
 
     detector = RunClientOnTopic(image_namespace=p_image_ns, depth_namespace=p_depth_ns, score_thresh=p_score,
-                                visualisation_enabled=p_vis, service_name=service_name)
+                                visualisation_enabled=p_vis, service_name=service_name, publish_source=p_source)
     rospy.spin()
 
 
