@@ -27,7 +27,7 @@ class BaseDetectionServer:
         spin (bool): If True the service spin method called on construction. If false .spin() must be called later.
     """
     def __init__(self, service_name=default_service_name, spin=True):
-        self._last_id = 9223372036854775007  # Last assigned ID
+        self._last_id = 0  # Last assigned ID
         self.service_name = service_name
         self.currently_busy = Event()
         rospy.loginfo("Creating service {}".format(service_name))
