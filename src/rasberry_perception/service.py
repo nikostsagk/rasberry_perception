@@ -84,6 +84,13 @@ class Server:
 
         # Get the backend
         self.server = DETECTION_REGISTRY[self.backend_name]
+        notice = getattr(self.server, "citation_notice", None)
+        if notice:
+            if callable(notice):
+                notice = notice()
+            if isinstance(notice, str):
+                for msg in notice.split("\n"):
+                    rospy.loginfo("\033[93m{}\033[0m: {}".format(self.backend_name, msg))
 
     def on_shutdown(self):
         # Remove parameters on shut down (params should not persist between servers)

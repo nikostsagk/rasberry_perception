@@ -2,16 +2,14 @@
 #  Email: ray.tunstill@gmail.com
 from threading import Event
 
-import numpy as np
 import ros_numpy
-from rasberry_perception.msg import Detections, ServiceStatus, RegionOfInterest, SegmentOfInterest, Detection
-
 
 from rasberry_perception.interfaces.default import BaseDetectionServer
 from rasberry_perception.interfaces.registry import DETECTION_REGISTRY
-from rasberry_perception.utility import function_timer
+from rasberry_perception.msg import Detections, ServiceStatus, RegionOfInterest, SegmentOfInterest, Detection
 # from rasberry_perception.visualisation import GenericMask
 from rasberry_perception.srv import GetDetectorResultsResponse, GetDetectorResultsRequest
+from rasberry_perception.utility import function_timer
 
 
 @DETECTION_REGISTRY.register_detection_backend("fruitcast")
@@ -41,6 +39,11 @@ class FruitCastServer(BaseDetectionServer):
 
         # Base class must be called at the end due to self.service_server.spin()
         BaseDetectionServer.__init__(self)
+
+    @staticmethod
+    def citation_notice():
+        return "Please cite this work as outlined in https://github.com/RaymondKirk/{fruit_detection,fruitcast}\n" \
+               "Maintained by Raymond Kirk (ray.tunstill@gmail.com)"
 
     @function_timer.interval_logger(interval=10)
     def get_detector_results(self, request):

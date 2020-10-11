@@ -62,6 +62,11 @@ class Detectron2Server(BaseDetectionServer):
         # Base class must be called at the end due to self.service_server.spin()
         BaseDetectionServer.__init__(self)
 
+    @staticmethod
+    def citation_notice():
+        return "Please cite this work as outlined in https://github.com/RaymondKirk/fruit_detection\n" \
+               "Maintained by Raymond Kirk (ray.tunstill@gmail.com)"
+
     @function_timer.interval_logger(interval=10)
     def get_detector_results(self, request):
         """
