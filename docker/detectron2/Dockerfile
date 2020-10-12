@@ -34,11 +34,13 @@ WORKDIR /
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get update --no-install-recommends && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y ninja-build protobuf-compiler libprotobuf-dev --no-install-recommends && \
-    rm -rf /var/lib/apt/lists/* && \
-    ## Install backend in virtual Python3 environment
-    python3 -m venv detectron2_venv --clear && \
+    rm -rf /var/lib/apt/lists/*
+
+## Install backend in virtual Python3 environment
+## Install dependencies. See https://pytorch.org/ for other options if you use a different version of CUDA
+RUN python3 -m venv detectron2_venv --clear && \
     . detectron2_venv/bin/activate && \
-    # Install dependencies. See https://pytorch.org/ for other options if you use a different version of CUDA
+    pip install --upgrade pip wheel setuptools && \
     pip install --no-cache-dir tensorboard cython && \
     pip install --no-cache-dir opencv-python numpy && \
     # At time of writing CUDA 10.2 is the native torch version

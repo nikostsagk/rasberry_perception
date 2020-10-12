@@ -11,8 +11,9 @@ password=$2
 # Pass password to the protected locations to allow the user access
 #   format: docker_hub["rasberry_perception:backend_name"]="$SHARE_TOKEN:$SHARE_PASSWORD"
 declare -A docker_hub
-docker_hub["rasberry_perception:detectron2"]="niq2GG66GoWdxjt:${password}"
+docker_hub["rasberry_perception:detectron2"]="n6rXP3oQpbjX9di:${password}"
 docker_hub["rasberry_perception:fruit_reid"]="DqS38eHzLGbHpqR:${password}"
+docker_hub["rasberry_perception:fruitcast"]="irB4bE5AnEGWGZY:${password}"
 
 echo "Looking for docker image '${image_name}' locally"
 
