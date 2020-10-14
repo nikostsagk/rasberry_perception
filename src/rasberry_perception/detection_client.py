@@ -142,11 +142,21 @@ class RunClientOnTopic:
             self.all_pose_publishers[frame_id].publish(pose_array)
 
     @staticmethod
-    def _reject_outliers(data, m=2., method="median"):
+    def _reject_outliers(data, m=3.5, method="mad"):
         if not data.size or not data.all():
             return data
         if method == "std":
             return data[abs(data - np.mean(data)) < m * np.std(data)]
+        elif method == "mad":
+            d = data
+            if len(d.shape) == 1:
+                d = d[:, None]
+            median = np.median(d, axis=0)
+            diff = np.sum((d - median) ** 2, axis=-1)
+            diff = np.sqrt(diff)
+            med_abs_deviation = np.median(diff)
+            modified_z_score = 0.6745 * diff / med_abs_deviation
+            return data[modified_z_score > m]
         elif method == "median":
             d = np.abs(data - np.median(data))
             m_dev = np.median(d)
@@ -156,6 +166,17 @@ class RunClientOnTopic:
             raise ValueError("Method must be std or median")
 
     @staticmethod
+    def _get_size(xp, yp, zp, method="mad", m=3.5):
+        """Utility function to get rough object size from depth points"""
+        frustrum_points = np.asarray([xp, yp, zp]).swapaxes(0, 1)  # shape=(N observations, 3)
+        # TODO: Median absolute difference outlier rejection doesn't work when all points are similar
+        object_points = RunClientOnTopic._reject_outliers(frustrum_points, m=m, method=method)
+        if object_points.shape[0] == 0:
+            return ObjectSize(0, 0, 0)
+        w, h, d = object_points.ptp(axis=0).tolist()
+        return ObjectSize(w, h, d)
+
+    @staticmethod
     def _get_pose(depth_roi, valid_positions, x_offset, y_offset, _fx, _fy, _cx, _cy, return_size=False):
         """Utility function to get a pose from a set of (y, x) points within a depth map"""
         zp = depth_roi[valid_positions] / 1000.0
@@ -163,8 +184,7 @@ class RunClientOnTopic:
         xp = ((valid_positions[1] + x_offset) - _cx) * zp / _fx
         ret = Pose(position=Point(np.median(xp), np.median(yp), np.median(zp)), orientation=Quaternion(0, 0, 0, 1))
         if return_size:
-            w, h, d = [np.ptp(RunClientOnTopic._reject_outliers(da)) for da in [xp, yp, zp]]
-            ret = (ret, ObjectSize(w, h, d))
+            ret = (ret, RunClientOnTopic._get_size(xp, yp, zp))
         return ret
 
     @staticmethod
@@ -227,7 +247,7 @@ class RunClientOnTopic:
                 if len(valid_idx[0]) and len(valid_idx[1]):
                     box_pose = results.objects[i].pose
                     if infer_pose_from_depth:
-                        box_pose, size = self._get_pose(d_roi, valid_idx, roi.x1, roi.y1, fx, fy, cx, cy, True)
+                        box_pose, size = self._get_pose(d_roi, valid_idx, roi.x1, roi.y1, fx, fy, cx, cy, return_size=True)
                         results.objects[i].pose = box_pose
                         results.objects[i].size = size
                         results.objects[i].pose_frame_id = depth_msg.header.frame_id
@@ -251,9 +271,7 @@ class RunClientOnTopic:
                     segm_pose = Pose(position=Point(np.median(xp), np.median(yp), np.median(zp)),
                                      orientation=Quaternion(0, 0, 0, 1))
                     # Overwrite the bbox extracted size if segm available
-                    results.objects[i].size = ObjectSize(*[
-                        np.ptp(RunClientOnTopic._reject_outliers(da)) for da in [xp, yp, zp]
-                    ])
+                    results.objects[i].size = RunClientOnTopic._get_size(xp, yp, zp)
                     tagged_segm_poses.poses.append(TaggedPose(tag=label, pose=segm_pose))
                     poses[label]["segm"].poses.append(segm_pose)
                     if infer_pose_from_depth:
