@@ -30,7 +30,7 @@ class RunClientOnTopic:
         self.score_thresh = score_thresh
         self._service_name = service_name
         self.namespace = "rasberry_perception/"
-        self.depth_enabled = depth_namespace is not None
+        self.depth_enabled = bool(depth_namespace)
         self.visualisation_enabled = visualisation_enabled
         self.publish_source = publish_source
 
