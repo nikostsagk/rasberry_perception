@@ -192,7 +192,7 @@ class RunClientOnTopic:
         return all([getattr(o, a, 0) == 0 for a in ["x", "y", "z", "w"] for o in [p.position, p.orientation]])
 
     @function_timer.interval_logger(interval=10)
-    def publish_detections(self, image_msg, image_info, depth_msg, depth_info, response):
+    def publish_detections(self, image_msg, image_info,  response, depth_msg=None, depth_info=None):
         """Function to publish detections based on the image data and detector result
 
         Args:
