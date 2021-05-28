@@ -9,7 +9,7 @@
     </group>
 
 
-    <arg name="image_ns" default="/camera/color"/>
+    <arg name="image_ns" default="/camera2/usb_cam"/>
     <arg name="depth_ns" default=""/> <!--/camera/aligned_depth_to_color"-->
     <arg name="score" default="0.5"/>
     <arg name="show_vis" default="false"/>

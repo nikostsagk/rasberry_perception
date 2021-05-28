@@ -59,5 +59,5 @@ RUN rm -rf /var/lib/apt/lists/*
 ## Create entry point for image
 WORKDIR /
 COPY entrypoint.sh .
-ENTRYPOINT ["/bin/bash", "entrypoint.sh"]
-CMD ["/bin/bash", "-c"]
+# ENTRYPOINT ["/bin/bash", "entrypoint.sh"]
+# CMD ["/bin/bash", "-c"]

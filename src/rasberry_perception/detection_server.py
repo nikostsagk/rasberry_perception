@@ -35,7 +35,6 @@ def __detection_server_runner():
     service_name = default_service_name
     _node_name = service_name + "_server"
     rospy.init_node(_node_name)
-
     server = Server(backend=args.backend, backend_kwargs=args_kwargs, service_name=service_name)
     server.run()
 
