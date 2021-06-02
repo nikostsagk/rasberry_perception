@@ -24,6 +24,10 @@ _COLORS = np.array([0.000, 0.447, 0.741, 0.850, 0.325, 0.098, 0.929, 0.694, 0.12
                     0.000, 0.000, 0.000, 0.143, 0.143, 0.143, 0.857, 0.857, 0.857, 1.000, 1.000, 1.000]
                    ).astype(np.float32).reshape(-1, 3)
 
+def color_to_int(color):
+    color = color * 255
+    int_color = (int(color[0]),int(color[1]), int(color[2]))
+    return int_color
 
 def rgb_to_hls(red, green, blue):
     max_channel_value = max(red, green, blue)
@@ -264,9 +268,10 @@ class Visualiser:
         cv2.putText(self._text, text, position, font, scale, color, thickness, cv2.LINE_AA)
 
     def draw_box(self, box_coord, edge_color, fill=False):
+
         x0, y0, x1, y1 = [int(i) for i in box_coord]
         line_width = -1 if fill else 2
-        edge_color = list((edge_color * 255).astype(np.int))
+        edge_color = color_to_int(edge_color)
         cv2.rectangle(self._overlay, (x0, y0), (x1, y1), edge_color, line_width)
 
     def draw_polygon(self, segment, color, edge_color=None, alpha=0.5):
@@ -274,8 +279,8 @@ class Visualiser:
             # Edge is brighter
             edge_color = np.asarray(self._change_color_brightness(color, brightness_factor=0.7))
 
-        color = list((color * 255).astype(int))
-        edge_color = list((edge_color * 255.0).astype(int))
+        color = color_to_int(color)
+        edge_color = color_to_int(edge_color)
         edge_thickness = 2
         segment = segment.reshape((-1, 1, 2))
         cv2.fillPoly(self._overlay, segment, color)
