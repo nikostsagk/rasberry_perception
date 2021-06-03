@@ -21,6 +21,7 @@ from rasberry_perception.utility import function_timer, WorkerTaskQueue
 from rasberry_perception.visualisation import Visualiser
 from rasberry_perception.msg import Detections, Detection, RegionOfInterest, SegmentOfInterest, TaggedPoseStampedArray,\
     TaggedPose, ObjectSize
+from image_geometry import PinholeCameraModel
 
 
 class RunClientOnTopic:
@@ -33,6 +34,11 @@ class RunClientOnTopic:
         self.depth_enabled = bool(depth_namespace)
         self.visualisation_enabled = visualisation_enabled
         self.publish_source = publish_source
+
+        # Build camera model for size estimation
+        self.cam_model = PinholeCameraModel()
+        camera_info = rospy.wait_for_message(image_namespace + "/camera_info", CameraInfo)
+        self.cam_model.fromCameraInfo(camera_info)
 
         # Wait for connection to detection service
         self.detector = Client()
@@ -156,6 +162,7 @@ class RunClientOnTopic:
             diff = np.sqrt(diff)
             med_abs_deviation = np.median(diff)
             modified_z_score = 0.6745 * diff / med_abs_deviation
+
             return data[modified_z_score > m]
         elif method == "median":
             d = np.abs(data - np.median(data))
@@ -177,6 +184,31 @@ class RunClientOnTopic:
         return ObjectSize(w, h, d)
 
     @staticmethod
+    def _get_size_simple(roi, z, cam_model):
+        """Utility function to get rough object size from bounding box"""
+        real_p1 = cam_model.projectPixelTo3dRay((int(roi.x1),int(roi.y1)))
+        real_p2 = cam_model.projectPixelTo3dRay((int(roi.x2),int(roi.y2)))
+        w = z * abs(real_p1[0]-real_p2[0])
+        h = z * abs(real_p1[1]-real_p2[1])
+        d = w
+        return ObjectSize(w, h, d)
+
+    @staticmethod
+    def _get_object_depth(depth_roi):
+        """Returns distance of roi from camera in metres
+        """
+        # Take the middle third of the bounding box roi for depth estimation
+        x1 = depth_roi.shape[0]/3
+        x2 = x1 *2
+        y1 =depth_roi.shape[1]/3
+        y2 = y1 * 2
+        new_roi = depth_roi[int(x1):int(x2),int(y1):int(y2)]
+        z = np.median(new_roi)
+        # z is in mm so convert to SI units
+        z = z/1000
+        return z
+
+    @staticmethod
     def _get_pose(depth_roi, valid_positions, x_offset, y_offset, _fx, _fy, _cx, _cy, return_size=False):
         """Utility function to get a pose from a set of (y, x) points within a depth map"""
         zp = depth_roi[valid_positions] / 1000.0
@@ -192,7 +224,7 @@ class RunClientOnTopic:
         return all([getattr(o, a, 0) == 0 for a in ["x", "y", "z", "w"] for o in [p.position, p.orientation]])
 
     @function_timer.interval_logger(interval=10)
-    def publish_detections(self, image_msg, image_info,  response, depth_msg=None, depth_info=None):
+    def publish_detections(self, image_msg, image_info,depth_msg=None, depth_info=None,  response=None ):
         """Function to publish detections based on the image data and detector result
 
         Args:
@@ -247,7 +279,10 @@ class RunClientOnTopic:
                 if len(valid_idx[0]) and len(valid_idx[1]):
                     box_pose = results.objects[i].pose
                     if infer_pose_from_depth:
-                        box_pose, size = self._get_pose(d_roi, valid_idx, roi.x1, roi.y1, fx, fy, cx, cy, return_size=True)
+                        box_pose = self._get_pose(d_roi, valid_idx, roi.x1, roi.y1, fx, fy, cx, cy, return_size=False)
+                        # Don't think size from _get_pose() works so implemented a simple size inference
+                        object_depth = self._get_object_depth(d_roi)
+                        size = self._get_size_simple(roi, object_depth, self.cam_model)
                         results.objects[i].pose = box_pose
                         results.objects[i].size = size
                         results.objects[i].pose_frame_id = depth_msg.header.frame_id
