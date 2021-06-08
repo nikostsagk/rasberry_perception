@@ -185,7 +185,7 @@ class RunClientOnTopic:
 
     @staticmethod
     def _get_size_simple(roi, z, cam_model):
-        """Utility function to get rough object size from bounding box"""
+        """Utility function to get rough object size from bounding box and object depth"""
         real_p1 = cam_model.projectPixelTo3dRay((int(roi.x1),int(roi.y1)))
         real_p2 = cam_model.projectPixelTo3dRay((int(roi.x2),int(roi.y2)))
         w = z * abs(real_p1[0]-real_p2[0])
@@ -280,7 +280,6 @@ class RunClientOnTopic:
                     box_pose = results.objects[i].pose
                     if infer_pose_from_depth:
                         box_pose = self._get_pose(d_roi, valid_idx, roi.x1, roi.y1, fx, fy, cx, cy, return_size=False)
-                        # Don't think size from _get_pose() works so implemented a simple size inference
                         object_depth = self._get_object_depth(d_roi)
                         size = self._get_size_simple(roi, object_depth, self.cam_model)
                         results.objects[i].pose = box_pose
