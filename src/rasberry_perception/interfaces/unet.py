@@ -75,8 +75,6 @@ class UNetServer(BaseDetectionServer):
 
         try:
             image = ros_numpy.numpify(request.image)
-            if request.image.encoding == "rgb8":
-                image = image[..., ::-1]
 
             img = PIL.Image.fromarray(image.astype('uint8'), 'RGB')
 
@@ -84,7 +82,7 @@ class UNetServer(BaseDetectionServer):
                                  image=img,
                                  device=self.device,
                                  config=self.config)
-            for m, c in zip(mask,self.config.class_names):
+            for m, c in zip(mask[1:],self.config.class_names):
                 m = m.astype('int')
                 # seg_roi = cv2.findContours(m, cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
                 contours = measure.find_contours(m, 0.5)
@@ -95,8 +93,8 @@ class UNetServer(BaseDetectionServer):
                     seg_roi = SegmentOfInterest(x=[],y=[])
                     roi=RegionOfInterest(x1=0,x2=0,y1=0,y2=0)
                 else:
-                    x_vals = [int(coord[0]) for coord in contours[0]]
-                    y_vals = [int(coord[1]) for coord in contours[0]]
+                    y_vals = [int(coord[0]) for coord in contours[0]]
+                    x_vals = [int(coord[1]) for coord in contours[0]]
                     seg_roi = SegmentOfInterest(x=x_vals,y=y_vals)
                     roi=RegionOfInterest(x1=min(x_vals),y1=min(y_vals),x2=max(x_vals),y2=max(y_vals))
                 detections.objects.append(Detection(roi=roi,seg_roi=seg_roi, class_name=c, confidence=1,id=self._new_id(),track_id=1))
@@ -104,7 +102,7 @@ class UNetServer(BaseDetectionServer):
 
             self.currently_busy.clear()
         except Exception as e:
-            print("FruitCastServer error: ", e)
+            print("UNetServer error: ", e)
             return GetDetectorResultsResponse(status=ServiceStatus(ERROR=True), results=detections)
 
         return GetDetectorResultsResponse(status=ServiceStatus(OKAY=True), results=detections)
