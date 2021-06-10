@@ -1,7 +1,6 @@
 #!/bin/bash
 set -e
 
-# RUN unet backend
-conda activate torch && \
-python /berry_segmentation/import_test.py
-#rosrun rasberry_perception detection_server.py --backend unet --weights /best.pt
+source "/unet_venv/bin/activate" && \
+rosrun rasberry_perception detection_server.py --backend unet --model_path epoch_80.pth --config_path param.yaml
+#echo 'here3'

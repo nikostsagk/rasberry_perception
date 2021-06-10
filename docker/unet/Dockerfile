@@ -15,7 +15,7 @@
 ## Run with:
 ##   docker run --network host --gpus all --name unet_backend --rm -it rasberry_perception:unet
 ##
-FROM saulgold/saga_perception:saga_base_gpu
+FROM saga:base_gpu
 MAINTAINER Saul Goldblatt
 
 # Set FORCE_CUDA because during `docker build` cuda is not accessible
@@ -25,16 +25,25 @@ ENV FORCE_CUDA="1"
 ARG TORCH_CUDA_ARCH_LIST="Kepler;Kepler+Tesla;Maxwell;Maxwell+Tegra;Pascal;Volta;Turing"
 ENV TORCH_CUDA_ARCH_LIST="${TORCH_CUDA_ARCH_LIST}"
 
+
 WORKDIR /
 COPY epoch_80.pth param.yaml /
 COPY berry_segmentation /berry_segmentation
-
-#activate conda env
-RUN conda env create -f /berry_segmentation/berry_segmentation_conda_env.yml
-SHELL ["conda", "run", "-n", "torch", "/bin/bash", "-c"]
-# Make sure the environment is activated:
-RUN echo "Make sure pytorch is installed:"
-RUN python -c "import torch"
+#
+RUN DEBIAN_FRONTEND=noninteractive curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add - && \
+    DEBIAN_FRONTEND=noninteractive apt-get update --no-install-recommends && \
+#     DEBIAN_FRONTEND=noninteractive apt-get install -y ninja-build    protobuf-compiler libprotobuf-dev python3.8* wget --no-install-recommends && \
+    rm -rf /var/lib/apt/lists/*
+#
+COPY berry_segmentation /berry_segmentation/
+# ## Install backend in virtual Python3 environment
+RUN python3.6 -m venv unet_venv --clear && \
+    . unet_venv/bin/activate && \
+    pip install --upgrade pip && \
+# #     # Install dependencies. See https://pytorch.org/ for other options if you use a different version of CUDA
+    pip install --no-cache-dir -r berry_segmentation/requirements.txt
+# RUN echo "Make sure pytorch is installed:"
+# RUN python -c "import torch"
 ## Create entry point for image (default entry point looks for a start_backend.sh script that describes how to launch the backend)
 COPY start_backend.sh .
 CMD ["/bin/bash", "-c"]
