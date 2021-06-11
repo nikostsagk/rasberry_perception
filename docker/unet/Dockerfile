@@ -40,10 +40,8 @@ COPY berry_segmentation /berry_segmentation/
 RUN python3.6 -m venv unet_venv --clear && \
     . unet_venv/bin/activate && \
     pip install --upgrade pip && \
-# #     # Install dependencies. See https://pytorch.org/ for other options if you use a different version of CUDA
     pip install --no-cache-dir -r berry_segmentation/requirements.txt
-# RUN echo "Make sure pytorch is installed:"
-# RUN python -c "import torch"
+
 ## Create entry point for image (default entry point looks for a start_backend.sh script that describes how to launch the backend)
 COPY start_backend.sh .
 CMD ["/bin/bash", "-c"]
