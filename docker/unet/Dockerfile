@@ -28,19 +28,18 @@ ENV TORCH_CUDA_ARCH_LIST="${TORCH_CUDA_ARCH_LIST}"
 
 WORKDIR /
 COPY epoch_80.pth param.yaml /
-COPY berry_segmentation /berry_segmentation
+COPY berry_segmentation /catkin_ws/src/rasberry_perception/src/rasberry_perception/berry_segmentation
 #
 RUN DEBIAN_FRONTEND=noninteractive curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add - && \
     DEBIAN_FRONTEND=noninteractive apt-get update --no-install-recommends && \
 #     DEBIAN_FRONTEND=noninteractive apt-get install -y ninja-build    protobuf-compiler libprotobuf-dev python3.8* wget --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
 #
-COPY berry_segmentation /berry_segmentation/
 # ## Install backend in virtual Python3 environment
 RUN python3.6 -m venv unet_venv --clear && \
     . unet_venv/bin/activate && \
     pip install --upgrade pip && \
-    pip install --no-cache-dir -r berry_segmentation/requirements.txt
+    pip install --no-cache-dir -r /catkin_ws/src/rasberry_perception/src/rasberry_perception/berry_segmentation/requirements.txt
 
 ## Create entry point for image (default entry point looks for a start_backend.sh script that describes how to launch the backend)
 COPY start_backend.sh .
