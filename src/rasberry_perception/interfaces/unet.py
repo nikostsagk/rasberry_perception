@@ -72,7 +72,6 @@ class UNetServer(BaseDetectionServer):
         self.currently_busy.set()
 
         detections = Detections()
-
         try:
             image = ros_numpy.numpify(request.image)
 
@@ -84,6 +83,8 @@ class UNetServer(BaseDetectionServer):
                                  config=self.config)
             for m, c in zip(mask[1:],self.config.class_names):
                 m = m.astype('int')
+                if c =='flesh':
+                    c='flesh_ripe'
                 # seg_roi = cv2.findContours(m, cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
                 contours = measure.find_contours(m, 0.5)
                 # for contour in contours:
@@ -99,7 +100,10 @@ class UNetServer(BaseDetectionServer):
                     roi=RegionOfInterest(x1=min(x_vals),y1=min(y_vals),x2=max(x_vals),y2=max(y_vals))
                 detections.objects.append(Detection(roi=roi,seg_roi=seg_roi, class_name=c, confidence=1,id=self._new_id(),track_id=1))
 
-
+            calyx_distance=0.001 #metres
+            no_of_berries=1
+            detections.gripper.no_of_berries = no_of_berries
+            detections.gripper.calyx_distance = 0.001
             self.currently_busy.clear()
         except Exception as e:
             print("UNetServer error: ", e)

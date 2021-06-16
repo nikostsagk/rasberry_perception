@@ -25,12 +25,12 @@ from image_geometry import PinholeCameraModel
 
 
 class RunClientOnTopic:
-    def __init__(self, image_namespace, depth_namespace=None, score_thresh=0.5, service_name=default_service_name,
+    def __init__(self, image_namespace, depth_namespace=None,results_namespace='/rasberry_perception', score_thresh=0.5, service_name=default_service_name,
                  visualisation_enabled=False, publish_source=False):
         # Initialise class members
         self.score_thresh = score_thresh
         self._service_name = service_name
-        self.namespace = "rasberry_perception/"
+        self.namespace = results_namespace
         self.depth_enabled = bool(depth_namespace)
         self.visualisation_enabled = visualisation_enabled
         self.publish_source = publish_source
@@ -55,23 +55,23 @@ class RunClientOnTopic:
         ]
 
         # The detector results publisher
-        self.detection_results_pub = rospy.Publisher(self.namespace + "results", Detections, queue_size=1)
+        self.detection_results_pub = rospy.Publisher(self.namespace + "/results", Detections, queue_size=1)
 
         # Initialise depth publishers/subscribers
         self.all_pose_publishers = {}
         if self.depth_enabled:
             if self.publish_source:
                 # These topics will republish the depth image (to ensure a 1:1 detection/source lookup)
-                self.depth_pub = rospy.Publisher(self.namespace + "depth/image_raw", Image, queue_size=1)
-                self.depth_info_pub = rospy.Publisher(self.namespace + "depth/camera_info", CameraInfo, queue_size=1)
+                self.depth_pub = rospy.Publisher(self.namespace + "/depth/image_raw", Image, queue_size=1)
+                self.depth_info_pub = rospy.Publisher(self.namespace + "/depth/camera_info", CameraInfo, queue_size=1)
 
             # Container for /detection/<class name>/bbox_poses and /detection/<class name>/segm_poses messages
             self.depth_pose_publishers = {}
 
             # Publish as tagged (by class name)
-            self.tagged_bbox_pose_publisher = rospy.Publisher(self.namespace + "poses/tagged/bbox",
+            self.tagged_bbox_pose_publisher = rospy.Publisher(self.namespace + "/poses/tagged/bbox",
                                                               TaggedPoseStampedArray, queue_size=1)
-            self.tagged_segm_pose_publisher = rospy.Publisher(self.namespace + "poses/tagged/segm",
+            self.tagged_segm_pose_publisher = rospy.Publisher(self.namespace + "/poses/tagged/segm",
                                                               TaggedPoseStampedArray, queue_size=1)
 
             # Subscribe to depth and depth intrinsic topics
@@ -82,8 +82,8 @@ class RunClientOnTopic:
 
         if self.visualisation_enabled:
             # Draw the detection message visually
-            self.detections_vis_pub = rospy.Publisher(self.namespace + "vis/detection/image_raw", Image, queue_size=1)
-            self.detections_vis_info_pub = rospy.Publisher(self.namespace + "vis/detection/camera_info", CameraInfo,
+            self.detections_vis_pub = rospy.Publisher(self.namespace + "/vis/detection/image_raw", Image, queue_size=1)
+            self.detections_vis_info_pub = rospy.Publisher(self.namespace + "/vis/detection/camera_info", CameraInfo,
                                                            queue_size=1)
 
             # Worker thread to do the heavy lifting of the detections visualisation
@@ -134,7 +134,7 @@ class RunClientOnTopic:
         all_poses = {}
         for class_name, origin_dict in poses.items():
             for origin, pose_array in origin_dict.items():
-                topic = self.namespace + "poses/by_class/{}/{}".format(class_name.replace(" ", "_"), origin)
+                topic = self.namespace + "/poses/by_class/{}/{}".format(class_name.replace(" ", "_"), origin)
                 if topic not in self.depth_pose_publishers:
                     self.depth_pose_publishers[topic] = rospy.Publisher(topic, PoseArray, queue_size=1)
                 if pose_array.header.frame_id not in all_poses:
@@ -143,7 +143,7 @@ class RunClientOnTopic:
                 self.depth_pose_publishers[topic].publish(pose_array)
         for frame_id, pose_array in all_poses.items():
             if frame_id not in self.all_pose_publishers:
-                self.all_pose_publishers[frame_id] = rospy.Publisher(self.namespace + "poses/all/{}".format(frame_id),
+                self.all_pose_publishers[frame_id] = rospy.Publisher(self.namespace + "/poses/all/{}".format(frame_id),
                                                                      PoseArray, queue_size=1)
             self.all_pose_publishers[frame_id].publish(pose_array)
 
@@ -370,14 +370,16 @@ def _get_detections_for_topic():
     p_score = rospy.get_param('~score', 0.5)
     p_vis = rospy.get_param('~show_vis', True)
     p_source = rospy.get_param('~publish_source', False)
+    p_results_ns = rospy.get_param('~results_ns','/rasberry_perception')
 
     rospy.loginfo("Camera Topic to Detection ROS: image_namespace={}, depth_namespace={}, score_thresh={}, "
                   "visualisation_enabled={}, publish_source={}".format(p_image_ns, p_depth_ns, p_score, p_vis,
-                                                                       p_source))
+                                                                       p_source, p_results_ns))
 
     try:
         detector = RunClientOnTopic(image_namespace=p_image_ns, depth_namespace=p_depth_ns, score_thresh=p_score,
-                                    visualisation_enabled=p_vis, service_name=service_name, publish_source=p_source)
+                                    visualisation_enabled=p_vis, service_name=service_name, publish_source=p_source,
+                                    results_namespace=p_results_ns)
         rospy.spin()
     except (KeyboardInterrupt, rospy.ROSInterruptException) as e:
         print("Exiting node due to interrupt:", e)
