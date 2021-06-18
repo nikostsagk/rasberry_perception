@@ -24,7 +24,8 @@ class _unknown_class:
 
 @DETECTION_REGISTRY.register_detection_backend("detectron2")
 class Detectron2Server(BaseDetectionServer):
-    _supported_version = "0.1.3"
+    # _supported_version = "0.1.3"
+    _supported_version = "0.4"
 
     def __init__(self, config_file, model_file=None):
         try:
@@ -51,10 +52,15 @@ class Detectron2Server(BaseDetectionServer):
             metadata = MetadataCatalog.get(self.cfg.DATASETS.TEST[0] if len(self.cfg.DATASETS.TEST) else "__unused")
             self.classes = metadata.get("thing_classes") or _unknown_class()
         except ImportError:
-            self.cfg.merge_from_file(config_file)
 
+            self.cfg.merge_from_file(config_file)
+            self.cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.4
+            self.cfg.SOLVER.IMS_PER_BATCH = 1
+            self.cfg.MODEL.ROI_HEADS.NUM_CLASSES = 5
         if model_file is not None:
             self.cfg.MODEL.WEIGHTS = model_file
+            # self.cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.1
+            self.cfg.SOLVER.IMS_PER_BATCH = 1
         self.cfg.freeze()
 
         self.predictor = DefaultPredictor(self.cfg)

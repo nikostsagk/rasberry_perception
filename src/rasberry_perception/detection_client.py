@@ -46,8 +46,8 @@ class RunClientOnTopic:
         # Initialise colour publishers/subscribers
         if self.publish_source:
             # These topics will republish the colour image (to ensure a 1:1 detection/source lookup)
-            self.image_pub = rospy.Publisher(self.namespace + "colour/image_raw", Image, queue_size=1)
-            self.image_info_pub = rospy.Publisher(self.namespace + "colour/camera_info", CameraInfo, queue_size=1)
+            self.image_pub = rospy.Publisher(self.namespace + "/colour/image_raw", Image, queue_size=1)
+            self.image_info_pub = rospy.Publisher(self.namespace + "/colour/camera_info", CameraInfo, queue_size=1)
 
         subscribers = [
             message_filters.Subscriber(image_namespace + "/image_raw", Image),
@@ -250,6 +250,9 @@ class RunClientOnTopic:
         # results.objects.extend(self._get_test_messages(depth_msg.height, depth_msg.width))
 
         if not len(results.objects):
+            if self.publish_source:
+                self.image_pub.publish(image_msg)
+                self.image_info_pub.publish(image_info)
             return
 
         if self.depth_enabled and depth_msg is not None:
@@ -365,11 +368,13 @@ def _get_detections_for_topic():
     rospy.init_node(_node_name, anonymous=True)
 
     # get private namespace parameters
-    p_image_ns = rospy.get_param('~image_ns', "/sequence_0/color")
-    p_depth_ns = rospy.get_param('~depth_ns', "/sequence_0/aligned_depth_to_color")
-    p_score = rospy.get_param('~score', 0.5)
+    # p_image_ns = rospy.get_param('~image_ns', "/sequence_0/color")
+    # p_depth_ns = rospy.get_param('~depth_ns', "/sequence_0/aligned_depth_to_color")
+    p_image_ns = rospy.get_param('~image_ns', "/camera3/usb_cam")
+    p_depth_ns = rospy.get_param('~depth_ns', "")
+    p_score = rospy.get_param('~score', 0.01)
     p_vis = rospy.get_param('~show_vis', True)
-    p_source = rospy.get_param('~publish_source', False)
+    p_source = rospy.get_param('~publish_source', True)
     p_results_ns = rospy.get_param('~results_ns','/rasberry_perception')
 
     rospy.loginfo("Camera Topic to Detection ROS: image_namespace={}, depth_namespace={}, score_thresh={}, "
