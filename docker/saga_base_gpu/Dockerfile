@@ -18,7 +18,7 @@
 FROM nvidia/cuda:10.2-cudnn7-devel-ubuntu18.04
 
 ## Meta information
-MAINTAINER Raymond Kirk    "rkirk@lincoln.ac.uk"
+MAINTAINER Saul Goldblatt   "saul.goldblatt@sagarobotics.com
 
 ## Install ROS
 ENV ROS_DISTRO melodic

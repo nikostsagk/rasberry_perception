@@ -27,7 +27,7 @@ class Detectron2Server(BaseDetectionServer):
     # _supported_version = "0.1.3"
     _supported_version = "0.4"
 
-    def __init__(self, config_file, model_file=None):
+    def __init__(self, config_file, service_name, model_file=None):
         try:
             from detectron2 import __version__ as version
             if version != Detectron2Server._supported_version:
@@ -66,7 +66,7 @@ class Detectron2Server(BaseDetectionServer):
         self.predictor = DefaultPredictor(self.cfg)
 
         # Base class must be called at the end due to self.service_server.spin()
-        BaseDetectionServer.__init__(self)
+        BaseDetectionServer.__init__(self,service_name=service_name)
 
     @staticmethod
     def citation_notice():

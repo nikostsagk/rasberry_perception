@@ -16,7 +16,7 @@
 ##   docker run --network host --gpus all --name fruitcast_backend --rm -it rasberry_perception:fruitcast
 ##
 
-FROM rasberry_perception:base_gpu
+FROM saga:base_gpu
 
 ## Meta information
 MAINTAINER Raymond Kirk    "rkirk@lincoln.ac.uk"

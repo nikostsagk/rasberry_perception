@@ -41,7 +41,7 @@ class RunClientOnTopic:
         self.cam_model.fromCameraInfo(camera_info)
 
         # Wait for connection to detection service
-        self.detector = Client()
+        self.detector = Client(service_name=service_name)
 
         # Initialise colour publishers/subscribers
         if self.publish_source:
@@ -363,15 +363,13 @@ class RunClientOnTopic:
 
 
 def _get_detections_for_topic():
-    service_name = default_service_name
-    _node_name = service_name + "_client"
+    _node_name = default_service_name + '_client'
     rospy.init_node(_node_name, anonymous=True)
 
     # get private namespace parameters
-    # p_image_ns = rospy.get_param('~image_ns', "/sequence_0/color")
-    # p_depth_ns = rospy.get_param('~depth_ns', "/sequence_0/aligned_depth_to_color")
-    p_image_ns = rospy.get_param('~image_ns', "/camera3/usb_cam")
-    p_depth_ns = rospy.get_param('~depth_ns', "")
+    p_image_ns = rospy.get_param('~image_ns', "/sequence_0/color")
+    p_depth_ns = rospy.get_param('~depth_ns', "/sequence_0/aligned_depth_to_color")
+    p_service_name = rospy.get_param('~service_name', "GetDetectionsService")
     p_score = rospy.get_param('~score', 0.01)
     p_vis = rospy.get_param('~show_vis', True)
     p_source = rospy.get_param('~publish_source', True)
@@ -383,7 +381,7 @@ def _get_detections_for_topic():
 
     try:
         detector = RunClientOnTopic(image_namespace=p_image_ns, depth_namespace=p_depth_ns, score_thresh=p_score,
-                                    visualisation_enabled=p_vis, service_name=service_name, publish_source=p_source,
+                                    visualisation_enabled=p_vis, service_name=p_service_name, publish_source=p_source,
                                     results_namespace=p_results_ns)
         rospy.spin()
     except (KeyboardInterrupt, rospy.ROSInterruptException) as e:

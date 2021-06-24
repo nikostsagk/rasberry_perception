@@ -15,7 +15,7 @@ from rasberry_perception.utility import function_timer
 
 @DETECTION_REGISTRY.register_detection_backend("unet")
 class UNetServer(BaseDetectionServer):
-    def __init__(self, model_path, config_path, image_size=640, nms_conf_thresh=0.4, nms_iou_thresh=0.5, device=""):
+    def __init__(self, model_path, config_path, service_name, image_size=640, nms_conf_thresh=0.4, nms_iou_thresh=0.5, device=""):
         try:
             import torch
             print(torch.cuda.is_available())
@@ -38,7 +38,7 @@ class UNetServer(BaseDetectionServer):
         self.currently_busy = Event()
 
         # Base class must be called at the end due to self.service_server.spin()
-        BaseDetectionServer.__init__(self)
+        BaseDetectionServer.__init__(self,service_name=service_name)
 
     @staticmethod
     def citation_notice():
