@@ -2,20 +2,20 @@
 <launch>
 <!-- Uncomment this block to add the ability to auto-launch a docker environment with the required detection backend
         otherwise launch a detection backend rosrun rasberry_perception detection_server.py -backend "backend_name" -backend_arg1 "config.yourconfig"-->
-    <arg name="backend" default=""/>
+    <arg name="backend" default="fruitcast"/>
     <arg name="password" default="'Contact rkirk@lincoln.ac.uk'"/>
     <group if="$(eval arg('backend') != '')">
         <node pkg="rasberry_perception" name="rasberry_perception_detection_backend" type="run_backend.sh" args="$(arg backend) $(arg password)" output="screen" required="true"/>
     </group>
 
 
-    <arg name="image_ns" default="/camera2/usb_cam"/>
+    <arg name="image_ns" default="/camera1/usb_cam"/>
     <arg name="depth_ns" default=""/> <!--/camera/aligned_depth_to_color"-->
     <arg name="score" default="0.5"/>
     <arg name="show_vis" default="false"/>
-    <arg name="publish_source" default="false"/>
-    <arg name="results_ns" default="/gripper"/>
-    <arg name="service_name" default="/rasberry_perception"/>
+    <arg name="publish_source" default="true"/>
+    <arg name="results_ns" default="/gripper_results"/>
+    <arg name="service_name" default="/gripper_perception"/>
 
 
 

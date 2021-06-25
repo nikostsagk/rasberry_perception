@@ -47,7 +47,8 @@ RUN python3.8 -m venv fruitcast_venv --clear && \
     # Install dependencies. See https://pytorch.org/ for other options if you use a different version of CUDA
     pip install --no-cache-dir -r yolov5/requirements.txt && \
     pip install --no-cache-dir -e yolov5 && \
-    pip install --no-cache-dir rospkg
+    pip install --no-cache-dir rospkg && \
+    pip install --no-cache-dir torch==1.6.0 torchvision==0.7.0
 
 
 ## Create entry point for image (default entry point looks for a start_backend.sh script that describes how to launch the backend)
