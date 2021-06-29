@@ -47,12 +47,11 @@ RUN python3 -m venv detectron2_venv --clear && \
     pip install --no-cache-dir opencv-python numpy && \
     # At time of writing CUDA 10.2 is the native torch version
     #    pip install --no-cache-dir torch==1.5+cu102 torchvision==0.6+cu102 -f https://download.pytorch.org/whl/torch_stable.html && \
-    pip install --no-cache-dir torch==1.5.0 torchvision==0.6.0 && \
+    pip install torch==1.6.0 torchvision==0.7.0 && \
     pip install --no-cache-dir 'git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI' && \
     pip install --no-cache-dir 'git+https://github.com/facebookresearch/fvcore' && \
     # Install detectron2
-    git clone https://github.com/facebookresearch/detectron2 && \
-    python -m pip install detectron2==0.1.3 -f https://dl.fbaipublicfiles.com/detectron2/wheels/cu102/torch1.5/index.html && \
+    python -m pip install detectron2==0.4 -f https://dl.fbaipublicfiles.com/detectron2/wheels/cu102/torch1.6/index.html && \
     pip install --no-cache-dir rospkg
 
 ## Add backends. These files can be obtained from Raymond (rkirk@lincoln.ac.uk) and require citation when used.
