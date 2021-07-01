@@ -47,6 +47,8 @@ RUN python3 -m venv detectron2_venv --system-site-packages && \
     python -m pip install --upgrade pip wheel setuptools && \
     python -m pip install --no-cache-dir tensorboard Cython && \
     python -m pip install --no-cache-dir opencv-python numpy && \
+    # Clone detectron2
+    git clone https://github.com/facebookresearch/detectron2 && \
     # Install detectron2
     python -m pip install 'git+git://github.com/facebookresearch/detectron2.git@v0.4' && \
     python -m pip install --no-cache-dir rospkg
