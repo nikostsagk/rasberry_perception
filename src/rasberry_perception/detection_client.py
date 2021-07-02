@@ -15,6 +15,7 @@ import ros_numpy
 import rospy
 from geometry_msgs.msg import Point, Pose, Quaternion, PoseArray
 from sensor_msgs.msg import Image, CameraInfo
+from std_srvs.srv import SetBool, SetBoolResponse
 
 from rasberry_perception import Client, default_service_name
 from rasberry_perception.utility import function_timer, WorkerTaskQueue
@@ -34,6 +35,10 @@ class RunClientOnTopic:
         self.depth_enabled = bool(depth_namespace)
         self.visualisation_enabled = visualisation_enabled
         self.publish_source = publish_source
+        
+        #Activate Service 
+        rospy.Service("/" +  self.namespace + "activate", SetBool, self._activate_cb)
+        self.acitvated = True
 
         # Build camera model for size estimation
         self.cam_model = PinholeCameraModel()
@@ -109,13 +114,14 @@ class RunClientOnTopic:
 
     @function_timer.interval_logger(interval=10)
     def run_detector(self, *args, **kwargs):
-        assert len(args) in [2, 4], "Args must either be (colour, info), or (colour, info, depth, info)"
-        image_msg, image_info = args[:2]
-        result = self.detector(image=image_msg)
-        if not result.status.OKAY:
-            return
+        if self.acitvated:
+            assert len(args) in [2, 4], "Args must either be (colour, info), or (colour, info, depth, info)"
+            image_msg, image_info = args[:2]
+            result = self.detector(image=image_msg)
+            if not result.status.OKAY:
+                return
 
-        self.publish_detections(*args, response=result)
+            self.publish_detections(*args, response=result)
 
     def _publish_poses(self, poses, tagged_bbox_poses, tagged_segm_poses):
         """Creates a separate PoseArray publisher for each detected class and pose_origin and as a pose tagged
@@ -358,6 +364,12 @@ class RunClientOnTopic:
         self.detections_vis_pub.publish(vis_msg)
         self.detections_vis_info_pub.publish(vis_info)
 
+    def _activate_cb(self, req):
+        ans = SetBoolResponse()
+        self.acitvated = req.data
+        rospy.loginfo("Detector Activated = " + str(self.acitvated))  
+        ans.success = True
+        return ans
 
 def _get_detections_for_topic():
     service_name = default_service_name
