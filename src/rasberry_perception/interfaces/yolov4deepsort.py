@@ -79,7 +79,6 @@ class YoloV4DeepsortServer(BaseDetectionServer):
             confidences = []
             class_name= []
             for detection in detections_yolo:   
-                print(detection)
                 if detection[0] != "ripe":  # only track ripe berry whose id is 0    
                     x1, y1, x2, y2 = self._convertBack(detection[2][0], \
                     detection[2][1], \
