@@ -18,7 +18,7 @@ class YoloV4DeepsortServer(BaseDetectionServer):
             import darknet            
             from deep_sort.tracker import Tracker
             from deep_sort import nn_matching
-            from deep_sort.tools import generate_detections as gdet
+            from tools import generate_detections as gdet
             from deep_sort import preprocessing
             from deep_sort.detection import Detection as deep_detection
             import os
@@ -73,8 +73,8 @@ class YoloV4DeepsortServer(BaseDetectionServer):
             frame = ros_numpy.numpify(request.image)
             original_shape = frame.shape
             frame = cv2.resize(frame, (self.image_size, int(self.image_size*0.75)))
-            darknet.copy_image_from_bytes(self.darknet_image, frame.tobytes())   
-            detections_yolo = darknet.detect_image(self.network, self.class_names, self.darknet_image, thresh=0.7)
+            self.darknet.copy_image_from_bytes(self.darknet_image, frame.tobytes())   
+            detections_yolo = self.darknet.detect_image(self.network, self.class_names, self.darknet_image, thresh=0.7)
             boxs = []
             confidences = []
             class_name= []
