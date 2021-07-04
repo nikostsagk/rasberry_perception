@@ -15,7 +15,7 @@ class TensorrtDeepsortServer(BaseDetectionServer):
             from modularmot.utils import ConfigDecoder
             from deep_sort.tracker import Tracker
             from deep_sort import nn_matching
-            from deepsort.tools import generate_detections as gdet
+            from deep_sort.tools import generate_detections as gdet
             from deep_sort import preprocessing
             from deep_sort.detection import Detection as deep_detection 
             import os
@@ -76,7 +76,7 @@ class TensorrtDeepsortServer(BaseDetectionServer):
             confidences = []
             class_name= []
             self.mot.step(image)
-            for detection in self.mot.show_detections:
+            for detection in self.mot.detections:
                 if detection[1] != "ripe":  # only track ripe berry whose class is "ripe"        
                     x1, y1, x2, y2 = detection[0][0], \
                     detection[0][1], \
