@@ -1,0 +1,15 @@
+_BASE_: "/detectron2/configs/Base-RCNN-FPN.yaml"
+MODEL:
+  WEIGHTS: "detectron2://ImageNetPretrained/MSRA/R-50.pkl"
+  MASK_ON: True
+  RESNETS:
+    DEPTH: 50
+  ROI_HEADS:
+    SCORE_THRESH_TEST: 0.4
+    NUM_CLASSES: 3
+SOLVER:
+  IMS_PER_BATCH: 1
+  STEPS: (210000, 250000)
+  MAX_ITER: 270000
+DATASETS:
+  THING_CLASSES: ["calyx", "flesh_ripe", "flesh_unripe"]
