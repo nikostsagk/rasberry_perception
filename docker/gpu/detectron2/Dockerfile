@@ -17,6 +17,7 @@
 ## Debug with:
 ##   docker run --network host --gpus all --name detectron2_backend --entrypoint /bin/bash --rm -it rasberry_perception/detectron2:gpu
 
+# TODO: Replace with repository.saga.internal/gpu.base
 FROM rasberry_perception:gpu
 
 ## Meta information
@@ -42,13 +43,15 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update --no-install-recommends && \
 RUN python3 -m venv detectron2_venv --clear && \
     . detectron2_venv/bin/activate && \
     pip install --upgrade pip wheel setuptools && \
-    pip install --no-cache-dir tensorboard cython && \
+    pip install --no-cache-dir tensorboard Cython && \
     pip install --no-cache-dir opencv-python numpy && \
     pip install --no-cache-dir torch torchvision torchaudio -f https://download.pytorch.org/whl/lts/1.8/torch_lts.html && \
     pip install --no-cache-dir 'git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI' && \
     pip install --no-cache-dir 'git+https://github.com/facebookresearch/fvcore' && \
+    # Clone detectron2
+    git clone https://github.com/facebookresearch/detectron2 && \
     # Install detectron2
-    python -m pip install detectron2==0.4 -f https://dl.fbaipublicfiles.com/detectron2/wheels/cu102/torch1.8/index.html && \
+    python -m pip install 'git+git://github.com/facebookresearch/detectron2.git@v0.4' && \
     pip install --no-cache-dir rospkg
 
 ## Create entry point for image (default entry point looks for a start_backend.sh script that describes how to launch the backend)
