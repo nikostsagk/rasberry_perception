@@ -1,5 +1,5 @@
 ## Basis for running detectron2 backend in a container.
-## Extended from the saga/rasberry_perception:base_gpu image.
+## Extended from the rasberry_perception/detectron2:gpu image.
 ##
 ## Prerequisites:
 ##   - docker
@@ -7,20 +7,20 @@
 ##   - nvidia container toolkit
 ##
 ## Build with:
-##   docker build -t saga/rasberry_perception:detectron2 .
+##   docker build -t rasberry_perception/detectron2:gpu .
 ##
 ## Save with:
-##   docker save saga/rasberry_perception:detectron2 | gzip > saga_rasberry_perception_detectron2.tar.gz
+##   docker save rasberry_perception/detectron2:gpu | gzip > rasberry_perception_detectron2_gpu.tar.gz
 ##
 ## Run with:
-##   docker run --network host --gpus all --name detectron2_backend --rm -it saga/rasberry_perception:detectron2
+##   docker run --network host --gpus all --name detectron2_backend --rm -it rasberry_perception/detectron2:gpu
 ## Debug with:
-##   docker run --network host --gpus all --name detectron2_backend --entrypoint /bin/bash --rm -it saga/rasberry_perception:detectron2
+##   docker run --network host --gpus all --name detectron2_backend --entrypoint /bin/bash --rm -it rasberry_perception/detectron2:gpu
 
-FROM saga/rasberry_perception:base_gpu
+FROM rasberry_perception:gpu
 
 ## Meta information
-LABEL detectron2.version="0.4" maintainers="Saul Goldblatt <saul.goldblatt@sagarobotics.com>, Nikos Tsagkopoulos <ntsagkopoulos@sagarobotics.com"
+LABEL detectron2.version="0.4" maintainers="Saul Goldblatt <saul.goldblatt@sagarobotics.com>, Nikos Tsagkopoulos <ntsagkopoulos@sagarobotics.com>"
 
 # Set FORCE_CUDA because during `docker build` cuda is not accessible
 ENV FORCE_CUDA="1"

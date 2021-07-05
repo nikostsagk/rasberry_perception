@@ -7,19 +7,19 @@
 ##   - nvidia container toolkit
 ##
 ## Build with:
-##   docker build -t saga/rasberry_perception:base_jetson .
+##   docker build -t rasberry_perception:jetson .
 ##
 ## Save with:
-##   docker save saga/rasberry_perception:base_jetson | gzip > saga_rasberry_perception_base_jetson.tar.gz
+##   docker save rasberry_perception:jetson | gzip > rasberry_perception_jetson.tar.gz
 ##
 ## Run with:
-##   docker run --network host --gpus all --name base_jetson --rm -it saga/rasberry_perception:base_jetson /bin/bash
+##   docker run --network host --gpus all --name base_jetson --rm -it rasberry_perception:jetson /bin/bash
 ##
 
 FROM nvcr.io/nvidia/l4t-pytorch:r32.5.0-pth1.7-py3
 
 ## Meta information
-LABEL cuda.version="10.2" pytorch.version="1.7" maintainers="Saul Goldblatt <saul.goldblatt@sagarobotics.com>, Nikos Tsagkopoulos <ntsagkopoulos@sagarobotics.com"
+LABEL cuda.version="10.2" pytorch.version="1.7" maintainers="Saul Goldblatt <saul.goldblatt@sagarobotics.com>, Nikos Tsagkopoulos <ntsagkopoulos@sagarobotics.com>"
 
 ## Install ROS
 ENV ROS_DISTRO melodic

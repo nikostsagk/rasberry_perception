@@ -6,19 +6,19 @@
 ##   - nvidia container toolkit
 ##
 ## Build with:
-##   docker build -t saga/rasberry_perception:base_gpu .
+##   docker build -t rasberry_perception:gpu .
 ##
 ## Save with:
-##   docker save saga/rasberry_perception:base_gpu | gzip > saga_rasberry_perception_base_gpu.tar.gz
+##   docker save rasberry_perception:gpu | gzip > rasberry_perception_gpu.tar.gz
 ##
 ## Run with:
-##   docker run --network host --gpus all --name base_gpu --rm -it saga/rasberry_perception:base_gpu /bin/bash
+##   docker run --network host --gpus all --name gpu --rm -it rasberry_perception:gpu /bin/bash
 ##
 
 FROM nvidia/cuda:10.2-cudnn7-devel-ubuntu18.04
 
 ## Meta information
-LABEL cuda.version="10.2" maintainers="Saul Goldblatt <saul.goldblatt@sagarobotics.com>, Nikos Tsagkopoulos <ntsagkopoulos@sagarobotics.com"
+LABEL cuda.version="10.2" maintainers="Saul Goldblatt <saul.goldblatt@sagarobotics.com>, Nikos Tsagkopoulos <ntsagkopoulos@sagarobotics.com>"
 
 ## Install ROS
 ENV ROS_DISTRO melodic
@@ -37,9 +37,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y ros-${ROS_DISTRO}-catkin -
     DEBIAN_FRONTEND=noninteractive apt-get install -y python-catkin-tools python3-venv python3-pip python-rosdep --no-install-recommends && rosdep init && rosdep update
 
 ## Clone necessary repositories
-#TODO: replace with sagarobotics forks
 WORKDIR /catkin_ws/src
-RUN git clone https://github.com/saulgoldsaga/rasberry_perception.git
+RUN git clone https://github.com/SAGARobotics/rasberry_perception.git
 
 ## Install ros-dependencies and build the rasberry_perception package
 WORKDIR /catkin_ws

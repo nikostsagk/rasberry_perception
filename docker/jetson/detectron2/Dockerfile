@@ -1,5 +1,5 @@
 ## Basis for running detectron2 backend in a container on a JETSON.
-## Extended from the saga/rasberry_perception:base_jetson image.
+## Extended from the rasberry_perception:jetson image.
 ##
 ## Prerequisites:
 ##   - docker
@@ -11,20 +11,20 @@
 ##   https://stackoverflow.com/a/61737404/11750663
 ##
 ## Build with:
-##   docker build -t saga/rasberry_perception:detectron2_jetson .
+##   docker build -t rasberry_perception/detectron2:jetson .
 ##
 ## Save with:
-##   docker save saga/rasberry_perception:detectron2_jetson | gzip > saga_rasberry_perception_detectron2_jetson.tar.gz
+##   docker save rasberry_perception/detectron2:jetson | gzip > rasberry_perception_detectron2_jetson.tar.gz
 ##
 ## Run with:
-##   docker run --network host --gpus all --name detectron2_backend --rm -it saga/rasberry_perception:detectron2_jetson
+##   docker run --network host --gpus all --name detectron2_backend --rm -it rasberry_perception/detectron2:jetson
 ## Debug with:
-##   docker run --network host --gpus all --name detectron2_backend --entrypoint /bin/bash --rm -it saga/rasberry_perception:detectron2_jetson
+##   docker run --network host --gpus all --name detectron2_backend --entrypoint /bin/bash --rm -it rasberry_perception/detectron2:jetson
 
-FROM saga/rasberry_perception:base_jetson
+FROM rasberry_perception:jetson
 
 ## Meta information
-LABEL detectron2.version="0.4" maintainers="Saul Goldblatt <saul.goldblatt@sagarobotics.com>, Nikos Tsagkopoulos <ntsagkopoulos@sagarobotics.com"
+LABEL detectron2.version="0.4" maintainers="Saul Goldblatt <saul.goldblatt@sagarobotics.com>, Nikos Tsagkopoulos <ntsagkopoulos@sagarobotics.com>"
 
 # # Set FORCE_CUDA because during `docker build` cuda is not accessible
 ENV FORCE_CUDA="1"
