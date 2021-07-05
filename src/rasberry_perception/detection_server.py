@@ -15,6 +15,7 @@ from rasberry_perception import Server, default_service_name
 def _default_arg_parser(args=None):
     parser = argparse.ArgumentParser(description='Run the detection server.')
     parser.add_argument('--backend', type=str, help="Which backend to use.", default=None)
+
     parsed_args, unknown = parser.parse_known_args() #this is an 'internal' method
 
     # Add unrecognised args as kwargs for passing the detection server
@@ -31,11 +32,12 @@ def _default_arg_parser(args=None):
 def __detection_server_runner():
     # Command line arguments should always over ride ros parameters
     args, args_kwargs = _default_arg_parser()
-
-    service_name = default_service_name
+    try:
+        service_name = args_kwargs['service_name']
+    except:
+        service_name = default_service_name
     _node_name = service_name + "_server"
     rospy.init_node(_node_name)
-
     server = Server(backend=args.backend, backend_kwargs=args_kwargs, service_name=service_name)
     server.run()
 
