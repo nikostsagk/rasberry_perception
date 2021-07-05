@@ -39,7 +39,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y ros-${ROS_DISTRO}-catkin -
 ## Clone necessary repositories
 #TODO: replace with sagarobotics forks
 WORKDIR /catkin_ws/src
-RUN git clone https://github.com/saulgoldsaga/rasberry_perception.git
+RUN git clone https://github.com/SAGARobotics/rasberry_perception.git
 
 ## Install ros-dependencies and build the rasberry_perception package
 WORKDIR /catkin_ws

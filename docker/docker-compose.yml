@@ -3,7 +3,7 @@
 version: '2.4'
 services:
     gripper_perception:
-        image: repository.saga.internal/gpu.detectron2
+        image: repository.saga.internal/${DEVICE}.detectron2
         container_name: detectron2_backend
         build:
             context: ${DEVICE}/detectron2

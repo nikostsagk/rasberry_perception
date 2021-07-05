@@ -21,6 +21,7 @@
 ## Debug with:
 ##   docker run --network host --gpus all --name detectron2_backend --entrypoint /bin/bash --rm -it rasberry_perception/detectron2:jetson
 
+# TODO Replace with repository.saga.internal/jetson.detectron2
 FROM rasberry_perception:jetson
 
 ## Meta information
