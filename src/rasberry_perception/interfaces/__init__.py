@@ -10,5 +10,8 @@ from .fruitcast import FruitCastServer
 from .mmot import MMotServer
 from .yolov4deepsort import YoloV4DeepsortServer
 from .tensorrtdeepsort import TensorrtDeepsortServer
+from .unet import UNetServer
+
 
 __all__ = ["YoloV4DeepsortServer","MMotServer","TensorrtDeepsortServer", "FruitCastServer", "GazeboRenderedBerriesServer", "Detectron2Server", "DefaultDetectionServer"]
+

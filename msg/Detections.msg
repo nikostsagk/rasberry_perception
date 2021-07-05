@@ -8,3 +8,6 @@ sensor_msgs/CameraInfo camera_info # The original sensor_msgs/CameraInfo message
 
 # Contains the results of the detection server backend
 rasberry_perception/Detection[] objects # Detection results for the image
+
+#Gripper cam information
+rasberry_perception/GripperCam gripper

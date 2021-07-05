@@ -14,7 +14,7 @@ from rasberry_perception.utility import function_timer
 
 @DETECTION_REGISTRY.register_detection_backend("fruitcast")
 class FruitCastServer(BaseDetectionServer):
-    def __init__(self, weights, image_size=640, nms_conf_thresh=0.4, nms_iou_thresh=0.5, device=""):
+    def __init__(self, weights,service_name, image_size=640, nms_conf_thresh=0.4, nms_iou_thresh=0.5, device=""):
         try:
             from yolov5.utils.general import set_logging
             from yolov5.utils.torch_utils import select_device
@@ -38,7 +38,7 @@ class FruitCastServer(BaseDetectionServer):
         self.currently_busy = Event()
 
         # Base class must be called at the end due to self.service_server.spin()
-        BaseDetectionServer.__init__(self)
+        BaseDetectionServer.__init__(self, service_name=service_name)
 
     @staticmethod
     def citation_notice():

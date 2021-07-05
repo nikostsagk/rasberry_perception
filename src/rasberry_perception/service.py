@@ -76,6 +76,7 @@ class Server:
             ))
 
         self.server_args = backend_kwargs
+        self.server_args['service_name'] = service_name
         self.backend_name = backend
         self._assigned_parameters = assigned_parameters
 

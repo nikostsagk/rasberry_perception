@@ -18,7 +18,7 @@
 FROM nvidia/cuda:10.2-cudnn7-devel-ubuntu18.04
 
 ## Meta information
-MAINTAINER Raymond Kirk    "rkirk@lincoln.ac.uk"
+MAINTAINER Saul Goldblatt   "saul.goldblatt@sagarobotics.com
 
 ## Install ROS
 ENV ROS_DISTRO melodic
@@ -38,9 +38,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt install -y ros-${ROS_DISTRO}-catkin --no-
 
 ## Clone necessary repositories
 WORKDIR /catkin_ws/src
-RUN git clone https://github.com/RaymondKirk/rasberry_perception.git && \
-    git clone https://github.com/RaymondKirk/bayestracking.git
-
+RUN git clone https://github.com/saulgoldsaga/rasberry_perception.git
 ## Install ros-dependencies and build the rasberry_perception package
 WORKDIR /catkin_ws
 RUN rosdep install --from-paths src --ignore-src -r -y && \

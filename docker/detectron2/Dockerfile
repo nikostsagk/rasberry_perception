@@ -14,9 +14,11 @@
 ##
 ## Run with:
 ##   docker run --network host --gpus all --name detectron2_backend --rm -it rasberry_perception:detectron2
+## Debug with:
+##   docker run --network host --gpus all --name detectron2_backend --entrypoint /bin/bash --rm -it rasberry_perception:detectron2
 ##
 
-FROM rasberry_perception:base_gpu
+FROM saga:base_gpu
 
 ## Meta information
 MAINTAINER Raymond Kirk    "rkirk@lincoln.ac.uk"
@@ -45,17 +47,16 @@ RUN python3 -m venv detectron2_venv --clear && \
     pip install --no-cache-dir opencv-python numpy && \
     # At time of writing CUDA 10.2 is the native torch version
     #    pip install --no-cache-dir torch==1.5+cu102 torchvision==0.6+cu102 -f https://download.pytorch.org/whl/torch_stable.html && \
-    pip install --no-cache-dir torch torchvision && \
+    pip install torch==1.6.0 torchvision==0.7.0 && \
     pip install --no-cache-dir 'git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI' && \
     pip install --no-cache-dir 'git+https://github.com/facebookresearch/fvcore' && \
     # Install detectron2
-    git clone https://github.com/facebookresearch/detectron2 && \
-    pip install --no-cache-dir -e detectron2 && \
+    python -m pip install detectron2==0.4 -f https://dl.fbaipublicfiles.com/detectron2/wheels/cu102/torch1.6/index.html && \
     pip install --no-cache-dir rospkg
 
 ## Add backends. These files can be obtained from Raymond (rkirk@lincoln.ac.uk) and require citation when used.
-COPY r50_packaged /r50_packaged/
-
+# COPY model
+COPY model_final.pth model_final.pth
 ## Create entry point for image (default entry point looks for a start_backend.sh script that describes how to launch the backend)
 COPY start_backend.sh .
 CMD ["/bin/bash", "-c"]
