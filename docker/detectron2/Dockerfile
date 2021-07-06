@@ -51,6 +51,7 @@ RUN python3 -m venv detectron2_venv --clear && \
     pip install --no-cache-dir 'git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI' && \
     pip install --no-cache-dir 'git+https://github.com/facebookresearch/fvcore' && \
     # Install detectron2
+    git clone https://github.com/facebookresearch/detectron2 detectron2_repo/ && \
     python -m pip install detectron2==0.4 -f https://dl.fbaipublicfiles.com/detectron2/wheels/cu102/torch1.6/index.html && \
     pip install --no-cache-dir rospkg
 

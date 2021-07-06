@@ -26,12 +26,12 @@ from std_srvs.srv import SetBool, SetBoolResponse
 
 
 class RunClientOnTopic:
-    def __init__(self, image_namespace, depth_namespace=None,results_namespace='/rasberry_perception', score_thresh=0.5, service_name=default_service_name,
-                 visualisation_enabled=False, publish_source=False, topic_trigger = ''):
+    def __init__(self, image_namespace, depth_namespace=None, score_thresh=0.5, service_name=default_service_name,
+                 visualisation_enabled=False, publish_source=False, run_on_start=True, topic_trigger = ''):
         # Initialise class members
         self.score_thresh = score_thresh
         self._service_name = service_name
-        self.namespace = results_namespace
+        self.namespace = service_name
         self.depth_enabled = bool(depth_namespace)
         self.visualisation_enabled = visualisation_enabled
         self.publish_source = publish_source
@@ -106,19 +106,15 @@ class RunClientOnTopic:
         self.ts = message_filters.ApproximateTimeSynchronizer(subscribers, sync_queue, sync_thresh, allow_headerless=True)
         self.ts.registerCallback(self.run_detector)
         # Set service
-        rospy.Service("/get_det", SetBool, self.set_get_detections)
+        self.detections_activated = run_on_start
+        rospy.Service(self.namespace+'_activate', SetBool, self.activate_detections)
 
-    def set_get_detections(self,get_detections):
+
+    def activate_detections(self, req):
         ans = SetBoolResponse()
-        if get_detections.data==True:
-            self.get_detections = True
-            ans.success = True
-        elif get_detections.data==False:
-            self.get_detections = False
-            ans.success = False
-        else:
-            ans.success=False
-            ans.message='Must use bool'
+        self.detections_activated=req.data
+        rospy.loginfo("Detector Activated = " + str(self.detections_activated))
+        ans.success=True
         return ans
 
     def on_shutdown(self):
@@ -128,7 +124,7 @@ class RunClientOnTopic:
     @function_timer.interval_logger(interval=10)
     def run_detector(self, *args, **kwargs):
         assert len(args) in [2, 4], "Args must either be (colour, info), or (colour, info, depth, info)"
-        if self.get_detections:
+        if self.detections_activated:
             image_msg, image_info = args[:2]
             result = self.detector(image=image_msg)
             if not result.status.OKAY:
@@ -384,9 +380,8 @@ class RunClientOnTopic:
 def _get_detections_for_topic():
     _node_name = default_service_name + '_client'
     rospy.init_node(_node_name, anonymous=True)
-
     # get private namespace parameters
-    p_image_ns = rospy.get_param('~image_ns', "/camera3/usb_cam")
+    p_image_ns = rospy.get_param('~image_ns', "/camera1/usb_cam")
     p_depth_ns = rospy.get_param('~depth_ns', "")
     p_service_name = rospy.get_param('~service_name', "gripper_perception")
     # p_image_ns = rospy.get_param('~image_ns', "/sequence_0/color")
@@ -395,18 +390,19 @@ def _get_detections_for_topic():
     p_score = rospy.get_param('~score', 0.01)
     p_vis = rospy.get_param('~show_vis', True)
     p_source = rospy.get_param('~publish_source', True)
-    p_results_ns = rospy.get_param('~results_ns','/rasberry_perception')
+    p_run_on_start = rospy.get_param('~run_on_start', True)
 
     rospy.loginfo("Camera Topic to Detection ROS: image_namespace={}, depth_namespace={}, score_thresh={}, "
                   "visualisation_enabled={}, publish_source={}".format(p_image_ns, p_depth_ns, p_score, p_vis,
-                                                                       p_source, p_results_ns))
+                                                                       p_source))
 
     try:
 
 
         detector = RunClientOnTopic(image_namespace=p_image_ns, depth_namespace=p_depth_ns, score_thresh=p_score,
                                     visualisation_enabled=p_vis, service_name=p_service_name, publish_source=p_source,
-                                    results_namespace=p_results_ns)
+                                    run_on_start=p_run_on_start
+                                    )
         rospy.spin()
     except (KeyboardInterrupt, rospy.ROSInterruptException) as e:
         print("Exiting node due to interrupt:", e)
