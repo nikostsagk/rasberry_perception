@@ -14,7 +14,6 @@
     <arg name="score" default="0.5"/>
     <arg name="show_vis" default="false"/>
     <arg name="publish_source" default="true"/>
-    <arg name="results_ns" default="/gripper_results"/>
     <arg name="service_name" default="/gripper_perception"/>
 
 
@@ -25,7 +24,6 @@
         <param name="score" type="double" value="$(arg score)"/>
         <param name="show_vis" type="bool" value="$(arg show_vis)"/>
         <param name="publish_source" type="bool" value="$(arg publish_source)"/>
-        <param name="results_ns" type="str" value="$(arg results_ns)"/>s
         <param name="service_name" type="str" value="$(arg service_name)"/>
 
     </node>

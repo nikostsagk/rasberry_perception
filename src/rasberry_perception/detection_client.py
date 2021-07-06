@@ -26,12 +26,12 @@ from std_srvs.srv import SetBool, SetBoolResponse
 
 
 class RunClientOnTopic:
-    def __init__(self, image_namespace, depth_namespace=None,results_namespace='/rasberry_perception', score_thresh=0.5, service_name=default_service_name,
+    def __init__(self, image_namespace, depth_namespace=None, score_thresh=0.5, service_name=default_service_name,
                  visualisation_enabled=False, publish_source=False, topic_trigger = ''):
         # Initialise class members
         self.score_thresh = score_thresh
         self._service_name = service_name
-        self.namespace = results_namespace
+        self.namespace = service_name
         self.depth_enabled = bool(depth_namespace)
         self.visualisation_enabled = visualisation_enabled
         self.publish_source = publish_source
@@ -106,7 +106,7 @@ class RunClientOnTopic:
         self.ts = message_filters.ApproximateTimeSynchronizer(subscribers, sync_queue, sync_thresh, allow_headerless=True)
         self.ts.registerCallback(self.run_detector)
         # Set service
-        rospy.Service("/get_det", SetBool, self.set_get_detections)
+        rospy.Service("/"+self.namespace+'_activate', SetBool, self.set_get_detections)
 
     def set_get_detections(self,get_detections):
         ans = SetBoolResponse()
@@ -384,9 +384,8 @@ class RunClientOnTopic:
 def _get_detections_for_topic():
     _node_name = default_service_name + '_client'
     rospy.init_node(_node_name, anonymous=True)
-
     # get private namespace parameters
-    p_image_ns = rospy.get_param('~image_ns', "/camera3/usb_cam")
+    p_image_ns = rospy.get_param('~image_ns', "/camera1/usb_cam")
     p_depth_ns = rospy.get_param('~depth_ns', "")
     p_service_name = rospy.get_param('~service_name', "gripper_perception")
     # p_image_ns = rospy.get_param('~image_ns', "/sequence_0/color")
@@ -395,18 +394,17 @@ def _get_detections_for_topic():
     p_score = rospy.get_param('~score', 0.01)
     p_vis = rospy.get_param('~show_vis', True)
     p_source = rospy.get_param('~publish_source', True)
-    p_results_ns = rospy.get_param('~results_ns','/rasberry_perception')
 
     rospy.loginfo("Camera Topic to Detection ROS: image_namespace={}, depth_namespace={}, score_thresh={}, "
                   "visualisation_enabled={}, publish_source={}".format(p_image_ns, p_depth_ns, p_score, p_vis,
-                                                                       p_source, p_results_ns))
+                                                                       p_source))
 
     try:
 
 
         detector = RunClientOnTopic(image_namespace=p_image_ns, depth_namespace=p_depth_ns, score_thresh=p_score,
-                                    visualisation_enabled=p_vis, service_name=p_service_name, publish_source=p_source,
-                                    results_namespace=p_results_ns)
+                                    visualisation_enabled=p_vis, service_name=p_service_name, publish_source=p_source
+                                    )
         rospy.spin()
     except (KeyboardInterrupt, rospy.ROSInterruptException) as e:
         print("Exiting node due to interrupt:", e)
