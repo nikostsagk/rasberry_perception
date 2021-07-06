@@ -34,11 +34,11 @@ ARG TORCH_CUDA_ARCH_LIST="Kepler;Kepler+Tesla;Maxwell;Maxwell+Tegra;Pascal;Volta
 ENV TORCH_CUDA_ARCH_LIST="${TORCH_CUDA_ARCH_LIST}"
 
 #TEMP 
-WORKDIR /catkin_ws/src/rasberry_perception
-RUN git remote add saga https://github.com/SAGARobotics/rasberry_perception.git && \
-    git fetch saga && \
-    git checkout tracking_backends_integration && \
-    git pull saga tracking_backends_integration
+#WORKDIR /catkin_ws/src/rasberry_perception
+#RUN git remote add saga https://github.com/SAGARobotics/rasberry_perception.git && \
+#    git fetch saga && \
+#    git checkout tracking_backends_integration && \
+#    git pull saga tracking_backends_integration
 #TEMP 
 RUN DEBIAN_FRONTEND=noninteractive apt-get update --no-install-recommends && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y python-pip libopencv-dev --no-install-recommends && \
