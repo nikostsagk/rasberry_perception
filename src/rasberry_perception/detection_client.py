@@ -124,7 +124,7 @@ class RunClientOnTopic:
     @function_timer.interval_logger(interval=10)
     def run_detector(self, *args, **kwargs):
         assert len(args) in [2, 4], "Args must either be (colour, info), or (colour, info, depth, info)"
-        if self.get_detections:
+        if self.detections_activated:
             image_msg, image_info = args[:2]
             result = self.detector(image=image_msg)
             if not result.status.OKAY:
