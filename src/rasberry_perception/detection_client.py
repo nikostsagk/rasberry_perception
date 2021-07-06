@@ -106,7 +106,7 @@ class RunClientOnTopic:
         self.ts = message_filters.ApproximateTimeSynchronizer(subscribers, sync_queue, sync_thresh, allow_headerless=True)
         self.ts.registerCallback(self.run_detector)
         # Set service
-        rospy.Service("/"+self.namespace+'_activate', SetBool, self.set_get_detections)
+        rospy.Service(self.namespace+'_activate', SetBool, self.set_get_detections)
 
     def set_get_detections(self,get_detections):
         ans = SetBoolResponse()
