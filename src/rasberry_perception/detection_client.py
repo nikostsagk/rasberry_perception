@@ -27,7 +27,7 @@ from std_srvs.srv import SetBool, SetBoolResponse
 
 class RunClientOnTopic:
     def __init__(self, image_namespace, depth_namespace=None, score_thresh=0.5, service_name=default_service_name,
-                 visualisation_enabled=False, publish_source=False, topic_trigger = ''):
+                 visualisation_enabled=False, publish_source=False, run_on_start=True, topic_trigger = ''):
         # Initialise class members
         self.score_thresh = score_thresh
         self._service_name = service_name
@@ -106,19 +106,15 @@ class RunClientOnTopic:
         self.ts = message_filters.ApproximateTimeSynchronizer(subscribers, sync_queue, sync_thresh, allow_headerless=True)
         self.ts.registerCallback(self.run_detector)
         # Set service
-        rospy.Service(self.namespace+'_activate', SetBool, self.set_get_detections)
+        self.detections_activated = run_on_start
+        rospy.Service(self.namespace+'_activate', SetBool, self.activate_detections)
 
-    def set_get_detections(self,get_detections):
+
+    def activate_detections(self, req):
         ans = SetBoolResponse()
-        if get_detections.data==True:
-            self.get_detections = True
-            ans.success = True
-        elif get_detections.data==False:
-            self.get_detections = False
-            ans.success = False
-        else:
-            ans.success=False
-            ans.message='Must use bool'
+        self.detections_activated=req.data
+        rospy.loginfo("Detector Activated = " + str(self.detections_activated))
+        ans.success=True
         return ans
 
     def on_shutdown(self):
@@ -394,6 +390,7 @@ def _get_detections_for_topic():
     p_score = rospy.get_param('~score', 0.01)
     p_vis = rospy.get_param('~show_vis', True)
     p_source = rospy.get_param('~publish_source', True)
+    p_run_on_start = rospy.get_param('~run_on_start', True)
 
     rospy.loginfo("Camera Topic to Detection ROS: image_namespace={}, depth_namespace={}, score_thresh={}, "
                   "visualisation_enabled={}, publish_source={}".format(p_image_ns, p_depth_ns, p_score, p_vis,
@@ -403,7 +400,8 @@ def _get_detections_for_topic():
 
 
         detector = RunClientOnTopic(image_namespace=p_image_ns, depth_namespace=p_depth_ns, score_thresh=p_score,
-                                    visualisation_enabled=p_vis, service_name=p_service_name, publish_source=p_source
+                                    visualisation_enabled=p_vis, service_name=p_service_name, publish_source=p_source,
+                                    run_on_start=p_run_on_start
                                     )
         rospy.spin()
     except (KeyboardInterrupt, rospy.ROSInterruptException) as e:

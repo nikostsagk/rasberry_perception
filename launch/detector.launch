@@ -15,6 +15,7 @@
     <arg name="show_vis" default="true"/>
     <arg name="publish_source" default="false"/>
     <arg name="service_name" default="/robot_perception"/>
+    <arg name="run_on_start" default="true"/>
 
 
     <node pkg="rasberry_perception" name="robot_perception" type="detection_client.py" output="screen" respawn="true">
@@ -24,6 +25,7 @@
         <param name="show_vis" type="bool" value="$(arg show_vis)"/>
         <param name="publish_source" type="bool" value="$(arg publish_source)"/>
         <param name="service_name" type="str" value="$(arg service_name)"/>
+        <param name="run_on_start" type="bool" value="$(arg run_on_start)"/>
 
     </node>
 </launch>
