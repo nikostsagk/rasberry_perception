@@ -1,5 +1,5 @@
 ## Basis for running unet backend in a container.
-## Extended from the rasberry_perception:saga_base_gpu image.
+## Extended from the rasberry_perception:gpu image.
 ##
 ## Prerequisites:
 ##   - docker
@@ -7,16 +7,16 @@
 ##   - nvidia container toolkit
 ##
 ## Build with:
-##   docker build -t rasberry_perception:unet .
+##   docker build -t rasberry_perception/unet:gpu .
 ##
 ## Save with:
-##   docker save rasberry_perception:unet | gzip > rasberry_perception_unet.tar.gz
+##   docker save rasberry_perception/unet:gpu | gzip > rasberry_perception_unet_gpu.tar.gz
 ##
 ## Run with:
-##   docker run --network host --gpus all --name unet_backend --rm -it rasberry_perception:unet
+##   docker run --network host --gpus all --name unet_backend --rm -it rasberry_perception/unet:gpu
 ##
-FROM saga:base_gpu
-MAINTAINER Saul Goldblatt
+FROM rasberry_perception:gpu
+LABEL maintainer="Saul Goldblatt <saul.goldblatt@sagarobotics.com>"
 
 # Set FORCE_CUDA because during `docker build` cuda is not accessible
 ENV FORCE_CUDA="1"

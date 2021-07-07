@@ -1,0 +1,21 @@
+# email: ntsagkopoulos@sagarobotics.com
+
+version: '2.4'
+services:
+    gripper_perception:
+        image: repository.saga.internal/${DEVICE}.detectron2
+        container_name: detectron2_backend
+        build:
+            context: ${DEVICE}/detectron2
+        network_mode: host
+        environment:
+            - ROS_MASTER_URI=${ROS_MASTER_URI}
+            - ROS_IP=${ROS_IP}
+            - SERVICE_NAME=gripper_perception
+        runtime: nvidia
+        privileged: true
+        entrypoint: /bin/bash ./entrypoint.sh
+        volumes:
+        - ./${DEVICE}/detectron2/model_final.pth:/model.pth
+        - ./${DEVICE}/detectron2/mask_rcnn_R_50_FPN_3x.yaml:/config.yaml
+        - ./${DEVICE}/detectron2/start_backend.sh:/start_backend.sh
