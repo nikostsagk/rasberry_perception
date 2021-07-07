@@ -1,9 +1,5 @@
 ## Basis for running detectron2 backend in a container.
-<<<<<<< HEAD:docker/gpu/detectron2/Dockerfile
-## Extended from the rasberry_perception/detectron2:gpu image.
-=======
 ## Extended from the rasberry_perception:base_gpu image.
->>>>>>> upstream/master:docker/detectron2/Dockerfile
 ##
 ## Prerequisites:
 ##   - docker
@@ -11,7 +7,6 @@
 ##   - nvidia container toolkit
 ##
 ## Build with:
-<<<<<<< HEAD:docker/gpu/detectron2/Dockerfile
 ##   docker build -t rasberry_perception/detectron2:gpu .
 ##
 ## Save with:
@@ -27,23 +22,6 @@ FROM rasberry_perception:gpu
 
 ## Meta information
 LABEL detectron2.version="0.4" maintainers="Saul Goldblatt <saul.goldblatt@sagarobotics.com>, Nikos Tsagkopoulos <ntsagkopoulos@sagarobotics.com>"
-=======
-##   docker build -t rasberry_perception:detectron2 .
-##
-## Save with:
-##   docker save rasberry_perception:detectron2 | gzip > rasberry_perception_detectron2.tar.gz
-##
-## Run with:
-##   docker run --network host --gpus all --name detectron2_backend --rm -it rasberry_perception:detectron2
-## Debug with:
-##   docker run --network host --gpus all --name detectron2_backend --entrypoint /bin/bash --rm -it rasberry_perception:detectron2
-##
-
-FROM saga:base_gpu
-
-## Meta information
-MAINTAINER Raymond Kirk    "rkirk@lincoln.ac.uk"
->>>>>>> upstream/master:docker/detectron2/Dockerfile
 
 # Set FORCE_CUDA because during `docker build` cuda is not accessible
 ENV FORCE_CUDA="1"
@@ -75,12 +53,8 @@ RUN python3 -m venv detectron2_venv --clear && \
     # Clone detectron2
     git clone https://github.com/facebookresearch/detectron2 && \
     # Install detectron2
-<<<<<<< HEAD:docker/gpu/detectron2/Dockerfile
-    python -m pip install 'git+git://github.com/facebookresearch/detectron2.git@v0.4' && \
-=======
     git clone https://github.com/facebookresearch/detectron2 detectron2_repo/ && \
     python -m pip install detectron2==0.4 -f https://dl.fbaipublicfiles.com/detectron2/wheels/cu102/torch1.6/index.html && \
->>>>>>> upstream/master:docker/detectron2/Dockerfile
     pip install --no-cache-dir rospkg
 
 ## Add backends. These files can be obtained from Raymond (rkirk@lincoln.ac.uk) and require citation when used.
