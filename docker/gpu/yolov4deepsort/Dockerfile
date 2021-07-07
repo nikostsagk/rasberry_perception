@@ -16,7 +16,7 @@
 ##   docker run --network host --gpus all --name yolov4deepsort_backend --rm -it rasberry_perception:yolov4deepsort
 ##
 
-FROM rasberry_perception:base_gpu
+FROM rasberry_perception:gpu
 
 ## Meta information
 MAINTAINER Robert Belshaw    "rbelshaw@sagarobotics.com"

@@ -9,13 +9,13 @@ from rasberry_perception.utility import function_timer
 
 @DETECTION_REGISTRY.register_detection_backend("tensorrtdeepsort")
 class TensorrtDeepsortServer(BaseDetectionServer):
-    def __init__(self, config_path, image_height=480, image_width=640, image_hz=30, deepsort_modelPath="/mars_sb_14.pb", nms_conf_thresh=0.4, nms_iou_thresh=0.5,max_cosine_distance = 0.6, nn_budget = 200, nms_max_overlap = 1.0):    
+    def __init__(self, config_path, service_name, image_height=480, image_width=640, image_hz=30, deepsort_modelPath="/mars_sb_14.pb",max_cosine_distance = 0.6, nn_budget = 200, nms_max_overlap = 1.0):    
         try:
             import modularmot
             from modularmot.utils import ConfigDecoder
             from deep_sort.tracker import Tracker
             from deep_sort import nn_matching
-            from deep_sort.tools import generate_detections as gdet
+            from tools import generate_detections as gdet
             from deep_sort import preprocessing
             from deep_sort.detection import Detection as deep_detection 
             import os
@@ -32,8 +32,7 @@ class TensorrtDeepsortServer(BaseDetectionServer):
         self.image_width = image_width
         
         print("Load Engine")
-        self.mot = modularmot.MOT([int(image_width), int(image_height)],1.0/int(image_hz), config['mot'], detections_only=True,
-                          draw=False, verbose=False)
+        self.mot = modularmot.MOT([int(image_width), int(image_height)],1.0/int(image_hz), config['mot'], detections_only=True, verbose=False)
         # deep_sort
         self.preprocessing = preprocessing
         self.deep_detection = deep_detection
@@ -43,12 +42,11 @@ class TensorrtDeepsortServer(BaseDetectionServer):
         self.currently_busy = Event()
         
         # Base class must be called at the end due to self.service_server.spin()
-        BaseDetectionServer.__init__(self)
-        print("Done Init!")
+        BaseDetectionServer.__init__(self, service_name=service_name)
 
     @staticmethod
     def citation_notice():
-        return "TensorRT Inference and Feature Extractor\n" \
+        return "TensorRT Inference and Feature Extrator\n" \
                "Maintained by Robert Belshaw (rbelshaw@sagarobotics.com)"
 
     @function_timer.interval_logger(interval=10)
