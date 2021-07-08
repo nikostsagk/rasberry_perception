@@ -7,21 +7,21 @@
 ##   - nvidia container toolkit
 ##
 ## Build with:
-##   docker build -t rasberry_perception:detectron2 .
+##   docker build -t rasberry_perception/detectron2:gpu .
 ##
 ## Save with:
-##   docker save rasberry_perception:detectron2 | gzip > rasberry_perception_detectron2.tar.gz
+##   docker save rasberry_perception/detectron2:gpu | gzip > rasberry_perception_detectron2_gpu.tar.gz
 ##
 ## Run with:
-##   docker run --network host --gpus all --name detectron2_backend --rm -it rasberry_perception:detectron2
+##   docker run --network host --gpus all --name detectron2_backend --rm -it rasberry_perception/detectron2:gpu
 ## Debug with:
-##   docker run --network host --gpus all --name detectron2_backend --entrypoint /bin/bash --rm -it rasberry_perception:detectron2
-##
+##   docker run --network host --gpus all --name detectron2_backend --entrypoint /bin/bash --rm -it rasberry_perception/detectron2:gpu
 
-FROM saga:base_gpu
+# TODO: Replace with repository.saga.internal/gpu.base
+FROM rasberry_perception:gpu
 
 ## Meta information
-MAINTAINER Raymond Kirk    "rkirk@lincoln.ac.uk"
+LABEL detectron2.version="0.4" maintainers="Saul Goldblatt <saul.goldblatt@sagarobotics.com>, Nikos Tsagkopoulos <ntsagkopoulos@sagarobotics.com>"
 
 # Set FORCE_CUDA because during `docker build` cuda is not accessible
 ENV FORCE_CUDA="1"
@@ -43,13 +43,15 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update --no-install-recommends && \
 RUN python3 -m venv detectron2_venv --clear && \
     . detectron2_venv/bin/activate && \
     pip install --upgrade pip wheel setuptools && \
-    pip install --no-cache-dir tensorboard cython && \
+    pip install --no-cache-dir tensorboard Cython && \
     pip install --no-cache-dir opencv-python numpy && \
     # At time of writing CUDA 10.2 is the native torch version
     #    pip install --no-cache-dir torch==1.5+cu102 torchvision==0.6+cu102 -f https://download.pytorch.org/whl/torch_stable.html && \
     pip install torch==1.6.0 torchvision==0.7.0 && \
     pip install --no-cache-dir 'git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI' && \
     pip install --no-cache-dir 'git+https://github.com/facebookresearch/fvcore' && \
+    # Clone detectron2
+    git clone https://github.com/facebookresearch/detectron2 && \
     # Install detectron2
     git clone https://github.com/facebookresearch/detectron2 detectron2_repo/ && \
     python -m pip install detectron2==0.4 -f https://dl.fbaipublicfiles.com/detectron2/wheels/cu102/torch1.6/index.html && \

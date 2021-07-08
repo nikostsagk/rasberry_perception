@@ -1,5 +1,5 @@
 ## Basis for running fruitcast backend in a container.
-## Extended from the rasberry_perception:base_gpu image.
+## Extended from the rasberry_perception:gpu image.
 ##
 ## Prerequisites:
 ##   - docker
@@ -7,16 +7,16 @@
 ##   - nvidia container toolkit
 ##
 ## Build with:
-##   docker build -t rasberry_perception:fruitcast .
+##   docker build -t rasberry_perception/fruitcast:gpu .
 ##
 ## Save with:
-##   docker save rasberry_perception:fruitcast | gzip > rasberry_perception_fruitcast.tar.gz
+##   docker save rasberry_perception/fruitcast:gpu | gzip > rasberry_perception_fruitcast_gpu.tar.gz
 ##
 ## Run with:
-##   docker run --network host --gpus all --name fruitcast_backend --rm -it rasberry_perception:fruitcast
+##   docker run --network host --gpus all --name fruitcast_backend --rm -it rasberry_perception/fruitcast:gpu
 ##
 
-FROM saga:base_gpu
+FROM rasberry_perception:gpu
 
 ## Meta information
 MAINTAINER Raymond Kirk    "rkirk@lincoln.ac.uk"
