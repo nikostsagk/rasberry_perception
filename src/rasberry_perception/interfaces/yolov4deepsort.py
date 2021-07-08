@@ -13,7 +13,7 @@ from rasberry_perception.utility import function_timer
 
 @DETECTION_REGISTRY.register_detection_backend("yolov4deepsort")
 class YoloV4DeepsortServer(BaseDetectionServer):
-    def __init__(self, weightPath="/yolov4_sb_best.weights", configPath="/yolov4_sb.cfg", metaPath="/voc_sb.data", deepsort_modelPath="/mars_sb_14.pb", image_size=640, nms_conf_thresh=0.4, nms_iou_thresh=0.5,max_cosine_distance = 0.6, nn_budget = 50, nms_max_overlap = 1.0):
+    def __init__(self,service_name, weightPath="/yolov4_sb_best.weights", configPath="/yolov4_sb.cfg", metaPath="/voc_sb.data", deepsort_modelPath="/mars_sb_14.pb", image_size=640, nms_conf_thresh=0.4, nms_iou_thresh=0.5,max_cosine_distance = 0.6, nn_budget = 50, nms_max_overlap = 1.0):
         try:
             import darknet            
             from deep_sort.tracker import Tracker
@@ -45,12 +45,13 @@ class YoloV4DeepsortServer(BaseDetectionServer):
         self.encoder = gdet.create_box_encoder(deepsort_modelPath, batch_size=1)
         metric = nn_matching.NearestNeighborDistanceMetric("cosine", max_cosine_distance, nn_budget)
         self.tracker = Tracker(metric)     
-        BaseDetectionServer.__init__(self)
+        BaseDetectionServer.__init__(self,service_name=service_name)
 
     @staticmethod
     def citation_notice():
         return "YoloV4 Inference and Feature Extractor by Ya Xiong(Bill)\n" \
-               "Maintained by Robert Belshaw (rbelshaw@sagarobotics.com)"
+               "Maintained by Robert Belshaw (rbelshaw@sagarobotics.com)\n" \
+               "Maintained by Saul Goldblatt (saul.goldblatt@sagarobotics.com)"
 
     @function_timer.interval_logger(interval=10)
     def get_detector_results(self, request):

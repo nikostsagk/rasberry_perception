@@ -71,7 +71,7 @@ class Detectron2Server(BaseDetectionServer):
     @staticmethod
     def citation_notice():
         return "Please cite this work as outlined in https://github.com/RaymondKirk/fruit_detection\n" \
-               "Maintained by Raymond Kirk (ray.tunstill@gmail.com)"\
+               "Maintained by Raymond Kirk (ray.tunstill@gmail.com)\n"\
                "Maintained by Saul Goldblatt (saul.goldblatt@sagarobotics.com)"
 
     @function_timer.interval_logger(interval=10)
