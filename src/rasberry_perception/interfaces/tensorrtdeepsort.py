@@ -9,7 +9,7 @@ from rasberry_perception.utility import function_timer
 
 @DETECTION_REGISTRY.register_detection_backend("tensorrtdeepsort")
 class TensorrtDeepsortServer(BaseDetectionServer):
-    def __init__(self, config_path, service_name, image_height=480, image_width=640, image_hz=30, deepsort_modelPath="/mars_sb_14.pb",max_cosine_distance = 0.5, nn_budget = 200, nms_max_overlap = 1.0):    
+    def __init__(self, config_path, service_name, image_height=480, image_width=640, image_hz=30, deepsort_modelPath="/mars_sb_14.pb",max_cosine_distance = 0.6, nn_budget = 50, nms_max_overlap = 1.0):    
         try:
             import modularmot
             from modularmot.utils import ConfigDecoder
