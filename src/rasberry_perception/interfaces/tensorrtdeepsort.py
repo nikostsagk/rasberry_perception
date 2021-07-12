@@ -9,7 +9,7 @@ from rasberry_perception.utility import function_timer
 
 @DETECTION_REGISTRY.register_detection_backend("tensorrtdeepsort")
 class TensorrtDeepsortServer(BaseDetectionServer):
-    def __init__(self, config_path, service_name, image_height=480, image_width=640, image_hz=30, deepsort_modelPath="/mars_sb_14.pb",max_cosine_distance = 0.6, nn_budget = 200, nms_max_overlap = 1.0):    
+    def __init__(self, config_path, service_name, image_height=480, image_width=640, image_hz=30, deepsort_modelPath="/mars_sb_14.pb",max_cosine_distance = 0.6, nn_budget = 50, nms_max_overlap = 1.0):    
         try:
             import modularmot
             from modularmot.utils import ConfigDecoder
@@ -65,17 +65,19 @@ class TensorrtDeepsortServer(BaseDetectionServer):
         if self.currently_busy.is_set():
             return GetDetectorResultsResponse(status=ServiceStatus(BUSY=True))
         self.currently_busy.set()
-        detections_msg = Detections()
+        detections_msg = Detections()        
         try:
             image = ros_numpy.numpify(request.image)
             if request.image.encoding == "rgb8":
                 image = image[..., ::-1]
+            #Image Info
+            self.image_height, self.image_width = image.shape[0], image.shape[1] 
             boxs = []
             confidences = []
             class_name= []
             self.mot.step(image)
             for detection in self.mot.detections:
-                if detection[1] != "ripe":  # only track ripe berry whose class is "ripe"        
+                if detection[1] != 0:  # only track ripe berry whose class is "ripe"        
                     x1, y1, x2, y2 = detection[0][0], \
                     detection[0][1], \
                     detection[0][2], \
