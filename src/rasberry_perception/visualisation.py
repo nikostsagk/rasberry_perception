@@ -3,6 +3,8 @@
 
 import cv2
 import numpy as np
+import rospy 
+from visualization_msgs.msg import Marker, MarkerArray
 
 __all__ = ["Visualiser"]
 
@@ -152,6 +154,7 @@ class Visualiser:
             labels.append("{}{}{:.2f}".format(detection.class_name, reid_class, detection.confidence))
 
         self.overlay_instances(boxes, labels, masks, assigned_colors, alpha)
+        self.publish_markers(message.objects)
 
     def overlay_instances(self, boxes=None, labels=None, masks=None, assigned_colors=None, alpha=0.5):
         num_instances = None
@@ -311,3 +314,36 @@ class Visualiser:
             else:
                 ret.append(GenericMask(x, self.height, self.width))
         return ret
+
+class MarkerGenerator:
+    def create_markers(self, detections, frame):
+        self.markerArray = MarkerArray()
+        ids = []
+        for detection in detections:
+            marker = Marker()
+            marker.header.frame_id = frame
+            marker.type = marker.SPHERE
+            marker.action = marker.ADD
+            marker.scale.x = detection.size.x
+            marker.scale.y = detection.size.y
+            marker.scale.z = detection.size.z
+            marker.color.a = 0.8
+            #TEMP
+            if detections.class_name == "Ripe Strawberry":
+                marker.color.r = 1.0
+            else:
+                marker.color.g = 1.0
+            #TEMP
+            marker.pose.orientation.w = 1.0
+            marker.pose.position.x = detection.pose.position.x
+            marker.pose.position.y = detection.pose.position.y
+            marker.pose.position.z = detection.pose.position.z
+            marker.id = detection.track_id
+            ids.append(detection.track_id)
+        for m in self.markerArray.markers:
+            if m.id == -1 or None:
+                m.id = max(ids) + 1
+        self.markerArray.markers.append(marker)
+
+    def get_markers(self):
+        return self.markerArray

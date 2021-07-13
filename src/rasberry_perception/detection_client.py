@@ -18,12 +18,12 @@ from sensor_msgs.msg import Image, CameraInfo
 
 from rasberry_perception import Client, default_service_name
 from rasberry_perception.utility import function_timer, WorkerTaskQueue
-from rasberry_perception.visualisation import Visualiser
+from rasberry_perception.visualisation import Visualiser, MarkerGenerator
 from rasberry_perception.msg import Detections, Detection, RegionOfInterest, SegmentOfInterest, TaggedPoseStampedArray,\
     TaggedPose, ObjectSize
 from image_geometry import PinholeCameraModel
 from std_srvs.srv import SetBool, SetBoolResponse
-
+from visualization_msgs.msg import MarkerArray
 
 class RunClientOnTopic:
     def __init__(self, image_namespace, depth_namespace=None, score_thresh=0.5, service_name=default_service_name,
@@ -88,6 +88,9 @@ class RunClientOnTopic:
             self.detections_vis_pub = rospy.Publisher(self.namespace + "/vis/detection/image_raw", Image, queue_size=1)
             self.detections_vis_info_pub = rospy.Publisher(self.namespace + "/vis/detection/camera_info", CameraInfo,
                                                            queue_size=1)
+
+            #Marker Publisher
+            self.vis_marker_pub = rospy.Publisher(self.namespace + "/vis/markers", MarkerArray)
 
             # Worker thread to do the heavy lifting of the detections visualisation
             self.publisher_tasks = WorkerTaskQueue(num_workers=1, max_size=1, discard=True)
@@ -355,6 +358,9 @@ class RunClientOnTopic:
         if self.visualisation_enabled:
             self.publisher_tasks.add_task(self._vis_publish, (image_msg, image_info, results,))
 
+        if self.visualisation_enabled and self.depth_enabled:
+            self.publisher_tasks.add_task(self._marker_publish, (image_info, results,))
+
     @function_timer.interval_logger(interval=10)
     def _vis_publish(self, image_msg, image_info, result):
         """Publish function for service results. Meant to be offloaded to another thread.
@@ -376,6 +382,18 @@ class RunClientOnTopic:
         self.detections_vis_pub.publish(vis_msg)
         self.detections_vis_info_pub.publish(vis_info)
 
+    @function_timer.interval_logger(interval=10)
+    def _marker_publish(self, image_info, result):
+        """Publish function for Markers. Meant to be offloaded to another thread.
+
+        Args:
+            image_info (CameraInfo): The RGB camera info message
+            result (GetDetectorResultsResponse):  The result of a call to the GetDetectorResults service api
+        """
+        vis = MarkerGenerator()
+        vis.create_markers(result, image_info.header.frame_id)
+        markerArray = vis.get_markers()
+        self.vis_marker_pub.publish(markerArray)
 
 def _get_detections_for_topic():
     _node_name = default_service_name + '_client'
@@ -397,8 +415,6 @@ def _get_detections_for_topic():
                                                                        p_source))
 
     try:
-
-
         detector = RunClientOnTopic(image_namespace=p_image_ns, depth_namespace=p_depth_ns, score_thresh=p_score,
                                     visualisation_enabled=p_vis, service_name=p_service_name, publish_source=p_source,
                                     run_on_start=p_run_on_start
