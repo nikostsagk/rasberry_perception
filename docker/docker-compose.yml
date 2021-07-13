@@ -3,7 +3,8 @@
 version: '2.4'
 services:
     gripper_perception:
-        image: rasberry_perception:detectron2
+        # Need to docker login
+        image: repository.saga.com/${DEVICE}.detectron2
         container_name: detectron2_backend
         build:
             context: ${DEVICE}/detectron2
