@@ -93,7 +93,7 @@ class RunClientOnTopic:
             self.vis_marker_pub = rospy.Publisher(self.namespace + "/vis/markers", MarkerArray)
 
             # Worker thread to do the heavy lifting of the detections visualisation
-            self.publisher_tasks = WorkerTaskQueue(num_workers=1, max_size=1, discard=True)
+            self.publisher_tasks = WorkerTaskQueue(num_workers=2, max_size=2, discard=True)
             rospy.on_shutdown(self.on_shutdown)
 
             # This topic only publishes the points of the depth map that are considered for the bbox_pose calculation
@@ -353,7 +353,6 @@ class RunClientOnTopic:
         if self.publish_source:
             self.image_pub.publish(image_msg)
             self.image_info_pub.publish(image_info)
-
         # Offload the visualisation task <1ms (takes considerable time)
         if self.visualisation_enabled:
             self.publisher_tasks.add_task(self._vis_publish, (image_msg, image_info, results,))
