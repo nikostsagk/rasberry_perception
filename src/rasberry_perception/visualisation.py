@@ -149,7 +149,7 @@ class Visualiser:
             xyxy_abs = list(zip(detection.seg_roi.x, detection.seg_roi.y))
             masks.append(GenericMask([xyxy_abs], self.height, self.width))
             reid_class = " (" + str(np.asarray(detection.reid_logits).argmax()) + ") " if detection.reid_logits else ""
-            labels.append("{}{}{:.2f}".format(detection.class_name, reid_class, detection.confidence))
+            labels.append("{}{}{:.2f}".format(detection.class_name, reid_class, detection.id))
 
         self.overlay_instances(boxes, labels, masks, assigned_colors, alpha)
 
