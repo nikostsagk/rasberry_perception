@@ -45,10 +45,12 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
 ## Add Darknet. These files can be obtained from Rob ("rbelshaw@sagarobotics.com") or downloaded from https://github.com/SAGARobotics/Noronn.git branch cuda10
 ## The Makefile should be tweaked to build for the hardware that you wish to implement on.
+# Make sure using branch cuda10
 COPY Noronn /catkin_ws/src/Noronn
 WORKDIR /catkin_ws/src/Noronn/deep_sort_yolov4-master
-RUN git checkout cuda10 && \
-    make
+#RUN git checkout cuda10 && \
+#    make
+RUN make
 WORKDIR /
 
 #RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y python-pip libopencv-dev
