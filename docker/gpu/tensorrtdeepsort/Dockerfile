@@ -16,14 +16,19 @@ ARG SCRIPT_DIR=/opt/tensorrt/python
 RUN DEBIAN_FRONTEND=noninteractive apt-get update --no-install-recommends && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y ninja-build protobuf-compiler libprotobuf-dev python  python3-venv
 
-# Copy ModularMOT as is private. Can be accessed here https://github.com/SAGARobotics/PerceptionApps
-COPY ModularMOT /ModularMOT
-#TEMP Copy Weights. Acquire from rbelshaw@sagarobotics.com 
-COPY mars_sb_14.pb /mars_sb_14.pb
-COPY yolov4-416.onnx /ModularMOT/modularmot/models/yolov4-416.onnx
-
 WORKDIR /
 RUN git clone https://github.com/rjwb1/deep_sort.git
+
+#TEMP#
+COPY PerceptionApps /PerceptionApps
+WORKDIR /PerceptionApps
+RUN git checkout ModularMOT
+WORKDIR /
+#TEMP#
+
+#TEMP Copy Weights. Acquire from rbelshaw@sagarobotics.com 
+COPY mars_sb_14.pb /mars_sb_14.pb
+COPY yolov4-416.onnx /PerceptionApps/ModularMOT/modularmot/models/yolov4-416.onnx
 
 ## Install backend in virtual Python3 environment
 RUN python3.6 -m venv modularmot_venv --clear --system-site-packages && \
@@ -33,13 +38,13 @@ RUN python3.6 -m venv modularmot_venv --clear --system-site-packages && \
     pip install --no-cache-dir numpy && \
     pip install --no-cache-dir cython && \
     pip install --no-cache-dir cython-bbox && \
-    pip install --no-cache-dir -r /ModularMOT/requirements.txt && \
+    pip install --no-cache-dir -r /PerceptionApps/ModularMOT/requirements.txt && \
     pip install --no-cache-dir scikit-build && \
     pip install --no-cache-dir opencv-python && \
     pip install --no-cache-dir scipy tensorflow && \
     pip install --no-cache-dir scikit-learn==0.22.2
 
-ENV PYTHONPATH "${PYTHONPATH}:/ModularMOT:/deep_sort"
+ENV PYTHONPATH "${PYTHONPATH}:/PerceptionApps/ModularMOT:/deep_sort"
 
 ## Install ROS
 ENV ROS_DISTRO melodic
@@ -58,7 +63,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt install -y ros-${ROS_DISTRO}-catkin --no-
 ## Clone necessary repositories
 WORKDIR /catkin_ws/src
 RUN git clone https://github.com/SagaRobotics/rasberry_perception.git
-WORKDIR /ModularMOT/modularmot/plugins
+WORKDIR /PerceptionApps/ModularMOT/modularmot/plugins
 RUN make
 
 ## Install ros-dependencies and build the rasberry_perception package
