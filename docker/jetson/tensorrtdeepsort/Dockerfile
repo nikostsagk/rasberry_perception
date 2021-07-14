@@ -1,16 +1,15 @@
 ## Build with:
-##   docker build -t ModularMOT:dev .
+##   docker build -t rasberry_perception:tensorrtdeepsort .
 ##
 ## Save with:
-##   docker save ModularMOT:dev | gzip >  modularmot-dev.tar.gz
+##   docker save rasberry_perception:tensorrtdeepsort | gzip >  rasberry_perception-tensorrtdeepsort.tar.gz
 ##
 ## Run with:
-##   docker run --network host --gpus all --name modularmot --rm -it ModularMOT:dev
+##   docker run --network host --gpus all --name tensorrt_backend --rm -it rasberry_perception:tensorrtdeepsort
 ##
 
 FROM rasberry_perception:jetson
 
-ARG SCRIPT_DIR=/opt/tensorrt/python
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get update --no-install-recommends && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y ninja-build protobuf-compiler libprotobuf-dev python  python3-venv
@@ -29,37 +28,28 @@ COPY yolov4-416.onnx /ModularMOT/modularmot/models/yolov4-416.onnx
 RUN echo 'export PATH=/usr/local/cuda/bin${PATH:+:${PATH}}' >> ~/.bashrc && \ 
     echo 'export LD_LIBRARY_PATH=/usr/local/cuda/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}' >> ~/.bashrc 
 
+#Tensorflow Dependencies
+RUN DEBIAN_FRONTEND=noninteractive apt-get update
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install libhdf5-serial-dev hdf5-tools libhdf5-dev zlib1g-dev zip libjpeg8-dev liblapack-dev libblas-dev gfortran 
+RUN apt-get -y install python3-pip
+RUN pip3 --no-cache-dir install -U pip testresources setuptools==49.6.0 
+
 ## Install backend in virtual Python3 environment
 RUN python3.6 -m venv modularmot_venv --clear --system-site-packages && \
     . modularmot_venv/bin/activate && \
-    pip install --allow-unauthenticated --no-cache-dir rospkg && \
-    dpkg -i ${SCRIPT_DIR}/*-tf_*.deb && \
-    pip install --allow-unauthenticated --global-option=build_ext --global-option="-I/usr/local/cuda/include" --global-option="-L/usr/local/cuda/lib64" pycuda && \
-    pip install --allow-unauthenticated  --no-cache-dir numpy && \
-    pip install --allow-unauthenticated --no-cache-dir cython && \
-    pip install --allow-unauthenticated --no-cache-dir cython-bbox && \
-    pip install --allow-unauthenticated --no-cache-dir -r ${APP_DIR}/ModularMOT/requirements.txt && \
-    pip install --allow-unauthenticated --no-cache-dir scikit-build && \
-    pip install --allow-unauthenticated --no-cache-dir opencv-python && \
-    pip install --allow-unauthenticated --no-cache-dir scipy tensorflow && \
-    pip install --allow-unauthenticated --no-cache-dir scikit-learn==0.22.2
+    pip install --no-cache-dir rospkg && \
+    pip install --global-option=build_ext --global-option="-I/usr/local/cuda/include" --global-option="-L/usr/local/cuda/lib64" pycuda && \
+    pip3 install --no-cache-dir -U numpy==1.19.4 future==0.18.2 mock==3.0.5 h5py==2.10.0 keras_preprocessing==1.1.1 keras_applications==1.0.8 gast==0.2.2 futures protobuf pybind11 && \
+    pip install --no-cache-dir numpy && \
+    pip install --no-cache-dir cython && \
+    pip install --no-cache-dir cython-bbox && \
+    pip3 install --no-cache-dir --extra-index-url https://developer.download.nvidia.com/compute/redist/jp/v45 tensorflow==1.15.4+nv20.12 && \   
+    pip install --no-cache-dir scikit-build && \
+    pip install --no-cache-dir opencv-python && \
+    pip install --no-cache-dir scipy && \
+    pip install --no-cache-dir scikit-learn==0.22
 
 ENV PYTHONPATH "${PYTHONPATH}:/ModularMOT:/deep_sort"
-
-## Install ROS
-ENV ROS_DISTRO melodic
-ENV TZ Europe/London
-RUN DEBIAN_FRONTEND=noninteractive apt update --no-install-recommends && \
-    DEBIAN_FRONTEND=noninteractive apt install -y software-properties-common lsb-release curl apt-transport-https git --no-install-recommends && \
-    rm -rf /var/lib/apt/lists/* && \
-    echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list && \
-    apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654 && \
-    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
-    DEBIAN_FRONTEND=noninteractive apt update
-RUN DEBIAN_FRONTEND=noninteractive apt-get install libatlas-base-dev gfortran && \
-    DEBIAN_FRONTEND=noninteractive apt install -y ros-${ROS_DISTRO}-catkin --no-install-recommends && \
-    DEBIAN_FRONTEND=noninteractive apt install -y ros-${ROS_DISTRO}-ros-base python-catkin-tools python3-venv python3-pip --no-install-recommends && \
-    DEBIAN_FRONTEND=noninteractive apt install -y python-rosdep --no-install-recommends && rosdep init && rosdep update
 
 WORKDIR /
 
@@ -67,33 +57,29 @@ RUN wget http://releases.llvm.org/7.0.1/llvm-7.0.1.src.tar.xz && \
     tar -xvf llvm-7.0.1.src.tar.xz 
 WORKDIR /llvm-7.0.1.src/llvm_build_dir
 RUN cmake ../ -DCMAKE_BUILD_TYPE=Release -DLLVM_TARGETS_TO_BUILD="ARM;X86;AArch64" && \
-    make -j4 && \
+    make -j8 && \
     make install
 WORKDIR /llvm-7.0.1.src/llvm_build_dir/bin
 RUN echo "export LLVM_CONFIG=\""`pwd`"/llvm-config\"" >> ~/.bashrc && \
-    echo "alias llvm='"`pwd`"/llvm-lit'" >> ~/.bashrc && \
-    source ~/.bashrc && \
-    pip install --allow-unauthenticated --no-cache-dir llvmlite==0.31.0
+    echo "alias llvm='"`pwd`"/llvm-lit'" >> ~/.bashrc
 
-RUN pip install --allow-unauthenticated --no-cache-dir numba
+WORKDIR / 
+RUN . modularmot_venv/bin/activate && \
+pip install --no-cache-dir llvmlite==0.31.0 && \
+pip install --no-cache-dir numba==0.48
 
 ## Clone necessary repositories
-WORKDIR /catkin_ws/src
-RUN git clone https://github.com/SagaRobotics/rasberry_perception.git
+WORKDIR /catkin_ws/src/rasberry_perception
+RUN git checkout tracking-docker 
 
-WORKDIR /ModularMOT/modularmot/plugins
-RUN make
-
-## Install ros-dependencies and build the rasberry_perception package
-WORKDIR /catkin_ws
-RUN rosdep install --from-paths src --ignore-src -r -y && \
-    catkin config --extend /opt/ros/$ROS_DISTRO && \
-    catkin build rasberry_perception
+#MUST BE BUILT AND COMMITTED
+#WORKDIR /ModularMOT/modularmot/plugins
+#RUN make
 
 WORKDIR /
 
 # Docker clean-up
-RUN rm -rf /var/lib/apt/lists/*
+#RUN rm -rf /var/lib/apt/lists/*
 
 ## Create entry point for image (default entry point looks for a start_backend.sh script that describes how to launch the backend)
 COPY start_backend.sh .
