@@ -149,7 +149,7 @@ class Visualiser:
             xyxy_abs = list(zip(detection.seg_roi.x, detection.seg_roi.y))
             masks.append(GenericMask([xyxy_abs], self.height, self.width))
             reid_class = " (" + str(np.asarray(detection.reid_logits).argmax()) + ") " if detection.reid_logits else ""
-            labels.append("{}{}{:.2f}".format(detection.class_name, reid_class, detection.id))
+            labels.append("{}{}".format(detection.class_name, detection.track_id))
 
         self.overlay_instances(boxes, labels, masks, assigned_colors, alpha)
 
@@ -265,7 +265,8 @@ class Visualiser:
         self.draw_box(box_cords, np.asarray((0, 0, 0)), fill=True)
 
         position = (position[0] + box_pad, position[1] + box_pad + label_height)
-        cv2.putText(self._text, text, position, font, scale, color, thickness, cv2.LINE_AA)
+        cv2.putText(self._text, text, position,font,scale,color)
+
 
     def draw_box(self, box_coord, edge_color, fill=False):
 
