@@ -319,46 +319,14 @@ class RunClientOnTopic:
             tagged_real_poses = PoseArray(header=poses_header)
 
             for i in range(len(results.objects)):
-                roi = results.objects[i].roi
-                bb1 = [int(roi.x1 + ((roi.x2 - roi.x1) / 3)), int(roi.x1 + (roi.x2 - roi.x1) * 2 / 3),
-                       int(roi.y1 + (roi.y2 - roi.y1) / 3), int(roi.y1 + (roi.y2 - roi.y1) * 2 / 3)]
-                bb1_image = np.zeros_like(depth_image)
-                bb1_image[bb1[2]:bb1[3], bb1[0]:bb1[1]] = 1
-                overlap_img = bb1_image
-                # check for overlaps of the middle third and get roi without overlap.
-                for j in range(len(results.objects)):
-
-                    if i !=j:
-                        roi_j=results.objects[j].roi
-                        # bb2 = [int(roi_j.x1+((roi_j.x2-roi_j.x1) / 3)), int(roi_j.x1+(roi_j.x2-roi_j.x1)*2/3), int(roi_j.y1+(roi_j.y2-roi_j.y1) / 3),int(roi_j.y1+(roi_j.y2-roi_j.y1)  * 2/3)]
-                        bb2 = [int(roi_j.x1),int(roi_j.x2),int(roi_j.y1),int(roi_j.y2)]
-                        if self._is_overlap(bb1,bb2):
-                            if self._get_iou(bb1,bb2) < 0.9:
-
-                                bb2_image = np.zeros_like(depth_image)
-                                bb2_image[bb2[2]:bb2[3],bb2[0]:bb2[1]] = 2
-                                overlap_img = overlap_img+bb2_image
-                                # depth_mask = a
-                    depth_mask = depth_image.copy()
-                    depth_mask[np.where(overlap_img != 1)] = 0
-
-                    dist = self._get_object_depth_from_mask(depth_mask)
-                    if dist==None:
-                        results.objects[i].confidence=0
-                    else:
-
-                        results.objects[i].pose.position.z = dist
-
-                if results.objects[i].confidence!=0:
-
-
 
                     label = results.objects[i].class_name
 
                     # Get localisation from bbox
+                    roi = results.objects[i].roi
                     xv, yv = np.meshgrid(np.arange(int(roi.x1), int(roi.x2)), np.arange(int(roi.y1), int(roi.y2)))
                     d_roi = depth_image[yv, xv]  # For bbox the x, y, z pos is based on median of valid depth pixels
-                    valid_idx = np.where(np.logical_and(d_roi != 0, np.isfinite(d_roi)))
+                    valid_idx =     np.where(np.logical_and(d_roi != 0, np.isfinite(d_roi)))
 
                     infer_pose_from_depth = self.__check_pose_empty(results.objects[i].pose)
                     if len(valid_idx[0]) and len(valid_idx[1]):
@@ -367,11 +335,8 @@ class RunClientOnTopic:
                             box_pose = self._get_pose(d_roi, valid_idx, roi.x1, roi.y1, fx, fy, cx, cy, return_size=False)
                             object_depth = self._get_object_depth(d_roi)
 
-                            # object_depth=self._get_object_depth_from_mask(overlap_img)
                             size = self._get_size_simple(roi, object_depth, self.cam_model)
-                            results.objects[i].pose.x = box_pose.x
-                            results.objects[i].pose.y = box_pose.y
-
+                            results.objects[i].pose = box_pose
                             results.objects[i].size = size
                             results.objects[i].pose_frame_id = depth_msg.header.frame_id
                         tagged_bbox_poses.poses.append(TaggedPose(tag=label, pose=box_pose))
@@ -453,12 +418,14 @@ def _get_detections_for_topic():
     rospy.init_node(_node_name, anonymous=True)
     # get private namespace parameters
     p_image_ns = rospy.get_param('~image_ns', "/camera/camera1/color")
-    p_depth_ns = rospy.get_param('~depth_ns', "/camera/camera1/aligned_depth_to_color")
+    p_depth_ns = rospy.get_param('~depth_ns', "")
+    # p_image_ns = rospy.get_param('~image_ns', "/camera/camera1/color")
+    # p_depth_ns = rospy.get_param('~depth_ns', "/camera/camera1/aligned_depth_to_color")
     p_service_name = rospy.get_param('~service_name', "robot_perception")
     # p_image_ns = rospy.get_param('~image_ns', "/sequence_0/color")
     # p_depth_ns = rospy.get_param('~depth_ns', "/sequence_0/aligned_depth_to_color")
     # p_service_name = rospy.get_param('~service_name', "GetDetectionsService")
-    p_score = rospy.get_param('~score', 0.01)
+    p_score = rospy.get_param('~score', 0.5)
     p_vis = rospy.get_param('~show_vis', True)
     p_source = rospy.get_param('~publish_source', True)
     p_run_on_start = rospy.get_param('~run_on_start', True)

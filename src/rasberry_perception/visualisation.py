@@ -149,11 +149,14 @@ class Visualiser:
             xyxy_abs = list(zip(detection.seg_roi.x, detection.seg_roi.y))
             masks.append(GenericMask([xyxy_abs], self.height, self.width))
             reid_class = " (" + str(np.asarray(detection.reid_logits).argmax()) + ") " if detection.reid_logits else ""
-            labels.append("{}{}".format(detection.class_name, detection.track_id))
+            if detection.track_id >=0:
+                labels.append("{}{}".format(detection.class_name, detection.track_id))
+            else:
+                labels.append('')
 
-        self.overlay_instances(boxes, labels, masks, assigned_colors, alpha)
+        self.overlay_instances(boxes, labels, masks, assigned_colors, alpha, message.objects)
 
-    def overlay_instances(self, boxes=None, labels=None, masks=None, assigned_colors=None, alpha=0.5):
+    def overlay_instances(self, boxes=None, labels=None, masks=None, assigned_colors=None, alpha=0.5, detections=None):
         num_instances = None
         if boxes is not None:
             boxes = self._convert_boxes(boxes)
@@ -183,12 +186,15 @@ class Visualiser:
             labels = [labels[k] for k in sorted_idxs] if labels is not None else None
             masks = [masks[idx] for idx in sorted_idxs] if masks is not None else None
             assigned_colors = [assigned_colors[idx] for idx in sorted_idxs]
+            detections = [detections[idx] for idx in sorted_idxs]
 
         for i in range(num_instances):
-            color = assigned_colors[i]
+            if detections[i].track_id>=0:
+                color = _COLORS[detections[i].track_id % len(_COLORS)]
+            else:
+                color=(0,1,0)
 
-            if boxes is not None:
-                self.draw_box(boxes[i], edge_color=color)
+            self.draw_box(boxes[i], edge_color=color)
 
             if masks is not None:
                 for segment in masks[i].polygons:
