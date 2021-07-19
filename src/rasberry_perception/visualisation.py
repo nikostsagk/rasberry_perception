@@ -156,6 +156,7 @@ class Visualiser:
             else:
                 labels.append('')
 
+
         self.overlay_instances(boxes, labels, masks, assigned_colors, alpha, message.objects)
 
     def overlay_instances(self, boxes=None, labels=None, masks=None, assigned_colors=None, alpha=0.5, detections=None):
@@ -335,12 +336,10 @@ class MarkerGenerator:
             marker.scale.y = detection.size.z
             marker.scale.z = detection.size.y
             marker.color.a = 0.8
-            #TEMP
-            if detection.class_name == "Ripe Strawberry":
+            if detection.track_id != -1:
                 marker.color.r = 1.0
             else:
                 marker.color.g = 1.0
-            #TEMP
             marker.pose.orientation.w = 1.0
             marker.pose.position.x = detection.pose.position.x
             marker.pose.position.y = detection.pose.position.y

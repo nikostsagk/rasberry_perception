@@ -104,8 +104,8 @@ class RunClientOnTopic:
 
             # This topic only publishes the points of the depth map that are considered for the bbox_pose calculation
             if self.depth_enabled:
-                self.box_depth_pub = rospy.Publisher(self.namespace + "vis/bbox_points/image_raw", Image, queue_size=1)
-                self.box_depth_info_pub = rospy.Publisher(self.namespace + "vis/bbox_points/camera_info", CameraInfo, queue_size=1)
+                self.box_depth_pub = rospy.Publisher(self.namespace + "/vis/bbox_points/image_raw", Image, queue_size=1)
+                self.box_depth_info_pub = rospy.Publisher(self.namespace + "/vis/bbox_points/camera_info", CameraInfo, queue_size=1)
 
         # Start subscription to the relevant topics
         sync_queue, sync_thresh = 1, 0.1
