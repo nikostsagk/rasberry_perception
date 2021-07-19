@@ -194,7 +194,7 @@ class Visualiser:
             if detections[i].track_id>=0:
                 color = _COLORS[detections[i].track_id % len(_COLORS)]
             else:
-                color=(0,1,0)
+                color=np.array([1,1,1])
 
             self.draw_box(boxes[i], edge_color=color)
 
