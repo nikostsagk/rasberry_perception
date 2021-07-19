@@ -3,6 +3,8 @@
 
 import cv2
 import numpy as np
+import rospy 
+from visualization_msgs.msg import Marker, MarkerArray
 
 __all__ = ["Visualiser"]
 
@@ -318,3 +320,53 @@ class Visualiser:
             else:
                 ret.append(GenericMask(x, self.height, self.width))
         return ret
+
+class MarkerGenerator:
+    def create_markers(self, detections, frame):
+        self.markerArray = MarkerArray()
+        id = 0
+        id_t = 1
+        for detection in detections.objects:
+            marker = Marker()
+            marker.header.frame_id = "/perception_link"
+            marker.type = marker.SPHERE
+            marker.action = marker.ADD
+            marker.scale.x = detection.size.x
+            marker.scale.y = detection.size.z
+            marker.scale.z = detection.size.y
+            marker.color.a = 0.8
+            #TEMP
+            if detection.class_name == "Ripe Strawberry":
+                marker.color.r = 1.0
+            else:
+                marker.color.g = 1.0
+            #TEMP
+            marker.pose.orientation.w = 1.0
+            marker.pose.position.x = detection.pose.position.x
+            marker.pose.position.y = detection.pose.position.y
+            marker.pose.position.z = detection.pose.position.z
+            marker.lifetime = rospy.Duration(0.2)
+            marker.id = id
+            #TEXT
+            if detection.track_id != -1:
+                text = Marker()
+                text.header.frame_id = "/perception_link"
+                text.type = marker.TEXT_VIEW_FACING
+                text.action = marker.ADD
+                text.scale.x = 0.05
+                text.scale.y = 0.05
+                text.scale.z = 0.05
+                text.color.a = 0.8
+                text.pose.orientation.w = 1.0
+                text.pose.position.x = detection.pose.position.x
+                text.pose.position.y = detection.pose.position.y + detection.size.y + 0.01 
+                text.pose.position.z = detection.pose.position.z
+                text.lifetime = rospy.Duration(0.2)
+                text.text = str(detection.track_id)
+                text.id = id_t                
+                self.markerArray.markers.append(text)
+                id_t += 2
+            id += 2
+            self.markerArray.markers.append(marker)
+    def get_markers(self):
+        return self.markerArray
