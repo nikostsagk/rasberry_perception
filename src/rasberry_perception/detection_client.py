@@ -2,6 +2,9 @@
 
 #  Raymond Kirk (Tunstill) Copyright (c) 2020
 #  Email: ray.tunstill@gmail.com
+#  Modified by
+#  Saul Goldblatt 2021
+#  Email: saul.goldblatt@sagarobotics.com
 
 # Executable for sending an image topic to the DetectionServer and publishing the results
 
@@ -25,6 +28,7 @@ from image_geometry import PinholeCameraModel
 from std_srvs.srv import SetBool, SetBoolResponse
 from visualization_msgs.msg import MarkerArray
 
+
 class RunClientOnTopic:
     def __init__(self, image_namespace, depth_namespace=None, score_thresh=0.5, service_name=default_service_name,
                  visualisation_enabled=False, publish_source=False, run_on_start=True, topic_trigger = ''):
@@ -40,6 +44,7 @@ class RunClientOnTopic:
 
         # Build camera model for size estimation
         self.cam_model = PinholeCameraModel()
+        rospy.loginfo('waiting for '+ image_namespace + "/camera_info"+' topic')
         camera_info = rospy.wait_for_message(image_namespace + "/camera_info", CameraInfo)
         self.cam_model.fromCameraInfo(camera_info)
 
@@ -91,6 +96,7 @@ class RunClientOnTopic:
 
             #Marker Publisher
             self.vis_marker_pub = rospy.Publisher(self.namespace + "/vis/markers", MarkerArray)
+
 
             # Worker thread to do the heavy lifting of the detections visualisation
             self.publisher_tasks = WorkerTaskQueue(num_workers=2, max_size=2, discard=True)
@@ -225,6 +231,36 @@ class RunClientOnTopic:
         # z is in mm so convert to SI units
         z = z/1000
         return z
+    @staticmethod
+    def _get_object_depth_from_mask(mask):
+        berry_mask=mask[np.where(mask != 0)]
+        if berry_mask.size == 0:
+            return None
+        else:
+            z = np.median(berry_mask)
+            z =z/1000
+            return z
+
+    @staticmethod
+    def _is_overlap( bb1, bb2):
+        if (bb1[0]>= bb2[1]) or (bb1[1] <= bb2[0]) or (bb1[3] <= bb2[2]) or (bb1[2] >= bb2[3]):
+            return False
+        else:
+            return True
+    @staticmethod
+    def _get_iou(bb1,bb2):
+
+        xA = max(bb1[0], bb2[0])
+        yA = max(bb1[1], bb2[1])
+        xB = min(bb1[2], bb2[2])
+        yB = min(bb1[3], bb2[3])
+        interArea = max(0, xB - xA + 1) * max(0, yB - yA + 1)
+
+        boxAArea = (bb1[2] - bb1[0] + 1) * (bb1[3] - bb1[1] + 1)
+        boxBArea = (bb2[2] - bb2[0] + 1) * (bb2[3] - bb2[1] + 1)
+
+        iou = interArea / float(boxAArea + boxBArea - interArea)
+        return iou
 
     @staticmethod
     def _get_pose(depth_roi, valid_positions, x_offset, y_offset, _fx, _fy, _cx, _cy, return_size=False):
@@ -288,51 +324,53 @@ class RunClientOnTopic:
             tagged_real_poses = PoseArray(header=poses_header)
 
             for i in range(len(results.objects)):
-                label = results.objects[i].class_name
 
-                # Get localisation from bbox
-                roi = results.objects[i].roi
-                xv, yv = np.meshgrid(np.arange(int(roi.x1), int(roi.x2)), np.arange(int(roi.y1), int(roi.y2)))
-                d_roi = depth_image[yv, xv]  # For bbox the x, y, z pos is based on median of valid depth pixels
-                valid_idx = np.where(np.logical_and(d_roi != 0, np.isfinite(d_roi)))
+                    label = results.objects[i].class_name
 
-                infer_pose_from_depth = self.__check_pose_empty(results.objects[i].pose)
-                if len(valid_idx[0]) and len(valid_idx[1]):
-                    box_pose = results.objects[i].pose
-                    if infer_pose_from_depth:
-                        box_pose = self._get_pose(d_roi, valid_idx, roi.x1, roi.y1, fx, fy, cx, cy, return_size=False)
-                        object_depth = self._get_object_depth(d_roi)
-                        size = self._get_size_simple(roi, object_depth, self.cam_model)
-                        results.objects[i].pose = box_pose
-                        results.objects[i].size = size
-                        results.objects[i].pose_frame_id = depth_msg.header.frame_id
-                    tagged_bbox_poses.poses.append(TaggedPose(tag=label, pose=box_pose))
-                    poses[label]["bbox"].poses.append(box_pose)
-                if self.visualisation_enabled:
-                    boxes_depth_image[yv, xv] = depth_image[yv, xv]  # Publish a bbox pixels only image
+                    # Get localisation from bbox
+                    roi = results.objects[i].roi
+                    xv, yv = np.meshgrid(np.arange(int(roi.x1), int(roi.x2)), np.arange(int(roi.y1), int(roi.y2)))
+                    d_roi = depth_image[yv, xv]  # For bbox the x, y, z pos is based on median of valid depth pixels
+                    valid_idx =     np.where(np.logical_and(d_roi != 0, np.isfinite(d_roi)))
 
-                # Get localisation from segm
-                segm = results.objects[i].seg_roi
+                    infer_pose_from_depth = self.__check_pose_empty(results.objects[i].pose)
+                    if len(valid_idx[0]) and len(valid_idx[1]):
+                        box_pose = results.objects[i].pose
+                        if infer_pose_from_depth:
+                            box_pose = self._get_pose(d_roi, valid_idx, roi.x1, roi.y1, fx, fy, cx, cy, return_size=False)
+                            object_depth = self._get_object_depth(d_roi)
 
-                if not (segm.x and segm.y):
-                    continue
+                            size = self._get_size_simple(roi, object_depth, self.cam_model)
+                            results.objects[i].pose = box_pose
+                            results.objects[i].size = size
+                            results.objects[i].pose_frame_id = depth_msg.header.frame_id
+                        tagged_bbox_poses.poses.append(TaggedPose(tag=label, pose=box_pose))
+                        poses[label]["bbox"].poses.append(box_pose)
+                    if self.visualisation_enabled:
+                        boxes_depth_image[yv, xv] = depth_image[yv, xv]  # Publish a bbox pixels only image
 
-                d_roi = depth_image[segm.y, segm.x]  # For segm the x,y,z pos is based on median of detected pixels
-                valid_idx = np.where(np.logical_and(d_roi != 0, np.isfinite(d_roi)))
-                if len(valid_idx[0]):
-                    zp = d_roi[valid_idx[0]] / 1000.0
-                    yp = (np.asarray(segm.y)[valid_idx[0]] - cy) * zp / fy
-                    xp = (np.asarray(segm.x)[valid_idx[0]] - cx) * zp / fx
-                    segm_pose = Pose(position=Point(np.median(xp), np.median(yp), np.median(zp)),
-                                     orientation=Quaternion(0, 0, 0, 1))
-                    # Overwrite the bbox extracted size if segm available
-                    results.objects[i].size = RunClientOnTopic._get_size(xp, yp, zp)
-                    tagged_segm_poses.poses.append(TaggedPose(tag=label, pose=segm_pose))
-                    poses[label]["segm"].poses.append(segm_pose)
-                    if infer_pose_from_depth:
-                        results.objects[i].pose = segm_pose  # should be more accurate so use this as default
+                    # Get localisation from segm
+                    segm = results.objects[i].seg_roi
 
-                poses[label]["pose"].poses.append(results.objects[i].pose)
+                    if not (segm.x and segm.y):
+                        continue
+
+                    d_roi = depth_image[segm.y, segm.x]  # For segm the x,y,z pos is based on median of detected pixels
+                    valid_idx = np.where(np.logical_and(d_roi != 0, np.isfinite(d_roi)))
+                    if len(valid_idx[0]):
+                        zp = d_roi[valid_idx[0]] / 1000.0
+                        yp = (np.asarray(segm.y)[valid_idx[0]] - cy) * zp / fy
+                        xp = (np.asarray(segm.x)[valid_idx[0]] - cx) * zp / fx
+                        segm_pose = Pose(position=Point(np.median(xp), np.median(yp), np.median(zp)),
+                                         orientation=Quaternion(0, 0, 0, 1))
+                        # Overwrite the bbox extracted size if segm available
+                        results.objects[i].size = RunClientOnTopic._get_size(xp, yp, zp)
+                        tagged_segm_poses.poses.append(TaggedPose(tag=label, pose=segm_pose))
+                        poses[label]["segm"].poses.append(segm_pose)
+                        if infer_pose_from_depth:
+                            results.objects[i].pose = segm_pose  # should be more accurate so use this as default
+
+                    poses[label]["pose"].poses.append(results.objects[i].pose)
             # Publish depth poses and 1:1 depth map
             self._publish_poses(poses, tagged_bbox_poses, tagged_segm_poses)
             if self.publish_source:
@@ -398,13 +436,15 @@ def _get_detections_for_topic():
     _node_name = default_service_name + '_client'
     rospy.init_node(_node_name, anonymous=True)
     # get private namespace parameters
-    p_image_ns = rospy.get_param('~image_ns', "/camera1/usb_cam")
+    p_image_ns = rospy.get_param('~image_ns', "/camera/camera1/color")
     p_depth_ns = rospy.get_param('~depth_ns', "")
-    p_service_name = rospy.get_param('~service_name', "gripper_perception")
+    # p_image_ns = rospy.get_param('~image_ns', "/camera/camera1/color")
+    # p_depth_ns = rospy.get_param('~depth_ns', "/camera/camera1/aligned_depth_to_color")
+    p_service_name = rospy.get_param('~service_name', "robot_perception")
     # p_image_ns = rospy.get_param('~image_ns', "/sequence_0/color")
     # p_depth_ns = rospy.get_param('~depth_ns', "/sequence_0/aligned_depth_to_color")
     # p_service_name = rospy.get_param('~service_name', "GetDetectionsService")
-    p_score = rospy.get_param('~score', 0.01)
+    p_score = rospy.get_param('~score', 0.5)
     p_vis = rospy.get_param('~show_vis', True)
     p_source = rospy.get_param('~publish_source', True)
     p_run_on_start = rospy.get_param('~run_on_start', True)
