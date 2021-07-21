@@ -10,8 +10,9 @@ fi;
 
 SERVICE_NAME=$1
 
-ROS_URI="${ROS_MASTER_URI:-"http://localhost:11311/"}"
-ROS_LOCAL_IP="${ROS_IP:-"127.0.0.1"}"
+export ROS_MASTER_URI="${ROS_MASTER_URI:-"http://localhost:11311/"}"
+export ROS_IP="${ROS_IP:-"127.0.0.1"}"
+export ROS_HOSTNAME=$ROS_IP
 
 # Run backend
 docker-compose -f ../docker/docker-compose.yml run $SERVICE_NAME

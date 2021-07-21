@@ -22,7 +22,7 @@ services:
         - ./${DEVICE}/detectron2/start_backend.sh:/start_backend.sh
         - ./${DEVICE}/entrypoint.sh:/entrypoint.sh
 
-        robot_perception:
+    robot_perception:
         image: repository.sagarobotics.com/tensorrt_yolov4deepsort.${DEVICE}:deploy
         container_name: tensorrtdeepsort
         build:
