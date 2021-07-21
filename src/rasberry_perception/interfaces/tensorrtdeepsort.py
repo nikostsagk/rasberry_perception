@@ -1,3 +1,4 @@
+from codecs import encode
 from threading import Event
 import ros_numpy
 import json
@@ -72,41 +73,42 @@ class TensorrtDeepsortServer(BaseDetectionServer):
                 image = image[..., ::-1]
             #Image Info
             self.image_height, self.image_width = image.shape[0], image.shape[1] 
-            boxs = []
-            confidences = []
-            class_name= []
+
             self.mot.step(image)
-            for detection in self.mot.detections:
+            # detections
+            ndetections = len(self.mot.detections)
+            boxs = np.empty(shape=(ndetections, 4))
+            confidences = np.empty(shape=(ndetections,))
+            class_name = np.ones(ndetections)
+
+            # tracking
+            deep_detections = []
+
+            for n, detection in enumerate(self.mot.detections):
+                x1, y1, x2, y2 = detection[0]
+                h = y2 - y1
+                w = x2 - x1
+                boxs[n,:] = int(x1), int(y1), int(w), int(h)
+                confidences[n] = detection[2]
+                class_name[n] = detection[1]
+
                 if detection[1] != 0:  # only track ripe berry whose class is "ripe"        
-                    x1, y1, x2, y2 = detection[0][0], \
-                    detection[0][1], \
-                    detection[0][2], \
-                    detection[0][3]
                     detections_msg.objects.append(Detection(roi=RegionOfInterest(x1=x1, y1=y1, x2=x2, y2=y2), seg_roi=SegmentOfInterest(x=[], y=[]), id=self._new_id(), track_id=-1, confidence=detection[2], class_name="unripe"))                        
                     continue
-                confidences.append(detection[2])
-                class_name.append(detection[1])
-                bounds = detection[0]
-                h = bounds[3] - bounds[1]
-                w = bounds[2] - bounds[0]
-                boxs.append([int(bounds[0]), int(bounds[1]), int(w), int(h)])
-            features = self.encoder(image, boxs)
-            detections = [self.deep_detection(bbox, confidence, feature) for bbox, confidence, feature in zip(boxs, confidences, features)]
-            # Run non-maxima suppression.
-            boxes = np.array([d.tlwh for d in detections])
-            scores = np.array([d.confidence for d in detections])
-            indices = self.preprocessing.non_max_suppression(boxes, self.nms_max_overlap, scores)
-            detections = [detections[i] for i in indices]
+                
+                else:
+                    features = self.encoder(image, boxs[n:n+1,:])
+                    deep_detections.append(self.deep_detection(boxs[n,:], confidences[n], features[0]))
+                        
             # Call the tracker
             self.tracker.predict()
-            self.tracker.update(detections)            
+            self.tracker.update(deep_detections)            
             for track in self.tracker.tracks:
                 if not track.is_confirmed() or track.time_since_update > 1:
                     track_id = 0
                     continue
                 track_id = (int(track.track_id))
-                bbox = track.to_tlbr()
-                x1, y1, x2, y2 = bbox[0],bbox[1],bbox[2],bbox[3]  
+                x1, y1, x2, y2 = track.to_tlbr()
                 x1 = max(min(self.image_width-1, x1), 1)
                 x2 = max(min(self.image_width-1, x2), 1)
                 y1 = max(min(self.image_height-1, y1), 1)
@@ -114,8 +116,12 @@ class TensorrtDeepsortServer(BaseDetectionServer):
                 roi = (RegionOfInterest(x1=x1, y1=y1, x2=x2, y2=y2))
                 detections_msg.objects.append(Detection(roi=roi, seg_roi=SegmentOfInterest(x=[], y=[]), id=self._new_id(), track_id=track_id,confidence=0.99, class_name="Ripe Strawberry"))
         except Exception as e:
+            import sys, os
             self.currently_busy.clear()
             print("FruitCastServer error: ", e)
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            print(exc_type, fname, exc_tb.tb_lineno)
             return GetDetectorResultsResponse(status=ServiceStatus(ERROR=True), results=detections_msg)
         self.currently_busy.clear()
         return GetDetectorResultsResponse(status=ServiceStatus(OKAY=True), results=detections_msg)
