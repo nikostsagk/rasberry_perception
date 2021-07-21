@@ -32,6 +32,9 @@ services:
             - ROS_MASTER_URI=${ROS_MASTER_URI}
             - ROS_IP=${ROS_IP}
             - SERVICE_NAME=robot_perception
+            - OPENBLAS_MAIN_FREE=1
+            - OPENBLAS_NUM_THREADS=1
+            - NO_AT_BRIDGE=1
         runtime: nvidia
         privileged: true
         entrypoint: /bin/bash ./entrypoint.sh
