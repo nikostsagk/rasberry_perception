@@ -6,14 +6,17 @@
 ##   - nvidia container toolkit
 ##
 ## Build with:
-##   docker build -t rasberry_perception:base_gpu .
+##   docker build -t repository.sagarobotics.com/base.gpu:local .
 ##
 ## Save with:
-##   docker save rasberry_perception:base_gpu | gzip > rasberry_perception_base_gpu.tar.gz
+##   docker save repository.sagarobotics.com/base.gpu:local | gzip > rasberry_perception_base_gpu.tar.gz
 ##
 ## Run with:
-##   docker run --network host --gpus all --name base_gpu --rm -it rasberry_perception:base_gpu /bin/bash
-##
+##   docker run --network host --gpus all --name base_backend --rm -it repository.sagarobotics.com/base.gpu:local
+## Debug with:
+##   docker run --network host --gpus all --name base_backend --entrypoint /bin/bash --rm -it repository.sagarobotics.com/base.gpu:local
+## Tag with:
+##   docker tag repository.sagarobotics.com/base.gpu:local repository.sagarobotics.com/base.gpu:$(git show --format="%h" -s)
 
 FROM nvidia/cuda:10.2-cudnn7-devel-ubuntu18.04
 
