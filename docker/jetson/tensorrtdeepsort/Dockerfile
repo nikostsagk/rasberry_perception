@@ -15,18 +15,21 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update --no-install-recommends && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y ninja-build protobuf-compiler libprotobuf-dev python  python3-venv
 
 # Copy ModularMOT as is private. Can be accessed here https://github.com/SAGARobotics/PerceptionApps
-COPY ModularMOT /ModularMOT
+COPY PerceptionApps /PerceptionApps
 
 WORKDIR /
 RUN git clone https://github.com/rjwb1/deep_sort.git
 
 #TEMP Copy Weights. Acquire from rbelshaw@sagarobotics.com 
 COPY mars_sb_14.pb /mars_sb_14.pb
-COPY yolov4-416.onnx /ModularMOT/modularmot/models/yolov4-416.onnx
+COPY yolov4-416.onnx /PerceptionApps/ModularMOT/modularmot/models/yolov4-416.onnx
 
 # set up environment variables
-RUN echo 'export PATH=/usr/local/cuda/bin${PATH:+:${PATH}}' >> ~/.bashrc && \ 
-    echo 'export LD_LIBRARY_PATH=/usr/local/cuda/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}' >> ~/.bashrc 
+ENV PATH=/usr/local/cuda/bin${PATH:+:${PATH}}
+ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+ENV LLVM_CONFIG="/llvm-7.0.1.src/llvm_build_dir/bin/llvm-config"
+ENV llvm='/llvm-7.0.1.src/llvm_build_dir/bin/llvm-lit'
+
 
 #Tensorflow Dependencies
 RUN DEBIAN_FRONTEND=noninteractive apt-get update
@@ -49,7 +52,7 @@ RUN python3.6 -m venv modularmot_venv --clear --system-site-packages && \
     pip install --no-cache-dir scipy && \
     pip install --no-cache-dir scikit-learn==0.22
 
-ENV PYTHONPATH "${PYTHONPATH}:/ModularMOT:/deep_sort"
+ENV PYTHONPATH "${PYTHONPATH}:/PerceptionApps/ModularMOT:/deep_sort"
 
 WORKDIR /
 
@@ -60,26 +63,19 @@ RUN cmake ../ -DCMAKE_BUILD_TYPE=Release -DLLVM_TARGETS_TO_BUILD="ARM;X86;AArch6
     make -j8 && \
     make install
 WORKDIR /llvm-7.0.1.src/llvm_build_dir/bin
-RUN echo "export LLVM_CONFIG=\""`pwd`"/llvm-config\"" >> ~/.bashrc && \
-    echo "alias llvm='"`pwd`"/llvm-lit'" >> ~/.bashrc
 
 WORKDIR / 
 RUN . modularmot_venv/bin/activate && \
 pip install --no-cache-dir llvmlite==0.31.0 && \
 pip install --no-cache-dir numba==0.48
 
-## Clone necessary repositories
-WORKDIR /catkin_ws/src/rasberry_perception
-RUN git checkout tracking-docker 
-
-#MUST BE BUILT AND COMMITTED
-#WORKDIR /ModularMOT/modularmot/plugins
-#RUN make
+WORKDIR /PerceptionApps/ModularMOT/modularmot/plugins
+RUN make
 
 WORKDIR /
 
 # Docker clean-up
-#RUN rm -rf /var/lib/apt/lists/*
+RUN rm -rf /var/lib/apt/lists/*
 
 ## Create entry point for image (default entry point looks for a start_backend.sh script that describes how to launch the backend)
 COPY start_backend.sh .
