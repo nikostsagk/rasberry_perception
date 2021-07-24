@@ -11,9 +11,7 @@
 ## Tag with:
 ##   docker tag repository.sagarobotics.com/tensorrt_yolov4deepsort.jetson:local repository.sagarobotics.com/tensorrt_yolov4deepsort.jetson:$(git show --format="%h" -s)
 
-
-FROM rasberry_perception:jetson
-
+FROM repository.sagarobotics.com/base.jetson:deploy
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get update --no-install-recommends && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y ninja-build protobuf-compiler libprotobuf-dev python  python3-venv

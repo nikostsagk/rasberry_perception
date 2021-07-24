@@ -1,20 +1,14 @@
-## Basis for running detection backends in a container on a JETSON.
-## Extended from the nvcr.io/nvidia/l4t-pytorch:r32.5.0-pth1.7-py3 image.
-##
-## Prerequisites:
-##   - docker
-##   - nvidia driver
-##   - nvidia container toolkit
-##
 ## Build with:
-##   docker build -t rasberry_perception:jetson .
+##   docker build -t repository.sagarobotics.com/base.jetson:local .
 ##
 ## Save with:
-##   docker save rasberry_perception:jetson | gzip > rasberry_perception_jetson.tar.gz
+##   docker save repository.sagarobotics.com/base.jetson:local | gzip > base_jetson.tar.gz
 ##
-## Run with:
-##   docker run --network host --gpus all --name base_jetson --rm -it rasberry_perception:jetson /bin/bash
-##
+## Debug with:
+##   docker run --network host --gpus all --name base_backend --entrypoint /bin/bash --rm -it repository.sagarobotics.com/base.jetson:local
+## Tag with:
+##   docker tag repository.sagarobotics.com/base.jetson:local repository.sagarobotics.com/base.jetson:$(git show --format="%h" -s)
+
 
 FROM nvcr.io/nvidia/l4t-pytorch:r32.5.0-pth1.7-py3
 
