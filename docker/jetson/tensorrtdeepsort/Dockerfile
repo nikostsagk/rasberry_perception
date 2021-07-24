@@ -1,12 +1,16 @@
 ## Build with:
-##   docker build -t rasberry_perception:tensorrtdeepsort .
+##   docker build -t repository.sagarobotics.com/tensorrt_yolov4deepsort.jetson:local .
 ##
 ## Save with:
-##   docker save rasberry_perception:tensorrtdeepsort | gzip >  rasberry_perception-tensorrtdeepsort.tar.gz
+##   docker save repository.sagarobotics.com/tensorrt_yolov4deepsort.jetson:local | gzip > rasberry_perception_tensorrt_yolov4deepsort_jetson.tar.gz
 ##
 ## Run with:
-##   docker run --network host --gpus all --name tensorrt_backend --rm -it rasberry_perception:tensorrtdeepsort
-##
+##   docker run --network host --gpus all --name tensorrt_yolov4deepsort_backend --rm -it repository.sagarobotics.com/tensorrt_yolov4deepsort.jetson:local
+## Debug with:
+##   docker run --network host --gpus all --name tensorrt_yolov4deepsort_backend --entrypoint /bin/bash --rm -it repository.sagarobotics.com/tensorrt_yolov4deepsort.jetson:local
+## Tag with:
+##   docker tag repository.sagarobotics.com/tensorrt_yolov4deepsort.jetson:local repository.sagarobotics.com/tensorrt_yolov4deepsort.jetson:$(git show --format="%h" -s)
+
 
 FROM rasberry_perception:jetson
 
@@ -20,16 +24,11 @@ COPY PerceptionApps /PerceptionApps
 WORKDIR /
 RUN git clone https://github.com/rjwb1/deep_sort.git
 
-#TEMP Copy Weights. Acquire from rbelshaw@sagarobotics.com 
-COPY mars_sb_14.pb /mars_sb_14.pb
-COPY yolov4-416.onnx /PerceptionApps/ModularMOT/modularmot/models/yolov4-416.onnx
-
 # set up environment variables
 ENV PATH=/usr/local/cuda/bin${PATH:+:${PATH}}
 ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
 ENV LLVM_CONFIG="/llvm-7.0.1.src/llvm_build_dir/bin/llvm-config"
 ENV llvm='/llvm-7.0.1.src/llvm_build_dir/bin/llvm-lit'
-
 
 #Tensorflow Dependencies
 RUN DEBIAN_FRONTEND=noninteractive apt-get update
@@ -78,5 +77,8 @@ WORKDIR /
 RUN rm -rf /var/lib/apt/lists/*
 
 ## Create entry point for image (default entry point looks for a start_backend.sh script that describes how to launch the backend)
+WORKDIR /
+COPY entrypoint.sh .
 COPY start_backend.sh .
+ENTRYPOINT ["/bin/bash", "entrypoint.sh"]
 CMD ["/bin/bash", "-c"]
