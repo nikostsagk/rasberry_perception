@@ -21,10 +21,19 @@ class _unknown_class:
     def __getitem__(self, item):
         return "class {}".format(item)
 
+def add_dataset_category_config(cfg):
+    from detectron2.config import CfgNode as CN
+
+    """
+    Add config for additional category-related dataset options
+    - category thing_classes
+    - category mapping
+    """
+    _C = cfg
+    _C.DATASETS.THING_CLASSES = list()#CN(new_allowed=True)
 
 @DETECTION_REGISTRY.register_detection_backend("detectron2")
 class Detectron2Server(BaseDetectionServer):
-    # _supported_version = "0.1.3"
     _supported_version = "0.4"
 
     def __init__(self, config_file, service_name, model_file=None):
@@ -33,7 +42,6 @@ class Detectron2Server(BaseDetectionServer):
             if version != Detectron2Server._supported_version:
                 raise RuntimeError("Supported version is '{}', you have '{}'.".format(self._supported_version, version))
             from detectron2.config import get_cfg
-            from detectron2.data import MetadataCatalog, DatasetCatalog
             from detectron2.engine.defaults import DefaultPredictor
         except ImportError:
             raise
@@ -43,24 +51,14 @@ class Detectron2Server(BaseDetectionServer):
         self.classes = _unknown_class()
 
         try:
-            from fruit_detection.config import add_fruit_detection_config
-            from fruit_detection.datasets import register_data_set
-            add_fruit_detection_config(self.cfg)
+            add_dataset_category_config(self.cfg)
             self.cfg.merge_from_file(config_file)
-            register_data_set(self.cfg.DATASETS.TEST[0])
-            DatasetCatalog.get(self.cfg.DATASETS.TEST[0])
-            metadata = MetadataCatalog.get(self.cfg.DATASETS.TEST[0] if len(self.cfg.DATASETS.TEST) else "__unused")
-            self.classes = metadata.get("thing_classes") or _unknown_class()
+            self.classes = self.cfg.DATASETS.THING_CLASSES or _unknown_class()
         except ImportError:
 
             self.cfg.merge_from_file(config_file)
-            self.cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.4
-            self.cfg.SOLVER.IMS_PER_BATCH = 1
-            self.cfg.MODEL.ROI_HEADS.NUM_CLASSES = 5
         if model_file is not None:
             self.cfg.MODEL.WEIGHTS = model_file
-            # self.cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.1
-            self.cfg.SOLVER.IMS_PER_BATCH = 1
         self.cfg.freeze()
 
         self.predictor = DefaultPredictor(self.cfg)
@@ -70,9 +68,10 @@ class Detectron2Server(BaseDetectionServer):
 
     @staticmethod
     def citation_notice():
-        return "Please cite this work as outlined in https://github.com/RaymondKirk/fruit_detection\n" \
-               "Maintained by Raymond Kirk (ray.tunstill@gmail.com)\n"\
-               "Maintained by Saul Goldblatt (saul.goldblatt@sagarobotics.com)"
+        return  "Maintained by:\nRaymond Kirk (ray.tunstill@gmail.com)" \
+                "\nSaul Goldblatt (saul.goldblatt@sagarobotics.com)" \
+                "\nNikos Tsagkopoulos (ntsagkopoulos@sagarobotics.com)"
+
 
     @function_timer.interval_logger(interval=10)
     def get_detector_results(self, request):
