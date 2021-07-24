@@ -39,8 +39,8 @@ services:
         privileged: true
         entrypoint: /bin/bash ./entrypoint.sh
         volumes:
-            - ./${DEVICE}/tensorrtdeepsort/mars_sb_14.pb:/mars_sb_14.pb
-            - ./${DEVICE}/tensorrtdeepsort/yolov4-416.onnx:/PerceptionApps/ModularMOT/modularmot/models/yolov4-416.onnx
+#            - ./${DEVICE}/tensorrtdeepsort/mars_sb_14.pb:/mars_sb_14.pb
+#            - ./${DEVICE}/tensorrtdeepsort/yolov4-416.onnx:/PerceptionApps/ModularMOT/modularmot/models/yolov4-416.onnx
             - ./${DEVICE}/tensorrtdeepsort/tensorrtdeepsort.json:/config.json
             - ./${DEVICE}/tensorrtdeepsort/start_backend.sh:/start_backend.sh
             - ./${DEVICE}/tensorrtdeepsort/entrypoint.sh:/entrypoint.sh

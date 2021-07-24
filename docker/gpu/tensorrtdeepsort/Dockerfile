@@ -18,6 +18,10 @@ LABEL cuda.version="11.0" cudnn.version="8.0" tensorrt.version="7.1.3" maintaine
 RUN DEBIAN_FRONTEND=noninteractive apt-get update --no-install-recommends && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y ninja-build protobuf-compiler libprotobuf-dev python  python3-venv
 
+#TEMP Copy Weights. Acquire from rbelshaw@sagarobotics.com 
+COPY mars_sb_14.pb /mars_sb_14.pb
+COPY yolov4-416.onnx /PerceptionApps/ModularMOT/modularmot/models/yolov4-416.onnx
+
 WORKDIR /
 RUN git clone https://github.com/rjwb1/deep_sort.git
 COPY PerceptionApps /PerceptionApps
