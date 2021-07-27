@@ -25,6 +25,7 @@ RUN git clone https://github.com/rjwb1/deep_sort.git
 #TEMP Copy Weights. Acquire from rbelshaw@sagarobotics.com 
 COPY mars_sb_14.pb /mars_sb_14.pb
 COPY yolov4-416.onnx /PerceptionApps/ModularMOT/modularmot/models/yolov4-416.onnx
+COPY tensorrtdeepsort.json /config.json
 
 # set up environment variables
 ENV PATH=/usr/local/cuda/bin${PATH:+:${PATH}}
@@ -74,6 +75,7 @@ WORKDIR /PerceptionApps/ModularMOT/modularmot/plugins
 RUN make
 
 WORKDIR /
+RUN . modularmot_venv/bin/activate && /PerceptionApps/ModularMOT/modularmot/build_engine.py "/config.json"
 
 # Docker clean-up
 RUN rm -rf /var/lib/apt/lists/*
