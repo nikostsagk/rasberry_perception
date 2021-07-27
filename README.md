@@ -79,12 +79,14 @@ rosrun rasberry_perception detection_server.py  backend:="CustomBackendName" _cu
 
 ## Git strategy
 
-- Fork saga repo https://github.com/SAGARobotics/rasberry_perception
-- To add a feature create a descriptive branch name, and link it to an issue #
-- When the feature is finished or ready to be picked up by someone else, test it on your machine and merge into your master (basic test strategy)
-- Create a pull request from your master to SAGARobotics develop branch, assign PR to someone
-- once the pull request has been tested by someone else it can be merged (basic test strategy)
-- Once a month the system is tested extensively and the develop branch is merged into master and a release branch is made (extensive test strategy)
+* Fork saga repo https://github.com/SAGARobotics/rasberry_perception
+* To add a feature create a descriptive branch name, and link it to an issue #
+    - Branch should be in your own fork unless working with someone else
+* When the feature is finished or ready to be picked up by someone else, test it on your machine and merge into your master (basic test strategy)
+* Create a pull request from your master to SAGARobotics develop branch, assign PR to someone
+* Once the pull request has been tested by someone else it can be merged (basic test strategy)
+    - Delete branch when merged
+* Once a month the system is tested extensively and the develop branch is merged into master and a release branch is made (extensive test strategy)
 
 ## Testing Strategies
 ### Basic Testing Strategy
