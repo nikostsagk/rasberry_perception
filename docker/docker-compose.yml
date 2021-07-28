@@ -20,6 +20,7 @@ services:
         - ./${DEVICE}/detectron2/mask_rcnn_R_50_FPN_3x.yaml:/config.yaml
         - ./${DEVICE}/detectron2/start_backend.sh:/start_backend.sh
         - ./${DEVICE}/entrypoint.sh:/entrypoint.sh
+#        - ../rasberry_perception:/catkin_ws/src/rasberry_perception
 
     robot_perception:
         image: repository.sagarobotics.com/tensorrt_yolov4deepsort.${DEVICE}:deploy
@@ -42,3 +43,4 @@ services:
             - ./${DEVICE}/tensorrtdeepsort/tensorrtdeepsort.json:/config.json
             - ./${DEVICE}/tensorrtdeepsort/start_backend.sh:/start_backend.sh
             - ./${DEVICE}/tensorrtdeepsort/entrypoint.sh:/entrypoint.sh
+#           - ../rasberry_perception:/catkin_ws/src/rasberry_perception
