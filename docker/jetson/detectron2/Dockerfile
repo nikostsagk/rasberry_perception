@@ -22,7 +22,7 @@
 ##   docker run --network host --gpus all --name detectron2_backend --entrypoint /bin/bash --rm -it rasberry_perception/detectron2:jetson
 
 # TODO Replace with repository.saga.internal/jetson.detectron2
-FROM rasberry_perception:jetson
+FROM repository.sagarobotics.com/base.jetson:deploy
 
 ## Meta information
 LABEL detectron2.version="0.4" maintainers="Saul Goldblatt <saul.goldblatt@sagarobotics.com>, Nikos Tsagkopoulos <ntsagkopoulos@sagarobotics.com>"

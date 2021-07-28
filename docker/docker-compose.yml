@@ -4,10 +4,9 @@ version: '2.4'
 services:
     gripper_perception:
         # Need to docker login
-        image: repository.sagarobotics.com/${DEVICE}.detectron2
+        image: repository.sagarobotics.com/detectron2.${DEVICE}:deploy
         container_name: detectron2_backend
-        build:
-            context: ${DEVICE}/detectron2
+        pull_policy: always
         network_mode: host
         environment:
             - ROS_MASTER_URI=${ROS_MASTER_URI}
@@ -19,38 +18,28 @@ services:
         volumes:
         - ./${DEVICE}/detectron2/model_final.pth:/model.pth
         - ./${DEVICE}/detectron2/mask_rcnn_R_50_FPN_3x.yaml:/config.yaml
-#        - ./${DEVICE}/detectron2/start_backend.sh:/start_backend.sh
+        - ./${DEVICE}/detectron2/start_backend.sh:/start_backend.sh
+        - ./${DEVICE}/entrypoint.sh:/entrypoint.sh
+#        - ../../rasberry_perception:/catkin_ws/src/rasberry_perception
+
     robot_perception:
-        image: ${DEVICE}/yolov4deepsort
+        image: repository.sagarobotics.com/tensorrt_yolov4deepsort.${DEVICE}:deploy
         container_name: tensorrtdeepsort
-        build:
-            context: ${DEVICE}/yolov4deepsort
         network_mode: host
         environment:
             - ROS_MASTER_URI=${ROS_MASTER_URI}
             - ROS_IP=${ROS_IP}
-            - SERVICE_NAME=gripper_perception
+            - SERVICE_NAME=robot_perception
+            - OPENBLAS_MAIN_FREE=1
+            - OPENBLAS_NUM_THREADS=1
+            - NO_AT_BRIDGE=1
         runtime: nvidia
         privileged: true
-        entrypoint: /bin/bash ./start_backend.sh
+        entrypoint: /bin/bash ./entrypoint.sh
         volumes:
-            - ./${DEVICE}/Noronn/deep_sort_yolov4-master/cfg/yolov4_sb.cfg:/yolov4_sb.cfg
-            - ./${DEVICE}/Noronn/deep_sort_yolov4-master/cfg/voc_sb.data:/voc_sb.data
-    #        - ./${DEVICE}/detectron2/start_backend.sh:/start_backend.sh
-    robot_perception2:
-        image: rasberry_perception:tensorrtdeepsort
-        container_name: tensorrtdeepsort
-        build:
-            context: ${DEVICE}/tensorrtdeepsort
-        network_mode: host
-        environment:
-            - ROS_MASTER_URI=${ROS_MASTER_URI}
-            - ROS_IP=${ROS_IP}
-            - SERVICE_NAME=gripper_perception
-        runtime: nvidia
-        privileged: true
-        entrypoint: /bin/bash ./start_backend.sh
-        volumes:
-            - ./${DEVICE}/tensorrtdeepsort/mars_sb_14.pb:/mars_sb_14.pb
-            - ./${DEVICE}/tensorrtdeepsort/yolov4-416.onnx:/yolov4-416.yaml
-    #        - ./${DEVICE}/detectron2/start_backend.sh:/start_backend.sh
+#            - ./${DEVICE}/tensorrtdeepsort/mars_sb_14.pb:/mars_sb_14.pb
+#            - ./${DEVICE}/tensorrtdeepsort/yolov4-416.onnx:/PerceptionApps/ModularMOT/modularmot/models/yolov4-416.onnx
+            - ./${DEVICE}/tensorrtdeepsort/tensorrtdeepsort.json:/config.json
+            - ./${DEVICE}/tensorrtdeepsort/start_backend.sh:/start_backend.sh
+            - ./${DEVICE}/tensorrtdeepsort/entrypoint.sh:/entrypoint.sh
+#           - ../../rasberry_perception:/catkin_ws/src/rasberry_perception

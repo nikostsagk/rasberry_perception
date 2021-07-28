@@ -80,4 +80,6 @@ install(DIRECTORY "launch" "config" DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATI
 
 file(GLOB python_scripts_DIR "scripts/*.py")
 file(GLOB bash_scripts_DIR "scripts/*.sh")
-catkin_install_python(PROGRAMS ${python_scripts_DIR} ${bash_scripts_DIR} DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+file(GLOB docker_scripts_DIR "docker/*.sh")
+
+catkin_install_python(PROGRAMS ${python_scripts_DIR} ${bash_scripts_DIR} ${docker_scripts_DIR} DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

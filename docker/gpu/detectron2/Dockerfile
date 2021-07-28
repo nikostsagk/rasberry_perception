@@ -7,18 +7,19 @@
 ##   - nvidia container toolkit
 ##
 ## Build with:
-##   docker build -t rasberry_perception/detectron2:gpu .
+##   docker build -t repository.sagarobotics.com/detectron2.gpu:local .
 ##
 ## Save with:
-##   docker save rasberry_perception/detectron2:gpu | gzip > rasberry_perception_detectron2_gpu.tar.gz
+##   docker save repository.sagarobotics.com/detectron2.gpu:local | gzip > rasberry_perception_detectron2_gpu.tar.gz
 ##
 ## Run with:
-##   docker run --network host --gpus all --name detectron2_backend --rm -it rasberry_perception/detectron2:gpu
+##   docker run --network host --gpus all --name detectron2_backend --rm -it repository.sagarobotics.com/detectron2.gpu:local
 ## Debug with:
-##   docker run --network host --gpus all --name detectron2_backend --entrypoint /bin/bash --rm -it rasberry_perception/detectron2:gpu
+##   docker run --network host --gpus all --name detectron2_backend --entrypoint /bin/bash --rm -it repository.sagarobotics.com/detectron2.gpu:local
+## Tag with:
+##   docker tag repository.sagarobotics.com/detectron2.gpu:local repository.sagarobotics.com/detectron2.gpu:$(git show --format="%h" -s)
 
-# TODO: Replace with repository.saga.internal/gpu.base
-FROM rasberry_perception:gpu
+FROM repository.sagarobotics.com/base.gpu:deploy
 
 ## Meta information
 LABEL detectron2.version="0.4" maintainers="Saul Goldblatt <saul.goldblatt@sagarobotics.com>, Nikos Tsagkopoulos <ntsagkopoulos@sagarobotics.com>"

@@ -1,11 +1,6 @@
-<!--  This file consumes information on image_ns/image_raw and depth_ns/image_raw to and publishes results from the detection_server.py backend -->
 <launch>
-    <arg name="service_name" default="gripper_perception"/>
 
-    <!-- server -->
-    <group ns="$(arg service_name)">
-        <node pkg="rasberry_perception" name="$(arg service_name)_node" type="run_backend.sh" args="$(arg service_name)" output="screen" required="true"/>
-    </group>
+    <arg name="service_name" default="robot_perception"/>
 
     <arg name="image_ns" default="/usb_camera"/>
     <arg name="depth_ns" default=""/> <!--/camera/aligned_depth_to_color"-->

@@ -1,0 +1,10 @@
+<launch>
+
+    <arg name="service_name" default="robot_perception"/>
+
+    <!-- server -->
+    <group ns="$(arg service_name)">
+        <node pkg="rasberry_perception" name="$(arg service_name)_node" type="run_backend.sh" args="$(arg service_name)" output="screen" required="true"/>
+    </group>
+
+</launch>
