@@ -17,12 +17,12 @@ export ROS_HOSTNAME=$ROS_IP
 
 # Function to stop the container on exit sig_(exit int term)
 function cleanup {
-    docker-compose -f $HOME/catkin_ws/src/rasberry_perception/docker/docker-compose.yml rm -sf $SERVICE_NAME
+    docker-compose -f docker-compose.yml rm -sf $SERVICE_NAME
     exit 0
 }
 trap cleanup INT TERM EXIT
 
 # Bring container down if already up (avoid corruption)
-docker-compose -f $HOME/catkin_ws/src/rasberry_perception/docker/docker-compose.yml rm -sf $SERVICE_NAME
+docker-compose -f docker-compose.yml rm -sf $SERVICE_NAME
 # Run backend
-docker-compose -f $HOME/catkin_ws/src/rasberry_perception/docker/docker-compose.yml run $SERVICE_NAME
+docker-compose -f docker-compose.yml run $SERVICE_NAME

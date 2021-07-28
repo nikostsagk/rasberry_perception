@@ -6,8 +6,7 @@ services:
         # Need to docker login
         image: repository.sagarobotics.com/detectron2.${DEVICE}:deploy
         container_name: detectron2_backend
-        build:
-            context: ${DEVICE}/detectron2
+        pull_policy: always
         network_mode: host
         environment:
             - ROS_MASTER_URI=${ROS_MASTER_URI}
@@ -25,8 +24,7 @@ services:
     robot_perception:
         image: repository.sagarobotics.com/tensorrt_yolov4deepsort.${DEVICE}:deploy
         container_name: tensorrtdeepsort
-        build:
-            context: ${DEVICE}/tensorrtdeepsort
+        pull_policy: always
         network_mode: host
         environment:
             - ROS_MASTER_URI=${ROS_MASTER_URI}
