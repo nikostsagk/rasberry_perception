@@ -2,7 +2,6 @@
 #  Email: ray.tunstill@gmail.com
 from threading import Event
 
-import cv2
 import ros_numpy
 
 from rasberry_perception.interfaces.default import BaseDetectionServer
